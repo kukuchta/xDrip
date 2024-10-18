@@ -1347,7 +1347,10 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
             final Preference shFollowPass = findPreference("shfollow_pass");
             final Preference shFollowServerUS = findPreference("dex_share_us_acct");
 
-            if (collectionType == DexCollectionType.SHFollow) {
+            if (collectionType == DexCollectionType.SHFollow || collectionType == DexCollectionType.SHAndCLFollow) {
+                collectionCategory.addPreference(shFollowUser);
+                collectionCategory.addPreference(shFollowPass);
+                collectionCategory.addPreference(shFollowServerUS);
                 final Preference.OnPreferenceChangeListener shFollowListener = new Preference.OnPreferenceChangeListener() {
                     @Override
                     public boolean onPreferenceChange(Preference preference, Object newValue) {
@@ -1398,7 +1401,7 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
             final Preference carelinkFollowDownloadMeals = findPreference("clfollow_download_meals");
             final Preference carelinkFollowDownloadNotifications = findPreference("clfollow_download_notifications");
             //Add CL prefs for CLFollower
-            if (collectionType == DexCollectionType.CLFollow) {
+            if (collectionType == DexCollectionType.CLFollow || collectionType == DexCollectionType.SHAndCLFollow) {
                 //Add CL prefs
                 //collectionCategory.addPreference(carelinkFollowUser);
                 //collectionCategory.addPreference(carelinkFollowPass);
@@ -1818,7 +1821,7 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
             }
 
             //Remove CL prefs for NON CLFollower
-            if (collectionType != DexCollectionType.CLFollow) {
+            if (collectionType != DexCollectionType.CLFollow && collectionType != DexCollectionType.SHAndCLFollow) {
                 try {
                     collectionCategory.removePreference(carelinkFollowCountry);
                     collectionCategory.removePreference(carelinkFollowPatient);

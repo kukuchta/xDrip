@@ -85,7 +85,7 @@ public class DexCollectionHelper {
                             }
                         });
                 break;
-
+            case SHAndCLFollow:
             case SHFollow:
                 textSettingDialog(activity,
                         "shfollow_user", "Dex Share Username",

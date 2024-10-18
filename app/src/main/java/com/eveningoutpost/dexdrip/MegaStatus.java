@@ -10,6 +10,7 @@ import static com.eveningoutpost.dexdrip.Home.startWatchUpdaterService;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.DexcomG5;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.Medtrum;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.NSFollow;
+import static com.eveningoutpost.dexdrip.utils.DexCollectionType.SHAndCLFollow;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.SHFollow;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.WebFollow;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.CLFollow;
@@ -215,6 +216,10 @@ public class MegaStatus extends FloatingLocaleActivityWithScreenshot {
             }
             if(dexCollectionType.equals(CLFollow)) {
                 addAsection(CARELINK_FOLLOW, "CareLink Follow Status");
+            }
+            if(dexCollectionType.equals(SHAndCLFollow)) {
+                addAsection(CARELINK_FOLLOW, "CareLink Follow Status");
+                addAsection(SHARE_FOLLOW, "Dex Share Follow Status");
             }
 
             //addAsection("Misc", "Currently Empty");
