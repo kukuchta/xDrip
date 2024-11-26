@@ -186,7 +186,11 @@ public class CareLinkClient {
 
         this.httpClient = new OkHttpClient.Builder()
                 .cookieJar(cookieJar)
-                .connectionPool(new ConnectionPool(5, 10, TimeUnit.MINUTES))
+                .connectionPool(new ConnectionPool(5, 15, TimeUnit.MINUTES))
+                .connectTimeout(60, TimeUnit.SECONDS)
+                .readTimeout(60, TimeUnit.SECONDS)
+                .writeTimeout(60, TimeUnit.SECONDS)
+                .callTimeout(60, TimeUnit.SECONDS)
                 .build();
     }
 

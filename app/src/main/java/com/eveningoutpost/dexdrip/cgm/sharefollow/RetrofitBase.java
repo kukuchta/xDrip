@@ -12,7 +12,9 @@ import com.google.gson.GsonBuilder;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
+import okhttp3.ConnectionPool;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -70,7 +72,13 @@ public class RetrofitBase {
 
                 instances.put(TAG, instance = new retrofit2.Retrofit.Builder()
                         .baseUrl(url)
-                        .client(httpClient.build())
+                        .client(httpClient
+                                .connectionPool(new ConnectionPool(5, 15, TimeUnit.MINUTES))
+                                .connectTimeout(60, TimeUnit.SECONDS)
+                                .readTimeout(60, TimeUnit.SECONDS)
+                                .writeTimeout(60, TimeUnit.SECONDS)
+                                .callTimeout(60, TimeUnit.SECONDS)
+                                .build())
                         .addConverterFactory(createGsonConverter(Dex_Constants.TREND_ARROW_VALUES.class, new ShareTrendDeserializer()))
                         .build());
                 urls.put(TAG, url); // save creation url for quick search

@@ -17,6 +17,7 @@ import com.eveningoutpost.dexdrip.cgm.carelinkfollow.message.Marker;
 import com.eveningoutpost.dexdrip.cgm.carelinkfollow.message.RecentData;
 import com.eveningoutpost.dexdrip.cgm.carelinkfollow.message.SensorGlucose;
 import com.eveningoutpost.dexdrip.cgm.carelinkfollow.message.TextMap;
+import com.eveningoutpost.dexdrip.utils.DexCollectionType;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,6 +27,7 @@ import java.util.UUID;
 
 import static com.eveningoutpost.dexdrip.models.BgReading.SPECIAL_FOLLOWER_PLACEHOLDER;
 import static com.eveningoutpost.dexdrip.models.Treatments.pushTreatmentSyncToWatch;
+import static com.eveningoutpost.dexdrip.utils.DexCollectionType.CLFollow;
 
 
 /**
@@ -47,7 +49,7 @@ public class CareLinkDataProcessor {
         List<SensorGlucose> filteredSgList;
         List<Marker> filteredMarkerList;
 
-        UserError.Log.d(TAG, "Start processsing data...");
+        UserError.Log.d(TAG, "Start processing data...");
 
         //SKIP ALL IF EMPTY!!!
         if (recentData == null) {
@@ -59,12 +61,12 @@ public class CareLinkDataProcessor {
 
         //SKIP DATA processing if NO PUMP CONNECTION (time shift seems to be different in this case, needs further analysis)
         if (recentData.isNGP() && !recentData.pumpCommunicationState) {
-            UserError.Log.d(TAG, "Not connected to pump => time can be wrong, leave processing!");
+            UserError.Log.d(TAG, "Pump disconnected!");
             return;
         }
 
         //SENSOR GLUCOSE (if available)
-        if (recentData.sgs != null) {
+        if (DexCollectionType.getDexCollectionType() == CLFollow && recentData.sgs != null) {
 
             final BgReading lastBg = BgReading.lastNoSenssor();
             final long lastBgTimestamp = lastBg != null ? lastBg.timestamp : 0;
@@ -167,6 +169,7 @@ public class CareLinkDataProcessor {
                         if (marker.value != null && !marker.value.equals(0)) {
                             //new blood test
                             if (BloodTest.getForPreciseTimestamp(marker.dateTime.getTime(), 10000) == null) {
+                                UserError.Log.d(TAG, "New finger BG");
                                 BloodTest.create(marker.dateTime.getTime(), marker.value, SOURCE_CARELINK_FOLLOW);
                             }
                         }
@@ -203,6 +206,7 @@ public class CareLinkDataProcessor {
 
                             //new Treatment
                             if (newTreatment(carbs, insulin, marker.dateTime.getTime())) {
+                                UserError.Log.d(TAG, "New treatment");
                                 t = Treatments.create(carbs, insulin, marker.dateTime.getTime());
                                 if (t != null) {
                                     t.enteredBy = SOURCE_CARELINK_FOLLOW;
@@ -303,6 +307,7 @@ public class CareLinkDataProcessor {
         if (date != null && noteText != null) {
             //New note
             if (newNote(noteText, date.getTime())) {
+                UserError.Log.d(TAG, "New notification");
                 //create_note in Treatment is not good, because of automatic link to other treatments in 5 mins range
                 Treatments note = new Treatments();
                 note.notes = noteText;
