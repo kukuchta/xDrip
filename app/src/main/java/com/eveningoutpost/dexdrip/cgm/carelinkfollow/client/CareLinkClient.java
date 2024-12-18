@@ -186,7 +186,10 @@ public class CareLinkClient {
 
         this.httpClient = new OkHttpClient.Builder()
                 .cookieJar(cookieJar)
-                .connectionPool(new ConnectionPool(5, 10, TimeUnit.MINUTES))
+                .connectionPool(new ConnectionPool(5, 15, TimeUnit.MINUTES))
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
+                .writeTimeout(30, TimeUnit.SECONDS)
                 .build();
     }
 
@@ -806,28 +809,28 @@ public class CareLinkClient {
             }
 
             //Parse dates
-            recentData.dMedicalDeviceTime = parseDateString(recentData.sMedicalDeviceTime);
-            recentData.medicalDeviceTimeAsDate = parseDateString(recentData.medicalDeviceTimeAsString);
-            recentData.dLastSensorTime = parseDateString(recentData.sLastSensorTime);
-            recentData.lastSensorTSAsDate = parseDateString(recentData.lastSensorTSAsString);
+            recentData.dMedicalDeviceTime = parseDateString(recentData.sMedicalDeviceTime); //11 without TZ gets parsed to 13 (+2)
+            recentData.medicalDeviceTimeAsDate = parseDateString(recentData.medicalDeviceTimeAsString); //same as above
+            recentData.dLastSensorTime = parseDateString(recentData.sLastSensorTime);       //11 without TZ gets parsed to 13 (+2)
+            recentData.lastSensorTSAsDate = parseDateString(recentData.lastSensorTSAsString);           //same as above
 
             //Sensor
             if (recentData.sgs != null) {
                 for (SensorGlucose sg : recentData.sgs) {
-                    sg.datetimeAsDate = parseDateString(sg.datetime);
+                    sg.datetimeAsDate = parseDateString(sg.datetime); //11 without TZ gets parsed to 13 (+2)
                 }
             }
 
             //Timezone was present => check if time needs correction
             if (!timezoneMissing) {
 
-                //Calc time diff between event time and actual local time
+                //Calc time diff between event time and actual local time // lastMedicalDeviceDataUpdateServerTime is 9 UTC or 11 (+2), dMedicalDeviceTime is 11 UTC or 13 (+2)
                 int diffInHour = (int) Math.round(((recentData.lastMedicalDeviceDataUpdateServerTime - recentData.dMedicalDeviceTime.getTime()) / 3600000D));
-
+                // diff is -2
                 //Correct times if server <> device > 26 mins => possibly different time zones
                 if (diffInHour != 0 && diffInHour < 26) {
 
-
+                    // add -2 to all dates
                     recentData.medicalDeviceTimeAsDate = shiftDateByHours(recentData.medicalDeviceTimeAsDate, diffInHour);
                     recentData.dMedicalDeviceTime = shiftDateByHours(recentData.dMedicalDeviceTime, diffInHour);
                     recentData.lastConduitDateTime = shiftDateByHours(recentData.lastConduitDateTime, diffInHour);

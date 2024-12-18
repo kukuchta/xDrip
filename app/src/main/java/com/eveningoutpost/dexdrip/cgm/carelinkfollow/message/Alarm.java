@@ -7,21 +7,19 @@ import java.util.Date;
  */
 public class Alarm {
 
-    public String getMessageAlarmCode() {
-        return null;
-    }
-
     public int code;
     public String datetime;
-    public Date datetimeAsDate;
     public String type;
     public boolean flash;
-    public String kind;
-    public long version;
     public Integer instanceId;
     public String messageId;
     public Integer sg;
     public Boolean pumpDeliverySuspendState;
     public String referenceGUID;
+    public int relativeOffset;
+    public String kind;
+    public long version;
+
+    public Date datetimeAsDate;
 
 }

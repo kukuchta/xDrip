@@ -1,164 +1,193 @@
 package com.eveningoutpost.dexdrip.cgm.carelinkfollow.message;
 
+import androidx.annotation.DrawableRes;
+
+import com.eveningoutpost.dexdrip.R;
+import com.eveningoutpost.dexdrip.models.Notifications;
+
 import java.util.HashMap;
 
 public class TextMap {
 
+    public static class NotificationMapEntry {
+        String type = null;
+        String message = null;
+        int id;
 
+        NotificationMapEntry(String type, String message, @DrawableRes int id) {
+            this.type = type;
+            this.message = message;
+            this.id = id;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public int getImage() {
+            return id;
+        }
+
+    }
     public static final String ERROR_TEXT_PREFIX_GUARDIAN = "GM_";
     public static final String ERROR_TEXT_PREFIX_NGP = "N";
 
     private static HashMap<String, String> errorTextMap;
+    private static HashMap<String, NotificationMapEntry> notificationMap;
     private static HashMap<String, String> errorCodeMap;
 
     static {
 
-        errorTextMap = new HashMap<>();
-        errorTextMap.put("", "");
-        errorTextMap.put("3", "Battery out limit");
-        errorTextMap.put("4", "Delivery stopped. Check BG");
-        errorTextMap.put("5", "Pump battery depleted. Insulin delivery stopped");
-        errorTextMap.put("6", "Auto Off. Insulin delivery stopped");
-        errorTextMap.put("16", "Pump reset. Insulin delivery stopped");
-        errorTextMap.put("43", "Pump motor error. Insulin delivery stopped");
-        errorTextMap.put("50", "Bolus stopped");
-        errorTextMap.put("51", "Delivery limit exceeded. Check BG");
-        errorTextMap.put("55", "Pump battery failed. Replace battery");
-        errorTextMap.put("59", "Button error");
-        errorTextMap.put("61", "Check settings. Insulin delivery stopped");
-        errorTextMap.put("62", "Empty reservoir");
-        errorTextMap.put("66", "No reservoir");
-        errorTextMap.put("74", "Finish loading");
-        errorTextMap.put("81", "Replace pump battery now");
-        errorTextMap.put("82", "Low Reservoir");
-        errorTextMap.put("83", "Check BG");
-        errorTextMap.put("84", "Alarm clock");
-        errorTextMap.put("85", "Max fill reached");
-        errorTextMap.put("86", "Weak battery detected");
-        errorTextMap.put("87", "Missed bolus");
-        errorTextMap.put("88", "Silenced sensor alert. Check alarm history");
-        errorTextMap.put("101", "High SG. CHECK BG");
-        errorTextMap.put("102", "Low SG");
-        errorTextMap.put("103", "Threshold Suspend");
-        errorTextMap.put("104", "Meter BG now");
-        errorTextMap.put("105", "Calibration Reminder");
-        errorTextMap.put("106", "Calibration error");
-        errorTextMap.put("107", "Sensor expired");
-        errorTextMap.put("108", "Change sensor");
-        errorTextMap.put("109", "Sensor error");
-        errorTextMap.put("110", "Recharge transmitter");
-        errorTextMap.put("111", "Transmitter battery low");
-        errorTextMap.put("112", "Weak signal");
-        errorTextMap.put("113", "Lost sensor");
-        errorTextMap.put("114", "Sensor glucose approaching high limit");
-        errorTextMap.put("115", "Sensor glucose approaching low limit");
-        errorTextMap.put("116", "Sensor glucose rising rapidly");
-        errorTextMap.put("117", "Sensor glucose falling rapidly");
-        errorTextMap.put("Axx", "Pump error Anull");
-        errorTextMap.put("Exx", "Pump error Enull");
-        errorTextMap.put("N002", "Pump Error. Delivery Stopped");
-        errorTextMap.put("N006", "Pump Battery Out Limit");
-        errorTextMap.put("N007", "Delivery Stopped. Check BG");
-        errorTextMap.put("N011", "Replace Pump Battery Now");
-        errorTextMap.put("N012", "Auto Suspend Limit Reached. Delivery Stopped");
-        errorTextMap.put("N024", "Critical Pump Error. Stop Pump Use. Use Other Treatment");
-        errorTextMap.put("N025", "Pump Power Error. Record Settings");
-        errorTextMap.put("N029", "Pump Restarted. Delivery Stopped");
-        errorTextMap.put("N037", "Pump Motor Error. Delivery Stopped");
-        errorTextMap.put("N051", "Bolus Stopped");
-        errorTextMap.put("N052", "Delivery Limit Exceeded. Check BG");
-        errorTextMap.put("N057", "Pump Battery Not Compatible");
-        errorTextMap.put("N058", "Insert A New AA Battery");
-        errorTextMap.put("N061", "Pump Button Error. Delivery Stopped");
-        errorTextMap.put("N062", "New Notification Received From Pump");
-        errorTextMap.put("N066", "No Reservoir Detected During Infusion Set Change");
-        errorTextMap.put("N069", "Loading Incomplete During Infusion Set Change");
-        errorTextMap.put("N073", "Replace Pump Battery Now");
-        errorTextMap.put("N077", "Pump Settings Error. Delivery Stopped");
-        errorTextMap.put("N084", "Pump Battery Removed. Replace Battery");
-        errorTextMap.put("N100", "Bolus Entry Timed Out Before Delivery");
-        errorTextMap.put("N103", "BG Check Reminder");
-        errorTextMap.put("N104", "Replace Pump Battery Soon");
-        errorTextMap.put("N105", "Reservoir Low. Change Reservoir Soon");
-        errorTextMap.put("N107", "Missed Meal Bolus Reminder");
-        errorTextMap.put("N109", "Set Change Reminder");
-        errorTextMap.put("N110", "Silenced Sensor Alert. Check Alarm History");
-        errorTextMap.put("N113", "Reservoir Empty. Change Reservoir Now");
-        errorTextMap.put("N117", "Active Insulin Cleared");
-        errorTextMap.put("N130", "Rewind Required. Delivery Stopped");
-        errorTextMap.put("N140", "Delivery Suspended. Connect Infusion Set");
-        errorTextMap.put("N775", "Calibrate Now");
-        errorTextMap.put("N776", "Calibration Error");
-        errorTextMap.put("N777", "Change Sensor");
-        errorTextMap.put("N779", "Recharge Transmitter Now");
-        errorTextMap.put("N780", "Lost Sensor Signal");
-        errorTextMap.put("N784", "SG Rising Rapidly");
-        errorTextMap.put("N794", "Sensor Expired. Change Sensor");
-        errorTextMap.put("N795", "Lost Sensor Signal. Check Transmitter");
-        errorTextMap.put("N796", "No Sensor Signal");
-        errorTextMap.put("N797", "Sensor Connected");
-        errorTextMap.put("N801", "Do Not Calibrate. Wait Up To 3 Hours");
-        errorTextMap.put("N802", "Low Sensor Glucose");
-        errorTextMap.put("N803", "Low Sensor Glucose. Check BG");
-        errorTextMap.put("N805", "Alert Before Low. Check BG");
-        errorTextMap.put("N807", "Basal Delivery Resumed. Check BG");
-        errorTextMap.put("N809", "Suspend On Low. Delivery Stopped. Check BG");
-        errorTextMap.put("N810", "Suspend Before Low. Delivery Stopped. Check BG");
-        errorTextMap.put("N812", "Call Emergency Assistance");
-        errorTextMap.put("N814", "Basal Resumed. SG Still Under Low Limit. Check BG");
-        errorTextMap.put("N815", "Low Limit Changed. Basal Manually Resumed. Check BG");
-        errorTextMap.put("N816", "High Sensor Glucose");
-        errorTextMap.put("N817", "Alert Before High. Check BG");
-        errorTextMap.put("N819", "Auto Mode Exit. Basal Delivery Started. BG Required");
-        errorTextMap.put("N821", "Minimum Delivery Timeout. BG Required");
-        errorTextMap.put("N822", "Maximum Delivery Timeout. BG Required");
-        errorTextMap.put("N823", "High Sensor Glucose For Over 1 Hour");
-        errorTextMap.put("N827", "Urgent Low Sensor Glucose. Check BG");
-        errorTextMap.put("N829", "BG Required");
-        errorTextMap.put("N832", "Calibration Required");
-        errorTextMap.put("N833", "Correction Bolus Recommended");
-        errorTextMap.put("N869", "Calibration Reminder");
-        errorTextMap.put("N870", "Recharge Transmitter Soon");
-        errorTextMap.put("Nnodata1", "Reconnecting To Pump");
-        errorTextMap.put("Nnodata2", "Lost Signal. Check Mobile Application");
-        errorTextMap.put("GM_alert.sg.threshold.low.urgent", "Urgent Low Sensor Glucose");
-        errorTextMap.put("GM_alert.sg.threshold.low", "Low Sensor Glucose");
-        errorTextMap.put("GM_alert.sg.predictive.low", "Low Predicted");
-        errorTextMap.put("GM_alert.sg.rate.falling", "Fall Alert");
-        errorTextMap.put("GM_alert.sg.threshold.high", "High Sensor Glucose");
-        errorTextMap.put("GM_alert.sg.predictive.high", "High Predicted");
-        errorTextMap.put("GM_alert.sg.rate.rising", "Rise Alert");
-        errorTextMap.put("GM_alert.transmitter.battery", "Transmitter Battery Empty");
-        errorTextMap.put("GM_alert.sensor.replace.calibrationError", "Change Sensor");
-        errorTextMap.put("GM_alert.sensor.replace.sensorError", "Change Sensor");
-        errorTextMap.put("GM_alert.sensor.replace.lifetime", "Sensor End of Life");
-        errorTextMap.put("GM_alert.transmitter.signal", "Lost Sensor Communication");
-        errorTextMap.put("GM_alert.sensor.connection", "Sensor Connected");
-        errorTextMap.put("GM_alert.sensor.calibration.rejected", "Calibration Not Accepted");
-        errorTextMap.put("GM_alert.sensor.calibration.calibrate_now", "Calibrate Now");
-        errorTextMap.put("GM_alert.sensor.error", "Sensor Glucose Not Available");
-        errorTextMap.put("GM_alert.calibration.reminder", "Calibration Reminder");
-        errorTextMap.put("GM_alert.transmitter.error", "Transmitter Error");
-        errorTextMap.put("GM_alert.receiver.battery.low", "Mobile Device Battery Low");
-        errorTextMap.put("Nalert.sg.threshold.low.urgent", "Urgent Low Sensor Glucose");
-        errorTextMap.put("Nalert.sg.threshold.low", "Low Sensor Glucose");
-        errorTextMap.put("Nalert.sg.predictive.low", "Low Predicted");
-        errorTextMap.put("Nalert.sg.rate.falling", "Fall Alert");
-        errorTextMap.put("Nalert.sg.threshold.high", "High Sensor Glucose");
-        errorTextMap.put("Nalert.sg.predictive.high", "High Predicted");
-        errorTextMap.put("Nalert.sg.rate.rising", "Rise Alert");
-        errorTextMap.put("Nalert.transmitter.battery", "Transmitter Battery Empty");
-        errorTextMap.put("Nalert.sensor.replace.calibrationError", "Change Sensor");
-        errorTextMap.put("Nalert.sensor.replace.sensorError", "Change Sensor");
-        errorTextMap.put("Nalert.sensor.replace.lifetime", "Sensor End of Life");
-        errorTextMap.put("Nalert.transmitter.signal", "Lost Sensor Communication");
-        errorTextMap.put("Nalert.sensor.connection", "Sensor Connected");
-        errorTextMap.put("Nalert.sensor.calibration.rejected", "Calibration Not Accepted");
-        errorTextMap.put("Nalert.sensor.calibration.calibrate_now", "Calibrate Now");
-        errorTextMap.put("Nalert.sensor.error", "Sensor Glucose Not Available");
-        errorTextMap.put("Nalert.calibration.reminder", "Calibration Reminder");
-        errorTextMap.put("Nalert.transmitter.error", "Transmitter Error");
-        errorTextMap.put("Nalert.receiver.battery.low", "Mobile Device Battery Low");
+        notificationMap = new HashMap<>();
+        notificationMap.put("", new NotificationMapEntry("","", R.drawable.empty));
+        notificationMap.put("3", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Battery out limit", R.drawable.battery_yellow));
+        notificationMap.put("4", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Delivery stopped. Check BG", R.drawable.warning_yellow));
+        notificationMap.put("5", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Pump battery depleted. Insulin delivery stopped", R.drawable.warning_yellow));
+        notificationMap.put("6", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Auto Off. Insulin delivery stopped", R.drawable.warning_yellow));
+        notificationMap.put("16", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Pump reset. Insulin delivery stopped", R.drawable.warning_yellow));
+        notificationMap.put("43", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Pump motor error. Insulin delivery stopped", R.drawable.warning_yellow));
+        notificationMap.put("50", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Bolus stopped", R.drawable.warning_yellow));
+        notificationMap.put("51", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Delivery limit exceeded. Check BG", R.drawable.warning_yellow));
+        notificationMap.put("55", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Pump battery failed. Replace battery", R.drawable.down_yellow));
+        notificationMap.put("59", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Button error", R.drawable.down_yellow));
+        notificationMap.put("61", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Check settings. Insulin delivery stopped", R.drawable.down_yellow));
+        notificationMap.put("62", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Empty reservoir", R.drawable.down_yellow));
+        notificationMap.put("66", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"No reservoir", R.drawable.down_yellow));
+        notificationMap.put("74", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Finish loading", R.drawable.down_yellow));
+        notificationMap.put("81", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Replace pump battery now", R.drawable.down_yellow));
+        notificationMap.put("82", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Low Reservoir", R.drawable.down_yellow));
+        notificationMap.put("83", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Check BG", R.drawable.down_yellow));
+        notificationMap.put("84", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Alarm clock", R.drawable.down_yellow));
+        notificationMap.put("85", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Max fill reached", R.drawable.down_yellow));
+        notificationMap.put("86", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Weak battery detected", R.drawable.down_yellow));
+        notificationMap.put("87", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Missed bolus", R.drawable.down_yellow));
+        notificationMap.put("88", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Silenced sensor alert. Check alarm history", R.drawable.down_yellow));
+        notificationMap.put("101", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"High SG. CHECK BG", R.drawable.down_yellow));
+        notificationMap.put("102", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Low SG", R.drawable.down_yellow));
+        notificationMap.put("103", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Threshold Suspend", R.drawable.down_yellow));
+        notificationMap.put("104", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Meter BG now", R.drawable.down_yellow));
+        notificationMap.put("105", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Calibration Reminder", R.drawable.down_yellow));
+        notificationMap.put("106", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Calibration error", R.drawable.down_yellow));
+        notificationMap.put("107", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Sensor expired", R.drawable.down_yellow));
+        notificationMap.put("108", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Change sensor", R.drawable.down_yellow));
+        notificationMap.put("109", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Sensor error", R.drawable.down_yellow));
+        notificationMap.put("110", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Recharge transmitter", R.drawable.down_yellow));
+        notificationMap.put("111", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Transmitter battery low", R.drawable.down_yellow));
+        notificationMap.put("112", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Weak signal", R.drawable.down_yellow));
+        notificationMap.put("113", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Lost sensor", R.drawable.down_yellow));
+        notificationMap.put("114", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Sensor glucose approaching high limit", R.drawable.down_yellow));
+        notificationMap.put("115", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Sensor glucose approaching low limit", R.drawable.down_yellow));
+        notificationMap.put("116", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Sensor glucose rising rapidly", R.drawable.down_yellow));
+        notificationMap.put("117", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Sensor glucose falling rapidly", R.drawable.down_yellow));
+        notificationMap.put("Axx", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Pump error Anull", R.drawable.down_yellow));
+        notificationMap.put("Exx", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Pump error Enull", R.drawable.down_yellow));
+        notificationMap.put("N002", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Pump Error. Delivery Stopped", R.drawable.down_yellow));
+        notificationMap.put("N006", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Pump Battery Out Limit", R.drawable.down_yellow));
+        notificationMap.put("N007", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Delivery Stopped. Check BG", R.drawable.down_yellow));
+        notificationMap.put("N011", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Replace Pump Battery Now", R.drawable.down_yellow));
+        notificationMap.put("N012", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Auto Suspend Limit Reached. Delivery Stopped", R.drawable.down_yellow));
+        notificationMap.put("N024", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Critical Pump Error. Stop Pump Use. Use Other Treatment", R.drawable.down_yellow));
+        notificationMap.put("N025", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Pump Power Error. Record Settings", R.drawable.down_yellow));
+        notificationMap.put("N029", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Pump Restarted. Delivery Stopped", R.drawable.down_yellow));
+        notificationMap.put("N037", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Pump Motor Error. Delivery Stopped", R.drawable.down_yellow));
+        notificationMap.put("N051", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Bolus Stopped", R.drawable.down_yellow));
+        notificationMap.put("N052", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Delivery Limit Exceeded. Check BG", R.drawable.down_yellow));
+        notificationMap.put("N057", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Pump Battery Not Compatible", R.drawable.down_yellow));
+        notificationMap.put("N058", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Insert A New AA Battery", R.drawable.down_yellow));
+        notificationMap.put("N061", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Pump Button Error. Delivery Stopped", R.drawable.down_yellow));
+        notificationMap.put("N062", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"New Notification Received From Pump", R.drawable.down_yellow));
+        notificationMap.put("N066", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"No Reservoir Detected During Infusion Set Change", R.drawable.down_yellow));
+        notificationMap.put("N069", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Loading Incomplete During Infusion Set Change", R.drawable.down_yellow));
+        notificationMap.put("N073", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Replace Pump Battery Now", R.drawable.down_yellow));
+        notificationMap.put("N077", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Pump Settings Error. Delivery Stopped", R.drawable.down_yellow));
+        notificationMap.put("N084", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Pump Battery Removed. Replace Battery", R.drawable.down_yellow));
+        notificationMap.put("N100", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Bolus Entry Timed Out Before Delivery", R.drawable.down_yellow));
+        notificationMap.put("N103", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"BG Check Reminder", R.drawable.down_yellow));
+        notificationMap.put("N104", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Replace Pump Battery Soon", R.drawable.down_yellow));
+        notificationMap.put("N105", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Reservoir Low. Change Reservoir Soon", R.drawable.down_yellow));
+        notificationMap.put("N107", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Missed Meal Bolus Reminder", R.drawable.down_yellow));
+        notificationMap.put("N109", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Set Change Reminder", R.drawable.down_yellow));
+        notificationMap.put("N110", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Silenced Sensor Alert. Check Alarm History", R.drawable.down_yellow));
+        notificationMap.put("N113", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Reservoir Empty. Change Reservoir Now", R.drawable.down_yellow));
+        notificationMap.put("N117", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Active Insulin Cleared", R.drawable.down_yellow));
+        notificationMap.put("N130", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Rewind Required. Delivery Stopped", R.drawable.down_yellow));
+        notificationMap.put("N140", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Delivery Suspended. Connect Infusion Set", R.drawable.down_yellow));
+        notificationMap.put("N775", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Calibrate Now", R.drawable.down_yellow));
+        notificationMap.put("N776", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Calibration Error", R.drawable.down_yellow));
+        notificationMap.put("N777", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Change Sensor", R.drawable.down_yellow));
+        notificationMap.put("N779", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Recharge Transmitter Now", R.drawable.down_yellow));
+        notificationMap.put("N780", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Lost Sensor Signal", R.drawable.down_yellow));
+        notificationMap.put("N784", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"SG Rising Rapidly", R.drawable.up2_yellow)); // Rapid rise
+        notificationMap.put("N794", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Sensor Expired. Change Sensor", R.drawable.down_yellow));
+        notificationMap.put("N795", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Lost Sensor Signal. Check Transmitter", R.drawable.down_yellow));
+        notificationMap.put("N796", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"No Sensor Signal", R.drawable.down_yellow));
+        notificationMap.put("N797", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Sensor Connected", R.drawable.down_yellow));
+        notificationMap.put("N801", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Do Not Calibrate. Wait Up To 3 Hours", R.drawable.down_yellow));
+        notificationMap.put("N802", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Low Sensor Glucose", R.drawable.down3_red)); // Below low limit
+        notificationMap.put("N803", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Low Sensor Glucose. Check BG", R.drawable.down_yellow));
+        notificationMap.put("N805", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Alert Before Low. Check BG", R.drawable.down_yellow)); // Before low, not stopping delivery
+        notificationMap.put("N807", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Basal Delivery Resumed. Check BG", R.drawable.down_yellow));
+        notificationMap.put("N809", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Suspend On Low. Delivery Stopped. Check BG", R.drawable.down_yellow));
+        notificationMap.put("N810", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Suspend Before Low. Delivery Stopped. Check BG", R.drawable.down_yellow)); // Before low, stopping delivery
+        notificationMap.put("N812", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Call Emergency Assistance", R.drawable.down_yellow));
+        notificationMap.put("N814", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Basal Resumed. SG Still Under Low Limit. Check BG", R.drawable.down_yellow));
+        notificationMap.put("N815", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Low Limit Changed. Basal Manually Resumed. Check BG", R.drawable.down_yellow));
+        notificationMap.put("N816", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"High Sensor Glucose", R.drawable.up3_red)); // Above high limit
+        notificationMap.put("N817", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Alert Before High. Check BG", R.drawable.down_yellow));
+        notificationMap.put("N819", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Auto Mode Exit. Basal Delivery Started. BG Required", R.drawable.down_yellow));
+        notificationMap.put("N821", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Minimum Delivery Timeout. BG Required", R.drawable.down_yellow));
+        notificationMap.put("N822", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Maximum Delivery Timeout. BG Required", R.drawable.down_yellow));
+        notificationMap.put("N823", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"High Sensor Glucose For Over 1 Hour", R.drawable.down_yellow));
+        notificationMap.put("N827", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Urgent Low Sensor Glucose. Check BG", R.drawable.down_yellow));
+        notificationMap.put("N829", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"BG Required", R.drawable.down_yellow));
+        notificationMap.put("N832", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Calibration Required", R.drawable.down_yellow));
+        notificationMap.put("N833", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Correction Bolus Recommended", R.drawable.down_yellow));
+        notificationMap.put("N869", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Calibration Reminder", R.drawable.calibration_grey));
+        notificationMap.put("N870", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Recharge Transmitter Soon", R.drawable.down_yellow));
+        notificationMap.put("Nnodata1", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Reconnecting To Pump", R.drawable.down_yellow));
+        notificationMap.put("Nnodata2", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Lost Signal. Check Mobile Application", R.drawable.down_yellow));
+        notificationMap.put("GM_alert.sg.threshold.low.urgent", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Urgent Low Sensor Glucose", R.drawable.down_yellow));
+        notificationMap.put("GM_alert.sg.threshold.low", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Low Sensor Glucose", R.drawable.down_yellow));
+        notificationMap.put("GM_alert.sg.predictive.low", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Low Predicted", R.drawable.down_yellow));
+        notificationMap.put("GM_alert.sg.rate.falling", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Fall Alert", R.drawable.down_yellow));
+        notificationMap.put("GM_alert.sg.threshold.high", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"High Sensor Glucose", R.drawable.down_yellow));
+        notificationMap.put("GM_alert.sg.predictive.high", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"High Predicted", R.drawable.down_yellow));
+        notificationMap.put("GM_alert.sg.rate.rising", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Rise Alert", R.drawable.down_yellow));
+        notificationMap.put("GM_alert.transmitter.battery", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Transmitter Battery Empty", R.drawable.down_yellow));
+        notificationMap.put("GM_alert.sensor.replace.calibrationError", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Change Sensor", R.drawable.down_yellow));
+        notificationMap.put("GM_alert.sensor.replace.sensorError", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Change Sensor", R.drawable.down_yellow));
+        notificationMap.put("GM_alert.sensor.replace.lifetime", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Sensor End of Life", R.drawable.down_yellow));
+        notificationMap.put("GM_alert.transmitter.signal", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Lost Sensor Communication", R.drawable.down_yellow));
+        notificationMap.put("GM_alert.sensor.connection", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Sensor Connected", R.drawable.down_yellow));
+        notificationMap.put("GM_alert.sensor.calibration.rejected", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Calibration Not Accepted", R.drawable.down_yellow));
+        notificationMap.put("GM_alert.sensor.calibration.calibrate_now", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Calibrate Now", R.drawable.down_yellow));
+        notificationMap.put("GM_alert.sensor.error", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Sensor Glucose Not Available", R.drawable.down_yellow));
+        notificationMap.put("GM_alert.calibration.reminder", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Calibration Reminder", R.drawable.down_yellow));
+        notificationMap.put("GM_alert.transmitter.error", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Transmitter Error", R.drawable.down_yellow));
+        notificationMap.put("GM_alert.receiver.battery.low", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Mobile Device Battery Low", R.drawable.down_yellow));
+        notificationMap.put("Nalert.sg.threshold.low.urgent", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Urgent Low Sensor Glucose", R.drawable.down_yellow));
+        notificationMap.put("Nalert.sg.threshold.low", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Low Sensor Glucose", R.drawable.down_yellow));
+        notificationMap.put("Nalert.sg.predictive.low", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Low Predicted", R.drawable.down_yellow));
+        notificationMap.put("Nalert.sg.rate.falling", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Fall Alert", R.drawable.down_yellow));
+        notificationMap.put("Nalert.sg.threshold.high", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"High Sensor Glucose", R.drawable.down_yellow));
+        notificationMap.put("Nalert.sg.predictive.high", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"High Predicted", R.drawable.down_yellow));
+        notificationMap.put("Nalert.sg.rate.rising", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Rise Alert", R.drawable.down_yellow));
+        notificationMap.put("Nalert.transmitter.battery", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Transmitter Battery Empty", R.drawable.down_yellow));
+        notificationMap.put("Nalert.sensor.replace.calibrationError", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Change Sensor", R.drawable.down_yellow));
+        notificationMap.put("Nalert.sensor.replace.sensorError", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Change Sensor", R.drawable.down_yellow));
+        notificationMap.put("Nalert.sensor.replace.lifetime", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Sensor End of Life", R.drawable.down_yellow));
+        notificationMap.put("Nalert.transmitter.signal", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Lost Sensor Communication", R.drawable.down_yellow));
+        notificationMap.put("Nalert.sensor.connection", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Sensor Connected", R.drawable.down_yellow));
+        notificationMap.put("Nalert.sensor.calibration.rejected", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Calibration Not Accepted", R.drawable.down_yellow));
+        notificationMap.put("Nalert.sensor.calibration.calibrate_now", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Calibrate Now", R.drawable.down_yellow));
+        notificationMap.put("Nalert.sensor.error", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Sensor Glucose Not Available", R.drawable.down_yellow));
+        notificationMap.put("Nalert.calibration.reminder", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Calibration Reminder", R.drawable.down_yellow));
+        notificationMap.put("Nalert.transmitter.error", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Transmitter Error", R.drawable.down_yellow));
+        notificationMap.put("Nalert.receiver.battery.low", new NotificationMapEntry(Notifications.NOTIFICATION_TYPE_ALERT,"Mobile Device Battery Low", R.drawable.down_yellow));
 
         errorCodeMap = new HashMap<>();
         errorCodeMap.put("002", "002");
@@ -301,44 +330,44 @@ public class TextMap {
 
     }
 
-    public static String getAlarmMessage(String deviceFamily, Alarm alarm) {
-
-        return getErrorMessage(deviceFamily, alarm.kind, alarm.code);
-
+    public static NotificationMapEntry parseNgpNotification(ActiveNotification notification) {
+        return parseNgpNotification(notification.faultId);
     }
 
-    public static String getNotificationMessage(String deviceFamily, ClearedNotification notification) {
-        return getErrorMessage(deviceFamily, notification.messageId, notification.faultId);
+    public static NotificationMapEntry parseNgpNotification(ClearedNotification notification) {
+        return parseNgpNotification(notification.faultId);
     }
 
-    public static String getNotificationMessage(String deviceFamily, String messageId, int faultId) {
-        return getErrorMessage(deviceFamily, messageId, faultId);
-    }
-
-    public static String getErrorMessage(String deviceFamily, String guardianErrorCode, int ngpErrorCode) {
+    public static NotificationMapEntry parseNgpNotification(int ngpErrorCode) {
         String errorTextId;
         String internalEC;
 
-        if (deviceFamily.equals(RecentData.DEVICE_FAMILY_GUARDIAN)) {
-            if (guardianErrorCode != null)
-                errorTextId = ERROR_TEXT_PREFIX_GUARDIAN + guardianErrorCode;
-            else
-                errorTextId = null;
-        } else if (deviceFamily.equals(RecentData.DEVICE_FAMILY_NGP)) {
-            String formattedEC = String.format("%03d", ngpErrorCode);
-            if (errorCodeMap.containsKey(formattedEC))
-                internalEC = errorCodeMap.get(formattedEC);
-            else
-                internalEC = formattedEC;
-            errorTextId = ERROR_TEXT_PREFIX_NGP + internalEC;
+        String formattedEC = String.format("%03d", ngpErrorCode);
+        if (errorCodeMap.containsKey(formattedEC)) {
+            internalEC = errorCodeMap.get(formattedEC);
         } else {
-            errorTextId = null;
+            internalEC = formattedEC;
+        }
+        errorTextId = ERROR_TEXT_PREFIX_NGP + internalEC;
+
+        if (notificationMap.containsKey(errorTextId)) {
+            return notificationMap.get(errorTextId);
         }
 
-        if (errorTextId != null && errorTextMap.containsKey(errorTextId))
-            return errorTextMap.get(errorTextId);
-        else
-            return null;
+        return null;
+    }
+
+    public static NotificationMapEntry parseGuardianNotification(Alarm alarm) {
+        String errorTextId;
+
+        if (alarm != null && alarm.kind != null) {
+            errorTextId = ERROR_TEXT_PREFIX_GUARDIAN + alarm.kind;
+            if (notificationMap.containsKey(errorTextId)) {
+                return notificationMap.get(errorTextId);
+            }
+        }
+
+        return null;
     }
 
 }

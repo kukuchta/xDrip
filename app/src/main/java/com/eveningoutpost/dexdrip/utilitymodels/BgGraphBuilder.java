@@ -28,6 +28,7 @@ import com.eveningoutpost.dexdrip.models.HeartRate;
 import com.eveningoutpost.dexdrip.models.Iob;
 import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.models.Libre2RawValue;
+import com.eveningoutpost.dexdrip.models.Notifications;
 import com.eveningoutpost.dexdrip.models.Prediction;
 import com.eveningoutpost.dexdrip.models.Profile;
 import com.eveningoutpost.dexdrip.models.StepCounter;
@@ -85,6 +86,7 @@ import lombok.val;
 import static com.eveningoutpost.dexdrip.models.JoH.tolerantParseDouble;
 import static com.eveningoutpost.dexdrip.utilitymodels.ColorCache.X;
 import static com.eveningoutpost.dexdrip.utilitymodels.ColorCache.getCol;
+import static java.lang.Math.abs;
 
 public class BgGraphBuilder {
     public static final int FUZZER = (int) (30 * Constants.SECOND_IN_MS);
@@ -123,6 +125,7 @@ public class BgGraphBuilder {
     private static final ReentrantLock readings_lock = new ReentrantLock();
 
     private final List<Treatments> treatments;
+    private final List<Notifications> notifications;
     private final static boolean d = false; // debug flag, could be read from preferences
 
     private Context context;
@@ -159,6 +162,7 @@ public class BgGraphBuilder {
     private final List<PointValue> filteredValues = new ArrayList<PointValue>();
     private final List<PointValue> bloodTestValues = new ArrayList<PointValue>();
     private final List<PointValue> calibrationValues = new ArrayList<PointValue>();
+    private final List<PointValue> deliveryChangedValues = new ArrayList<PointValue>();
     private final List<PointValue> treatmentValues = new ArrayList<PointValue>();
     private final List<PointValue> smbValues = new ArrayList<>();
     private final List<PointValue> iconValues = new ArrayList<>();
@@ -240,6 +244,7 @@ public class BgGraphBuilder {
         // get extra calibrations so we can use them for historical readings
         calibrations = Calibration.latestForGraph(numValues, start - (3 * Constants.DAY_IN_MS), end);
         treatments = Treatments.latestForGraph(numValues, start, end + (120 * 60 * 1000));
+        notifications = Notifications.latestForGraph(numValues, start, end);
         this.context = context;
         this.highMark = tolerantParseDouble(prefs.getString("highValue", "170"), 170);
         this.lowMark = tolerantParseDouble(prefs.getString("lowValue", "70"), 70);
@@ -701,6 +706,7 @@ public class BgGraphBuilder {
 
             lines.add(minShowLine());
             lines.add(maxShowLine());
+            lines.add(deliveryStoppedLine());
             lines.add(highLine());
             lines.add(predictiveHighLine());
             lines.add(lowLine());
@@ -829,7 +835,7 @@ public class BgGraphBuilder {
             for (PointValue thispoint : macropoints) {
 
                 // a jump too far for a line? make it a new one
-                if (((lastx != -999999) && (Math.abs(thispoint.getX() - lastx) > jumpthresh))
+                if (((lastx != -999999) && (abs(thispoint.getX() - lastx) > jumpthresh))
                         || thispoint.getX() == endmarker) {
 
                     if (thispoint.getX() == endmarker) {
@@ -862,7 +868,7 @@ public class BgGraphBuilder {
 
             for (PointValue thispoint : filteredValues) {
                 // a jump too far for a line? make it a new one
-                if (((lastx != -999999) && (Math.abs(thispoint.getX() - lastx) > jumpthresh))
+                if (((lastx != -999999) && (abs(thispoint.getX() - lastx) > jumpthresh))
                         || thispoint.getX() == endmarker) {
                     Line line = new Line(thesepoints);
                     line.setHasPoints(true);
@@ -909,7 +915,7 @@ public class BgGraphBuilder {
         bloodtest.setPointRadius(pointSize * 3 / 2);
         bloodtest.setHasPoints(true);
         bloodtest.setColor(ChartUtils.darkenColor(getCol(X.color_calibration_dot_background)));
-        bloodtest.setShape(ValueShape.SQUARE);
+        bloodtest.setShape(ValueShape.CIRCLE);
         lines.add(bloodtest);
 
         Line bloodtesti = new Line(bloodTestValues);
@@ -917,7 +923,7 @@ public class BgGraphBuilder {
         bloodtesti.setPointRadius(pointSize * 3 / 4);
         bloodtesti.setHasPoints(true);
         bloodtesti.setColor(ChartUtils.darkenColor(getCol(X.color_calibration_dot_foreground)));
-        bloodtesti.setShape(ValueShape.SQUARE);
+        bloodtesti.setShape(ValueShape.CIRCLE);
         lines.add(bloodtesti);
 
         return lines;
@@ -1081,6 +1087,7 @@ public class BgGraphBuilder {
             pluginValues.clear();
             iconValues.clear();
             smbValues.clear();
+            deliveryChangedValues.clear();
 
             if (Pref.getBooleanDefaultFalse("graph_smoothing")) {
                 if (Pref.getBooleanDefaultFalse("show-unsmoothed-values-as-plugin")) {
@@ -1177,7 +1184,7 @@ public class BgGraphBuilder {
                     // exclude any which have been used for calibration
                     boolean matches = false;
                     for (PointValue calibration_point : calibrationValues) {
-                        if ((Math.abs(calibration_point.getX() - this_point.getX())) <= ((AddCalibration.estimatedInterstitialLagSeconds * 1000) / FUZZER) && (calibration_point.getY() == calibration_point.getY())) {
+                        if ((abs(calibration_point.getX() - this_point.getX())) <= ((AddCalibration.estimatedInterstitialLagSeconds * 1000) / FUZZER) && (calibration_point.getY() == calibration_point.getY())) {
                             matches = true;
                             break;
                         }
@@ -1528,20 +1535,18 @@ public class BgGraphBuilder {
                 readings_lock.lock();
                 try {
                     // display treatment blobs and annotations
-                    long lastIconTimestamp = 0;
-                    int consecutiveCloseIcons = 0;
                     for (Treatments treatment : treatments) {
 
                         if (!treatment.hasContent()) continue;
 
                         if (showSMB && treatment.likelySMB()) {
-                            final Pair<Float, Float> yPositions = GraphTools.bestYPosition(bgReadings, treatment.timestamp, doMgdl, false, highMark, 10 + (100d * treatment.insulin));
+                            final Pair<Float, Float> yPositions = GraphTools.bestYPosition(bgReadings, treatment.timestamp, doMgdl, false, highMark, 5);
                             if (yPositions.first > 0) {
                                 final PointValueExtended pv = new PointValueExtended(treatment.timestamp / FUZZER, yPositions.first); // TEST VALUES
                                 pv.setPlumbPos(GraphTools.yposRatio(yPositions.second, yPositions.first, 0.1f));
-                                BitmapLoader.loadAndSetKey(pv, R.drawable.triangle, 180);
-                                pv.setBitmapTint(getCol(X.color_smb_icon));
-                                pv.setBitmapScale((float) (0.5f + (treatment.insulin * 5f))); // 0.1U == 100% 0.2U = 150%
+                                BitmapLoader.loadAndSetKey(pv, R.drawable.mini_blue, 0);
+                                //pv.setBitmapTint(getCol(X.color_smb_icon));
+                                pv.setBitmapScale((float) (1f)); // 0.1U == 100% 0.2U = 150%
                                 pv.note = "SMB: " + JoH.qs(treatment.insulin, 2) + "U" + (treatment.notes != null ? " " + treatment.notes : "");
                                 pv.real_timestamp = treatment.timestamp;
                                 smbValues.add(pv);
@@ -1550,28 +1555,6 @@ public class BgGraphBuilder {
                                 UserError.Log.d(TAG, "Could not determine a good position to use for SMB");
                             }
                         }
-
-                        if (treatment.noteOnly()) {
-                            if (hidePriming && treatment.isPrimingDose()) {
-                                continue;
-                            }
-                            final HPointValue pv = NoteClassifier.noteToPointValue(treatment.notes);
-                            if (pv != null) {
-                                final boolean tooClose = Math.abs(treatment.timestamp - lastIconTimestamp) < Constants.MINUTE_IN_MS * 6;
-                                if (tooClose) {
-                                    consecutiveCloseIcons++;
-                                } else {
-                                    consecutiveCloseIcons = 0;
-                                }
-                                final Pair<Float, Float> yPositions = GraphTools.bestYPosition(bgReadings, treatment.timestamp, doMgdl, false, highMark, 27d + (18d * consecutiveCloseIcons));
-                                pv.set((double)treatment.timestamp / FUZZER, yPositions.first);
-                                //pv.setPlumbPos(yPositions.second);
-                                iconValues.add(pv);
-                                lastIconTimestamp = treatment.timestamp;
-                                continue;
-                            }
-                        }
-
 
                         double height = 6 * bgScale;
                         if (treatment.insulin > 0)
@@ -1601,11 +1584,10 @@ public class BgGraphBuilder {
                             //pv.setBitmapScale((float) (0.5f + (treatment.insulin * 5f))); // 0.1U == 100% 0.2U = 150%
                             BitmapLoader.loadAndSetKey(pv, R.drawable.ic_eyedropper_variant_grey600_24dp, 0);
                             pv.setBitmapTint(getCol(X.color_basal_tbr));
-                            final Pair<Float, Float> yPositions = GraphTools.bestYPosition(bgReadings, treatment.timestamp, doMgdl, false, highMark, 27d + (18d * consecutiveCloseIcons));
+                            final Pair<Float, Float> yPositions = GraphTools.bestYPosition(bgReadings, treatment.timestamp, doMgdl, false, highMark, 27d);
                             pv.set(treatment.timestamp / FUZZER, yPositions.first);
                             pv.note = treatment.getBestShortText();
                             iconValues.add(pv);
-                            lastIconTimestamp = treatment.timestamp;
                             continue;
                         }
 
@@ -1626,7 +1608,7 @@ public class BgGraphBuilder {
                         }
                         if (treatmentValues.size() > 0) { // not sure if this >1 is right really - needs a review
                             PointValue lastpv = treatmentValues.get(treatmentValues.size() - 1);
-                            if (Math.abs(lastpv.getX() - pv.getX()) < ((10 * 60 * 1000) / FUZZER)) {
+                            if (abs(lastpv.getX() - pv.getX()) < ((10 * 60 * 1000) / FUZZER)) {
                                 // merge label with previous - Intelligent parsing and additions go here
                                 if (d)
                                     Log.d(TAG, "Merge treatment difference: " + Double.toString(lastpv.getX() - pv.getX()));
@@ -1649,9 +1631,94 @@ public class BgGraphBuilder {
                     readings_lock.unlock();
                 }
 
+                // Delivery zones drawn from notifications
+                readings_lock.lock();
                 try {
+                    Notifications firstNotification = Notifications.firstByType(Notifications.NOTIFICATION_TYPE_DELIVERY_STATE);
+                    final HPointValue startPoint = new PointValueExtended(start_time, firstNotification.deliverySuspended != 0 ? highMark : 0);
+                    deliveryChangedValues.add(startPoint);
+
+                    for (Notifications notification : notifications) {
+
+                        if (notification.type != null && notification.type.equals(Notifications.NOTIFICATION_TYPE_DELIVERY_STATE)) {
+                            final HPointValue pv1;
+                            final HPointValue pv2;
+
+                            // Last value was min (resumed)
+                            if (abs(deliveryChangedValues.get(deliveryChangedValues.size() - 1).getY()) < 0.01) {
+                                // And delivery suspended
+                                if(notification.deliverySuspended != 0) {
+                                    pv1 = new PointValueExtended((double)(notification.timestamp / FUZZER), 0);
+                                    pv2 = new PointValueExtended((double)((notification.timestamp + 1) / FUZZER), highMark);
+                                    deliveryChangedValues.add(pv1);
+                                    deliveryChangedValues.add(pv2);
+                                }
+                            }
+                            // Last value was max (suspended)
+                            else {
+                                // And delivery resumed
+                                if(notification.deliverySuspended == 0) {
+                                    pv1 = new PointValueExtended((double)(notification.timestamp / FUZZER), highMark);
+                                    pv2 = new PointValueExtended((double)((notification.timestamp + 1) / FUZZER), 0);
+                                    deliveryChangedValues.add(pv1);
+                                    deliveryChangedValues.add(pv2);
+                                }
+                            }
+                        }
+                    }
+
+                    Notifications lastNotification = Notifications.lastByType(Notifications.NOTIFICATION_TYPE_DELIVERY_STATE);
+                    final HPointValue endPoint = new PointValueExtended(end_time, lastNotification.deliverySuspended != 0 ? highMark : 0);
+                    deliveryChangedValues.add(endPoint);
+
+                } catch (Exception e) {
+
+                    Log.e(TAG, "Exception doing deliveryChangedValues values in bggraphbuilder: " + e.toString());
+                } finally {
+                    readings_lock.unlock();
+                }
 
 
+
+
+
+                // Notification icons
+                readings_lock.lock();
+                try {
+                    long lastIconTimestamp = 0;
+                    int consecutiveCloseIcons = 0;
+                    for (Notifications notification : notifications) {
+                        if (notification.type != Notifications.NOTIFICATION_TYPE_DELIVERY_STATE) {
+                            final HPointValue pv = NoteClassifier.notificationToPointValue(notification);
+                            if (pv != null) {
+                                final boolean tooClose = abs(notification.timestamp - lastIconTimestamp) < Constants.MINUTE_IN_MS * 6;
+                                if (tooClose) {
+                                    consecutiveCloseIcons++;
+                                } else {
+                                    consecutiveCloseIcons = 0;
+                                }
+                                final Pair<Float, Float> yPositions = GraphTools.bestYPosition(bgReadings, notification.timestamp, doMgdl, false, highMark, 10d + (18d * consecutiveCloseIcons));
+                                pv.set((double)notification.timestamp / FUZZER, yPositions.first);
+                                //pv.setPlumbPos(yPositions.second);
+                                iconValues.add(pv);
+                                lastIconTimestamp = notification.timestamp;
+                                continue;
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "Exception doing deliveryChangedValues values in bggraphbuilder: " + e.toString());
+                } finally {
+                    readings_lock.unlock();
+                }
+
+
+
+
+
+
+
+                try {
                     // we need to check we actually have sufficient data for this
                     double predictedbg = -1000;
                     BgReading mylastbg = bgReadings.get(0);
@@ -1777,7 +1844,7 @@ public class BgGraphBuilder {
                                         Log.d(TAG, "Predictive hours updated to: " + predictivehours);
                                 } else {
                                     //KS Log.d(TAG, "IOB DEBUG: " + (fuzzed_timestamp - end_time) + " " + iob.iob);
-                                    if (!iob_shown_already && (Math.abs(fuzzed_timestamp - end_time) < ((Constants.MINUTE_IN_MS * 5) / FUZZER)) && (iob.iob > 0)) {
+                                    if (!iob_shown_already && (abs(fuzzed_timestamp - end_time) < ((Constants.MINUTE_IN_MS * 5) / FUZZER)) && (iob.iob > 0)) {
                                         iob_shown_already = true;
                                         // show current iob
                                         //  double position = 12.4 * bgScale; // this is for mmol - needs generic for mg/dl
@@ -1972,6 +2039,17 @@ public class BgGraphBuilder {
         return lowLine;
     }
 
+    public Line deliveryStoppedLine() {
+        Line deliveryStopped = new Line(deliveryChangedValues);
+        deliveryStopped.setHasPoints(false);
+        deliveryStopped.setAreaTransparency(40);
+        deliveryStopped.setColor(ChartUtils.darkenColor(ChartUtils.darkenColor(ChartUtils.darkenColor(getCol(X.color_high_bg_values)))));
+        deliveryStopped.setAreaTransparency(35);
+        deliveryStopped.setStrokeWidth(0);
+        deliveryStopped.setFilled(true);
+        return deliveryStopped;
+    }
+
     public Line maxShowLine() {
         List<PointValue> maxShowValues = new ArrayList<PointValue>();
         maxShowValues.add(new HPointValue((double) start_time, (float) defaultMaxY));
@@ -2004,7 +2082,7 @@ public class BgGraphBuilder {
         return line;
     }
 
-    private List<Line> smbLines() {
+    private List<Line> smbLines() { // Trójkąty bolusów do 0.3u (smbValues)
         final List<Line> lines = new LinkedList<>();
         final Line line = new Line(smbValues);
         line.setTag("smb");
@@ -2021,6 +2099,7 @@ public class BgGraphBuilder {
         lines.add(line);
         return lines;
     }
+    // Trójkąty bolusów do 0.3u (smbValues)
 
     private List<Line> iconLines() {
         final List<Line> lines = new LinkedList<>();
@@ -2031,15 +2110,17 @@ public class BgGraphBuilder {
         line.setHasLines(false);
         line.setPointRadius(5);
         line.setPointColor(ColorUtil.blendColor(Color.BLACK, Color.TRANSPARENT, 0.99f));
+        //line.setPointColor(Color.WHITE);
         line.setBitmapScale(1f);
         line.setBitmapLabels(true);
-        line.setBitmapLabelShadowColor(Color.WHITE);
-        line.setFullShadow(true);
+        line.setStrokeWidth(5);
+        line.setBitmapLabelShadowColor(Color.TRANSPARENT);
+        line.setFullShadow(false);
         line.setBitmapCacheProvider(BitmapLoader.getInstance());
         lines.add(line);
         return lines;
     }
-
+    // Niewidzialne kropki pod okonami alarmów i zatrzymań (iconValues)
 
     /////////AXIS RELATED//////////////
     public Axis yAxis() {
@@ -2121,7 +2202,7 @@ public class BgGraphBuilder {
 
     public void showUnSmoothedValues(final List<BgReading> readings) {
         pluginValues.clear();
-        for (val bgReading : readings) {
+        for (BgReading bgReading : readings) {
             pluginValues.add(new HPointValue((double) (bgReading.timestamp / FUZZER), (float) unitized(bgReading.calculated_value)));
         }
     }
@@ -2249,7 +2330,7 @@ public class BgGraphBuilder {
     public static String unitizedDeltaStringRaw(boolean showUnit, boolean highGranularity, double value, boolean doMgdl) {
 
 
-        if (Math.abs(value) > 100) {
+        if (abs(value) > 100) {
             // a delta > 100 will not happen with real BG values -> problematic sensor data
             return "ERR";
         }
@@ -2271,7 +2352,7 @@ public class BgGraphBuilder {
             return delta_sign + df.format(unitized(value, doMgdl)) + (showUnit ? " mg/dl" : "");
         } else {
             // only show 2 decimal places on mmol/l delta when less than 0.1 mmol/l
-            if (highGranularity && (Math.abs(value) < (Constants.MMOLL_TO_MGDL * 0.1))) {
+            if (highGranularity && (abs(value) < (Constants.MMOLL_TO_MGDL * 0.1))) {
                 df.setMaximumFractionDigits(2);
             } else {
                 df.setMaximumFractionDigits(1);

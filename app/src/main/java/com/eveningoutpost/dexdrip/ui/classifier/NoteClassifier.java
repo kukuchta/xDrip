@@ -7,6 +7,7 @@ import androidx.annotation.ColorInt;
 import androidx.annotation.DrawableRes;
 
 import com.eveningoutpost.dexdrip.R;
+import com.eveningoutpost.dexdrip.models.Notifications;
 import com.eveningoutpost.dexdrip.utilitymodels.HPointValue;
 import com.eveningoutpost.dexdrip.utilitymodels.PointValueExtended;
 import com.eveningoutpost.dexdrip.ui.helpers.BitmapLoader;
@@ -54,6 +55,15 @@ public class NoteClassifier {
             return grey(R.drawable.dropper, note);
         }
         return grey(R.drawable.note_text_icon, note);
+    }
+
+    public static HPointValue notificationToPointValue(Notifications notification) {
+
+        final PointValueExtended pv = new PointValueExtended(0,0);
+        BitmapLoader.loadAndSetKey(pv, notification.imageId, 0);
+        pv.setBitmapScale(1f);
+        pv.note = notification.notes;
+        return pv;
     }
 
 

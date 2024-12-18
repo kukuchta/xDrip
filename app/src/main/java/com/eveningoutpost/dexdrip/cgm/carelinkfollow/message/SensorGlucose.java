@@ -9,13 +9,13 @@ public class SensorGlucose {
 
     public Integer sg;
     public String datetime;
-    public Date datetimeAsDate;
     public boolean timeChange;
+    public String sensorState;
     public String kind;
     public int version;
-    public String sensorState;
     public int relativeOffset;
 
+    public Date datetimeAsDate;
     public long timestamp = -1;
     public Date date = null;
 

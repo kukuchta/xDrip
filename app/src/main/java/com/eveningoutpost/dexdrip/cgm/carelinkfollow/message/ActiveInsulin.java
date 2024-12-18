@@ -7,11 +7,10 @@ import java.util.Date;
  */
 public class ActiveInsulin {
 
-    public Integer code;
-    public Date datetime;
-    public long version;
     public Double amount;
+    public Date datetime;
     public String precision;
     public String kind;
+    public long version;
 
 }

@@ -4,13 +4,18 @@ import java.util.Date;
 
 public class ActiveNotification {
 
+    public static final String NOTIFICATION_TYPE_ALERT = "ALERT";
+    public static final String NOTIFICATION_TYPE_ALARM = "ALARM";
+    public static final String NOTIFICATION_TYPE_REMINDER = "REMINDER";
     public String GUID;
     public Date dateTime;
     public String type;
     public int faultId;
     public int instanceId;
     public String messageId;
-    public String pumpDeliverySuspendState;
+    public int sg;
+    public String secondaryTime;
+    public boolean pumpDeliverySuspendState;
     public String pnpId;
     public int relativeOffset;
     public Boolean alertSilenced;

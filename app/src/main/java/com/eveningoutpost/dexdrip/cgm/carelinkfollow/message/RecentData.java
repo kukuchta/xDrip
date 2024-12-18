@@ -57,9 +57,7 @@ public class RecentData {
 
     public long lastSensorTS;
     public String medicalDeviceTimeAsString;
-    public Date medicalDeviceTimeAsDate;
     public String lastSensorTSAsString;
-    public Date lastSensorTSAsDate;
     public String kind;
     public int version;
     public String pumpModelNumber;
@@ -80,7 +78,6 @@ public class RecentData {
     public String medicalDeviceSerialNumber;
     public long medicalDeviceTime;
     public String sMedicalDeviceTime;
-    public Date dMedicalDeviceTime;
     public int reservoirLevelPercent;
     public int reservoirAmount;
     public float reservoirRemainingUnits;
@@ -92,7 +89,6 @@ public class RecentData {
     public String timeFormat;
     public long lastSensorTime;
     public String sLastSensorTime;
-    public Date dLastSensorTime;
     public boolean medicalDeviceSuspended;
     public String lastSGTrend;
     public SensorGlucose lastSG;
@@ -121,7 +117,13 @@ public class RecentData {
     public String clientTimeZoneName;
     public int sgBelowLimit;
     public float averageSGFloat;
-    public Boolean calFreeSensor;
-    public Boolean finalCalibration;
+    public CgmInfo cgmInfo;
+    public MedicalDeviceInformation medicalDeviceInformation;
+    public Boolean typeCast;
+
+    public Date medicalDeviceTimeAsDate;
+    public Date lastSensorTSAsDate;
+    public Date dMedicalDeviceTime;
+    public Date dLastSensorTime;
 
 }

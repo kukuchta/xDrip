@@ -50,11 +50,11 @@ public class GraphTools {
 
             calculatedYpos = (float) (interpolateCalculatedValue(before, after, timestamp) * unitsScale);
 
-            if (calculatedYpos >= highMark) {
-                offsetedYpos = calculatedYpos - offsetScaled;
-            } else {
+//            if (calculatedYpos >= highMark) {
+//                offsetedYpos = calculatedYpos - offsetScaled;
+//            } else {
                 offsetedYpos = calculatedYpos + offsetScaled;
-            }
+//            }
 
         }
         return new Pair<>(offsetedYpos, calculatedYpos);

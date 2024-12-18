@@ -1,9 +1,11 @@
 package com.eveningoutpost.dexdrip.cgm.carelinkfollow;
 
 import com.eveningoutpost.dexdrip.Home;
+import com.eveningoutpost.dexdrip.cgm.carelinkfollow.message.Alarm;
 import com.eveningoutpost.dexdrip.models.BgReading;
 import com.eveningoutpost.dexdrip.models.BloodTest;
 import com.eveningoutpost.dexdrip.models.DateUtil;
+import com.eveningoutpost.dexdrip.models.Notifications;
 import com.eveningoutpost.dexdrip.models.Sensor;
 import com.eveningoutpost.dexdrip.models.Treatments;
 import com.eveningoutpost.dexdrip.models.UserError;
@@ -11,7 +13,6 @@ import com.eveningoutpost.dexdrip.utilitymodels.Inevitable;
 import com.eveningoutpost.dexdrip.utilitymodels.Pref;
 import com.eveningoutpost.dexdrip.utilitymodels.PumpStatus;
 import com.eveningoutpost.dexdrip.cgm.carelinkfollow.message.ActiveNotification;
-import com.eveningoutpost.dexdrip.cgm.carelinkfollow.message.Alarm;
 import com.eveningoutpost.dexdrip.cgm.carelinkfollow.message.ClearedNotification;
 import com.eveningoutpost.dexdrip.cgm.carelinkfollow.message.Marker;
 import com.eveningoutpost.dexdrip.cgm.carelinkfollow.message.RecentData;
@@ -41,6 +42,17 @@ public class CareLinkDataProcessor {
 
     private static final String SOURCE_CARELINK_FOLLOW = "CareLink Follow";
 
+    public static final String CARELINK_NOTIFICATION_DELIVERY_SUSPENDED = "DELIVERY_SUSPENDED";
+    public static final String CARELINK_NOTIFICATION_SG_APPROACH_LOW_LIMIT = "BC_SID_SG_APPROACH_LOW_LIMIT_CHECK_BG";
+    public static final String CARELINK_NOTIFICATION_BUTTON_PRESSED_FOR_MOR_THAN_3_MIN = "BC_SID_BUTTON_PRESSED_FOR_MOR_THAN_3_MIN";
+    public static final String CARELINK_NOTIFICATION_SG_X_CHECK_BG = "BC_MESSAGE_DELIVERY_STOPPED_SG_X_CHECK_BG";
+    public static final String CARELINK_NOTIFICATION_SG_RISE_RAPID = "BC_SID_SG_RISE_RAPID";
+    public static final String CARELINK_NOTIFICATION_CHECK_BG_AND_CALIBRATE_SENSOR_TO_RECEIVE = "BC_SID_CHECK_BG_AND_CALIBRATE_SENSOR_TO_RECEIVE";
+    public static final String CARELINK_NOTIFICATION_SG_APPROACHING_LOW_LIMIT = "BC_MESSAGE_DELIVERY_STOPPED_SG_APPROACHILG_LOW_LIMIT_CHECK_BG";
+    public static final String CARELINK_NOTIFICATION_REPLACE_BATTERY_SOON = "BC_SID_REPLACE_BATTERY_SOON";
+    public static final String CARELINK_NOTIFICATION_TYPE_HIGH_SG = "BC_SID_HIGH_SG_CHECK_BG";
+    public static final String CARELINK_NOTIFICATION_INSERT_NEW_BATTERY = "BC_SID_DELIVERY_STOPPED_INSERT_NEW_BATTERY";
+
 
     static synchronized void processData(final RecentData recentData, final boolean live) {
 
@@ -60,11 +72,11 @@ public class CareLinkDataProcessor {
         //SKIP DATA processing if NO PUMP CONNECTION (time shift seems to be different in this case, needs further analysis)
         if (recentData.isNGP() && !recentData.pumpCommunicationState) {
             UserError.Log.d(TAG, "Not connected to pump => time can be wrong, leave processing!");
-            return;
+            //return;
         }
 
         //SENSOR GLUCOSE (if available)
-        if (recentData.sgs != null) {
+        if (false) {
 
             final BgReading lastBg = BgReading.lastNoSenssor();
             final long lastBgTimestamp = lastBg != null ? lastBg.timestamp : 0;
@@ -202,7 +214,7 @@ public class CareLinkDataProcessor {
                             }
 
                             //new Treatment
-                            if (newTreatment(carbs, insulin, marker.dateTime.getTime())) {
+                            if (isNewTreatment(carbs, insulin, marker.dateTime.getTime())) {
                                 t = Treatments.create(carbs, insulin, marker.dateTime.getTime());
                                 if (t != null) {
                                     t.enteredBy = SOURCE_CARELINK_FOLLOW;
@@ -213,8 +225,20 @@ public class CareLinkDataProcessor {
                             }
                         }
 
-                    }
+                    } else if (marker.type.equals(Marker.MARKER_TYPE_LOW_GLUCOSE_SUSPENDED) && Pref.getBooleanDefaultFalse("clfollow_download_notifications")) {
+                        //Delivery suspended marker only for pumps (not value in case of GC)
+                        if (recentData.isNGP()) {
 
+                            final Notifications notification;
+                            String notificationType = Notifications.NOTIFICATION_TYPE_DELIVERY_STATE;
+
+                            //new Notifications
+                            if (isNewDeliveryNotification(notificationType, marker.deliverySuspended, marker.dateTime.getTime())) {
+                                notification = Notifications.create(notificationType, "", marker.deliverySuspended, marker.dateTime.getTime());
+                                notification.save();
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -234,8 +258,7 @@ public class CareLinkDataProcessor {
             // Only Guardian Connect, NGP has all in notifications
             if (recentData.isGM() && recentData.lastAlarm != null) {
                 //Add notification from alarm
-                if (recentData.lastAlarm.datetimeAsDate != null && recentData.lastAlarm.kind != null)
-                    addNotification(recentData.lastAlarm.datetimeAsDate, recentData.getDeviceFamily(), recentData.lastAlarm);
+                addGuardianNotification(recentData.lastAlarm);
             }
         }
 
@@ -246,13 +269,13 @@ public class CareLinkDataProcessor {
                 //Active Notifications
                 if (recentData.notificationHistory.activeNotifications != null) {
                     for (ActiveNotification activeNotification : recentData.notificationHistory.activeNotifications) {
-                        addNotification(activeNotification.dateTime, recentData.getDeviceFamily(), activeNotification.messageId, activeNotification.faultId);
+                        addNgpNotification(activeNotification);
                     }
                 }
                 //Cleared Notifications
                 if (recentData.notificationHistory.clearedNotifications != null) {
                     for (ClearedNotification clearedNotification : recentData.notificationHistory.clearedNotifications) {
-                        addNotification(clearedNotification.triggeredDateTime, recentData.getDeviceFamily(), clearedNotification.messageId, clearedNotification.faultId);
+                        addNgpNotification(clearedNotification);
                     }
                 }
             }
@@ -261,7 +284,7 @@ public class CareLinkDataProcessor {
     }
 
     //Check if treatment is new (no identical entry (timestamp, carbs, insulin) exists)
-    protected static boolean newTreatment(double carbs, double insulin, long timestamp) {
+    protected static boolean isNewTreatment(double carbs, double insulin, long timestamp) {
 
         List<Treatments> treatmentsList;
         //Treatment with same timestamp and carbs + insulin exists?
@@ -275,68 +298,81 @@ public class CareLinkDataProcessor {
         return true;
     }
 
+    //Check if notification is new (no identical entry (timestamp) exists)
+    protected static boolean isNewDeliveryNotification(String type, boolean deliverySuspended, long timestamp) {
 
-    //Create notification from CareLink messageId
-    protected static boolean addNotification(Date date, String deviceFamily, String messageId, int faultId) {
-
-        if (deviceFamily != null && messageId != null)
-            return addNotification(date, TextMap.getNotificationMessage(deviceFamily, messageId, faultId));
-        else
-            return false;
-
-    }
-
-    //Create notification from CareLink Alarm
-    protected static boolean addNotification(Date date, String deviceFamily, Alarm alarm) {
-
-        if (deviceFamily != null && alarm != null && alarm.kind != null)
-            return addNotification(date, TextMap.getAlarmMessage(deviceFamily, alarm));
-        else
-            return false;
-
-    }
-
-    //Create notification from CareLink note info
-    protected static boolean addNotification(Date date, String noteText) {
-
-        //Valid date
-        if (date != null && noteText != null) {
-            //New note
-            if (newNote(noteText, date.getTime())) {
-                //create_note in Treatment is not good, because of automatic link to other treatments in 5 mins range
-                Treatments note = new Treatments();
-                note.notes = noteText;
-                note.timestamp = date.getTime();
-                note.created_at = DateUtil.toISOString(note.timestamp);
-                note.uuid = UUID.randomUUID().toString();
-                note.enteredBy = SOURCE_CARELINK_FOLLOW;
-                note.save();
-                if (Home.get_show_wear_treatments())
-                    pushTreatmentSyncToWatch(note, true);
-                return true;
+        List<Notifications> notificationsList;
+        int deliverySuspendedValue = deliverySuspended ? 1 : 0;
+        //Treatment with same timestamp and data exists?
+        notificationsList = Notifications.listByTimestamp(timestamp);
+        if (notificationsList != null) {
+            for (Notifications notification : notificationsList) {
+                if (notification.timestamp == timestamp &&
+                        notification.deliverySuspended == deliverySuspendedValue &&
+                        notification.type.equals(type))
+                    return false;
             }
         }
-
-        return false;
-
+        return true;
     }
 
-
     //Check note is new
-    protected static boolean newNote(String note, long timestamp) {
+    protected static boolean isNewNotification(String note, String type, long timestamp) {
 
-        List<Treatments> treatmentsList;
+        List<Notifications> notificationsList;
         //Treatment with same timestamp and note text exists?
-        treatmentsList = Treatments.listByTimestamp(timestamp);
-        if (treatmentsList != null) {
-            for (Treatments treatments : treatmentsList) {
-                if (treatments.notes.contains(note))
+        notificationsList = Notifications.listByTimestamp(timestamp);
+        if (notificationsList != null) {
+            for (Notifications notification : notificationsList) {
+                if (notification.timestamp == timestamp &&
+                        notification.notes.contains(note) &&
+                        notification.type.equals(type))
                     return false;
             }
         }
 
         return true;
-
     }
 
+    protected static void addNgpNotification(ActiveNotification activeNotification) {
+        if (activeNotification != null && activeNotification.dateTime != null) {
+            TextMap.NotificationMapEntry entry = TextMap.parseNgpNotification(activeNotification);
+            addNotification(activeNotification.dateTime, entry.getMessage(), entry.getType(), entry.getImage());
+        }
+    }
+
+    protected static void addNgpNotification(ClearedNotification clearedNotification) {
+        if (clearedNotification != null && clearedNotification.triggeredDateTime != null) {
+            TextMap.NotificationMapEntry entry = TextMap.parseNgpNotification(clearedNotification);
+            addNotification(clearedNotification.triggeredDateTime, entry.getMessage(), entry.getType(), entry.getImage());
+        }
+    }
+
+    //Create notification from CareLink messageId
+    protected static void addGuardianNotification(Alarm alarm) {
+        if (alarm != null && alarm.datetimeAsDate != null && alarm.kind != null) {
+            TextMap.NotificationMapEntry entry = TextMap.parseGuardianNotification(alarm);
+            addNotification(alarm.datetimeAsDate, entry.getMessage(), entry.getType(), entry.getImage());
+        }
+    }
+
+    //Create notification from CareLink note info
+    protected static void addNotification(Date date, String noteText, String type, int imageId) {
+
+        //Valid date
+        if (date != null && noteText != null) {
+            //New note
+            if (isNewNotification(noteText, type, date.getTime())) {
+                //create_note in Treatment is not good, because of automatic link to other treatments in 5 mins range
+                Notifications notification = new Notifications();
+                notification.notes = noteText;
+                notification.type = type;
+                notification.imageId = imageId;
+                notification.timestamp = date.getTime();
+                notification.created_at = DateUtil.toISOString(notification.timestamp);
+                notification.uuid = UUID.randomUUID().toString();
+                notification.save();
+            }
+        }
+    }
 }

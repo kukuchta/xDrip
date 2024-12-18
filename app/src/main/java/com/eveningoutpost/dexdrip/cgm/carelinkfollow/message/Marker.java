@@ -14,6 +14,7 @@ public class Marker {
     public static final String MARKER_TYPE_INSULIN = "INSULIN";
     public static final String MARKER_TYPE_AUTO_BASAL = "AUTO_BASAL_DELIVERY";
     public static final String MARKER_TYPE_AUTO_MODE_STATUS = "AUTO_MODE_STATUS";
+    public static final String MARKER_TYPE_LOW_GLUCOSE_SUSPENDED = "LOW_GLUCOSE_SUSPENDED";
 
     public boolean isBloodGlucose() {
         if (type == null)
@@ -28,19 +29,21 @@ public class Marker {
     public String kind;
     public int version;
     public Date dateTime;
-    public Integer relativeOffset;
-    public Boolean calibrationSuccess;
+    public int relativeOffset;
+    public boolean calibrationSuccess;
     public Double amount;
     public Float programmedExtendedAmount;
     public String activationType;
     public Float deliveredExtendedAmount;
     public Float programmedFastAmount;
-    public Integer programmedDuration;
+    public int programmedDuration;
     public Float deliveredFastAmount;
-    public Integer effectiveDuration;
-    public Boolean completed;
+    public int id;
+    public int effectiveDuration;
+    public boolean completed;
     public String bolusType;
-    public Boolean autoModeOn;
+    public boolean autoModeOn;
     public Float bolusAmount;
+    public boolean deliverySuspended;
 
 }

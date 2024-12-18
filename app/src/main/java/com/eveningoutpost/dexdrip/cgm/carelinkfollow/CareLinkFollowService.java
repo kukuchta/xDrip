@@ -168,7 +168,7 @@ public class CareLinkFollowService extends ForegroundService {
 
         long next;
 
-        //recent reading (less then data period) => last + period + grace
+        //recent reading (less then data period) => lastBG(pump time) + period + grace
         if ((now - last) < period) {
             next = last + period + grace;
         }
