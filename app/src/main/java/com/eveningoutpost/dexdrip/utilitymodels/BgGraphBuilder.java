@@ -18,6 +18,8 @@ import com.eveningoutpost.dexdrip.AddCalibration;
 import com.eveningoutpost.dexdrip.GcmActivity;
 import com.eveningoutpost.dexdrip.Home;
 import com.eveningoutpost.dexdrip.models.APStatus;
+import com.eveningoutpost.dexdrip.models.AutoBasalDelivery;
+import com.eveningoutpost.dexdrip.models.Autocorrection;
 import com.eveningoutpost.dexdrip.models.BgReading;
 import com.eveningoutpost.dexdrip.models.BloodTest;
 import com.eveningoutpost.dexdrip.models.Calibration;
@@ -58,6 +60,8 @@ import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.LinkedList;
@@ -142,6 +146,7 @@ public class BgGraphBuilder {
     private boolean simulation_enabled = false;
     private static double avg1value = 0;
     private static double avg2value = 0;
+    private static double maxValue = 0;
     private static int avg1counter = 0;
     private static double avg1startfuzzed = 0;
     private static int avg2counter = 0;
@@ -240,6 +245,9 @@ public class BgGraphBuilder {
                 capturePercentage = -1; // invalid reading
             }
         }
+
+        maxValue = unitized(BgReading.getMaxCalculatedValue(numValues, start, end));
+
         bloodtests = BloodTest.latestForGraph(numValues, start, end);
         // get extra calibrations so we can use them for historical readings
         calibrations = Calibration.latestForGraph(numValues, start - (3 * Constants.DAY_IN_MS), end);
@@ -255,6 +263,7 @@ public class BgGraphBuilder {
             defaultMinY = unitized(Pref.getStringToInt("default_ymin", 40)); // Use the user-defined ymin
             defaultMaxY = unitized(Pref.getStringToInt("default_ymax", 250)); // Use the user-defined ymax
         }
+        defaultMaxY = Math.max(maxValue, defaultMaxY) + unitized(40);
         pointSize = isXLargeTablet(context) ? 5 : 3;
         axisTextSize = isXLargeTablet(context) ? 20 : Axis.DEFAULT_TEXT_SIZE_SP;
         previewAxisTextSize = isXLargeTablet(context) ? 12 : 5;
@@ -340,65 +349,103 @@ public class BgGraphBuilder {
 
     private List<Line> basalLines() {
         final List<Line> basalLines = new ArrayList<>();
-        if (prefs.getBoolean("show_basal_line", false)) {
+        // TODO: Allow to hide basal lines independently
+        //if (prefs.getBoolean("show_basal_line", false))
 
-            final float yscale = doMgdl ? (float) Constants.MMOLL_TO_MGDL : 1f;
+        final double minAutoBasalHeight = 0;
+        final double maxAutoBasalHeight = 20;
+        final double autoBasalHeightSpan = maxAutoBasalHeight - minAutoBasalHeight;
+        final List<AutoBasalDelivery> autoBasalList = AutoBasalDelivery.latestForGraph(2000, loaded_start, loaded_end);
+        final double maxAutoBasalAmount = AutoBasalDelivery.getMaxAmount(loaded_start, loaded_end);
 
-            final List<APStatus> aplist = APStatus.latestForGraph(2000, loaded_start, loaded_end);
+        if (!autoBasalList.isEmpty()) {
+            final List<PointValue> points = new ArrayList<>(autoBasalList.size() * 4);
+            final List<PointValue> captions = new ArrayList<>(autoBasalList.size());
+            for (AutoBasalDelivery item : autoBasalList) {
+                final float yValue = (float)unitized(item.bolusAmount / maxAutoBasalAmount * autoBasalHeightSpan + minAutoBasalHeight);
 
-            if (aplist.size() > 0) {
-
-                // divider line
-
-                final Line dividerLine = new Line();
-                dividerLine.setTag("tbr"); // not quite true
-                dividerLine.setHasPoints(false);
-                dividerLine.setHasLines(true);
-                dividerLine.setStrokeWidth(1);
-                dividerLine.setColor(getCol(X.color_basal_tbr));
-                dividerLine.setPathEffect(new DashPathEffect(new float[]{10.0f, 10.0f}, 0));
-                dividerLine.setReverseYAxis(true);
-                dividerLine.setHasPoints(false);
-
-                final float one_hundred_percent = (100 * yscale) / 100f;
-                final List<PointValue> divider_points = new ArrayList<>(2);
-                divider_points.add(new HPointValue(loaded_start / FUZZER, one_hundred_percent));
-                dividerLine.setPointRadius(0);
-                divider_points.add(new HPointValue(loaded_end / FUZZER, one_hundred_percent));
-                dividerLine.setValues(divider_points);
-                basalLines.add(dividerLine);
-
-                final List<PointValue> points = new ArrayList<>(aplist.size());
-
-                int last_percent = -1;
-
-                int count = aplist.size();
-                for (APStatus item : aplist) {
-                    if (--count == 0 || (item.basal_percent != last_percent)) {
-                        final float this_ypos = (Math.min(item.basal_percent, 500) * yscale) / 100f; // capped at 500%
-                        points.add(new HPointValue((double) item.timestamp / FUZZER, this_ypos));
-
-                        last_percent = item.basal_percent;
-                    }
-                }
-
-                final Line line = new Line(points);
-                line.setFilled(true);
-                line.setFillFlipped(true);
-                line.setHasGradientToTransparent(true);
-                line.setHasPoints(false);
-                line.setStrokeWidth(1);
-                line.setHasLines(true);
-                line.setSquare(true);
-                line.setPointRadius(1);
-                line.setReverseYAxis(true);
-                line.setBackgroundUnclipped(true);
-                line.setGradientDivider(10f);
-                line.setColor(getCol(X.color_basal_tbr));
-                basalLines.add(line);
+                points.add(new HPointValue((double) (item.timestamp - 150000) / FUZZER, 0));
+                points.add(new HPointValue((double) (item.timestamp - 150000 + 10) / FUZZER, yValue));
+                points.add(new HPointValue((double) (item.timestamp + 150000 - 10) / FUZZER, yValue));
+                points.add(new HPointValue((double) (item.timestamp + 150000) / FUZZER, 0));
+                PointValueExtended caption = new PointValueExtended((double) (item.timestamp / FUZZER + 0.5), defaultMaxY + unitized(10) - yValue);
+                caption.real_timestamp = item.timestamp;
+                caption.note = (JoH.qs(item.bolusAmount, 3) + "u").replace(".0u", "u");
+                captions.add(caption);
             }
+
+            final Line autoBasalLine = new Line(points);
+            autoBasalLine.setColor(Color.parseColor("#FFD510D3"));
+            autoBasalLine.setReverseYAxis(true);
+            autoBasalLine.setStrokeWidth(1);
+            autoBasalLine.setHasPoints(false);
+            autoBasalLine.setFilled(true);
+            autoBasalLine.setFillFlipped(true);
+            autoBasalLine.setBackgroundUnclipped(true);
+            autoBasalLine.setAreaTransparency(150);
+            basalLines.add(autoBasalLine);
+
+            final Line autoBasalCaptionLine = new Line(captions);
+            //autoBasalCaptionLine.setReverseYAxis(true);
+            autoBasalCaptionLine.setHasPoints(true);
+            autoBasalCaptionLine.setHasLines(false);
+            autoBasalCaptionLine.setPointRadius(5);
+            autoBasalCaptionLine.setColor(Color.TRANSPARENT);
+            autoBasalCaptionLine.setPointColor(Color.TRANSPARENT);
+            basalLines.add(autoBasalCaptionLine);
         }
 
+        final double minAutocorrectHeight = 25;
+        final double maxAutocorrectHeight = 40;
+        final double autocorrectHeightSpan = maxAutocorrectHeight - minAutocorrectHeight;
+        final List<Autocorrection> autocorrectList = Autocorrection.latestForGraph(2000, loaded_start, loaded_end);
+        final double maxAutocorrectAmount = Autocorrection.getMaxAmount(loaded_start, loaded_end);
+
+        if (!autocorrectList.isEmpty()) {
+            final List<PointValue> points = new ArrayList<>(autocorrectList.size() * 4);
+            final List<PointValue> captions = new ArrayList<>(autocorrectList.size());
+            for (Autocorrection item : autocorrectList) {
+                final float yValue = (float)unitized(item.deliveredFastAmount / maxAutocorrectAmount * autocorrectHeightSpan + minAutocorrectHeight);
+                points.add(new HPointValue((double) (item.timestamp - 50000) / FUZZER, 0));
+                points.add(new HPointValue((double) (item.timestamp - 50000 + 10) / FUZZER, yValue));
+                points.add(new HPointValue((double) (item.timestamp + 50000 - 10) / FUZZER, yValue));
+                points.add(new HPointValue((double) (item.timestamp + 50000) / FUZZER, 0));
+                PointValueExtended caption = new PointValueExtended((double) (item.timestamp / FUZZER + 0.5), defaultMaxY + unitized(10) - yValue);
+                caption.real_timestamp = item.timestamp;
+                caption.note = (JoH.qs(item.deliveredFastAmount, 3) + "u").replace(".0u", "u");
+                captions.add(caption);
+            }
+
+            final Line autocorrectLine = new Line(points);
+            autocorrectLine.setColor(Color.parseColor("#FF01B3DA"));
+            autocorrectLine.setReverseYAxis(true);
+            autocorrectLine.setStrokeWidth(1);
+            autocorrectLine.setHasPoints(false);
+            autocorrectLine.setFilled(true);
+            autocorrectLine.setFillFlipped(true);
+            autocorrectLine.setBackgroundUnclipped(true);
+            autocorrectLine.setAreaTransparency(150);
+            basalLines.add(autocorrectLine);
+
+            final Line autocorrectCaptionLine = new Line(captions);
+            //autocorrectCaptionLine.setReverseYAxis(true);
+            autocorrectCaptionLine.setHasPoints(true);
+            autocorrectCaptionLine.setHasLines(false);
+            autocorrectCaptionLine.setPointRadius(5);
+            autocorrectCaptionLine.setColor(Color.TRANSPARENT);
+            autocorrectCaptionLine.setPointColor(Color.TRANSPARENT);
+            //autocorrectCaptionLine.setFullShadow(false);
+            basalLines.add(autocorrectCaptionLine);
+        }
+
+        List<PointValue> topMaskingLineValues = new ArrayList<PointValue>();
+        topMaskingLineValues.add(new HPointValue((double) start_time, defaultMaxY - unitized(10)));
+        topMaskingLineValues.add(new HPointValue((double) end_time, defaultMaxY - unitized(10)));
+        Line topMaskingLine = new Line(topMaskingLineValues);
+        topMaskingLine.setHasLines(true);
+        topMaskingLine.setStrokeWidth(1);
+        topMaskingLine.setHasPoints(false);
+        topMaskingLine.setColor(Color.GRAY);
         return basalLines;
     }
 
@@ -1152,6 +1199,8 @@ public class BgGraphBuilder {
             }
 
             final long close_to_side_time = (long) (end_time * FUZZER) - (Constants.MINUTE_IN_MS * 10);
+
+
             // enumerate calibrations
             try {
                 for (Calibration calibration : calibrations) {
@@ -1172,6 +1221,7 @@ public class BgGraphBuilder {
             } catch (Exception e) {
                 Log.e(TAG, "Exception doing calibration values in bggraphbuilder: " + e.toString());
             }
+
 
             // enumerate blood tests
             try {
@@ -1532,6 +1582,27 @@ public class BgGraphBuilder {
                 //Log.i(TAG,"Average2 value: "+unitized(avg2value));
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                 readings_lock.lock();
                 try {
                     // display treatment blobs and annotations
@@ -1635,8 +1706,8 @@ public class BgGraphBuilder {
                 readings_lock.lock();
                 try {
                     Notifications firstNotification = Notifications.firstByType(Notifications.NOTIFICATION_TYPE_DELIVERY_STATE);
-                    final HPointValue startPoint = new PointValueExtended(start_time, firstNotification.deliverySuspended != 0 ? highMark : 0);
-                    deliveryChangedValues.add(startPoint);
+                    //final HPointValue startPoint = new PointValueExtended(start_time, firstNotification.deliverySuspended != 0 ? highMark : 0);
+                    //deliveryChangedValues.add(startPoint);
 
                     for (Notifications notification : notifications) {
 
@@ -1647,29 +1718,29 @@ public class BgGraphBuilder {
                             // Last value was min (resumed)
                             if (abs(deliveryChangedValues.get(deliveryChangedValues.size() - 1).getY()) < 0.01) {
                                 // And delivery suspended
-                                if(notification.deliverySuspended != 0) {
-                                    pv1 = new PointValueExtended((double)(notification.timestamp / FUZZER), 0);
-                                    pv2 = new PointValueExtended((double)((notification.timestamp + 1) / FUZZER), highMark);
-                                    deliveryChangedValues.add(pv1);
-                                    deliveryChangedValues.add(pv2);
-                                }
+                                //if(notification.deliverySuspended != 0) {
+                                //    pv1 = new PointValueExtended((double)(notification.timestamp / FUZZER), 0);
+                                //    pv2 = new PointValueExtended((double)((notification.timestamp + 1) / FUZZER), highMark);
+                                //    deliveryChangedValues.add(pv1);
+                                //    deliveryChangedValues.add(pv2);
+                                //}
                             }
                             // Last value was max (suspended)
                             else {
                                 // And delivery resumed
-                                if(notification.deliverySuspended == 0) {
-                                    pv1 = new PointValueExtended((double)(notification.timestamp / FUZZER), highMark);
-                                    pv2 = new PointValueExtended((double)((notification.timestamp + 1) / FUZZER), 0);
-                                    deliveryChangedValues.add(pv1);
-                                    deliveryChangedValues.add(pv2);
-                                }
+                                //if(notification.deliverySuspended == 0) {
+                                //    pv1 = new PointValueExtended((double)(notification.timestamp / FUZZER), highMark);
+                                //    pv2 = new PointValueExtended((double)((notification.timestamp + 1) / FUZZER), 0);
+                                //    deliveryChangedValues.add(pv1);
+                                //    deliveryChangedValues.add(pv2);
+                                //}
                             }
                         }
                     }
 
                     Notifications lastNotification = Notifications.lastByType(Notifications.NOTIFICATION_TYPE_DELIVERY_STATE);
-                    final HPointValue endPoint = new PointValueExtended(end_time, lastNotification.deliverySuspended != 0 ? highMark : 0);
-                    deliveryChangedValues.add(endPoint);
+                    //final HPointValue endPoint = new PointValueExtended(end_time, lastNotification.deliverySuspended != 0 ? highMark : 0);
+                    //deliveryChangedValues.add(endPoint);
 
                 } catch (Exception e) {
 

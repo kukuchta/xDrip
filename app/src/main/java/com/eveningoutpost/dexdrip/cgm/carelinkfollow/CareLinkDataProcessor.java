@@ -2,10 +2,13 @@ package com.eveningoutpost.dexdrip.cgm.carelinkfollow;
 
 import com.eveningoutpost.dexdrip.Home;
 import com.eveningoutpost.dexdrip.cgm.carelinkfollow.message.Alarm;
+import com.eveningoutpost.dexdrip.models.AutoBasalDelivery;
+import com.eveningoutpost.dexdrip.models.Autocorrection;
 import com.eveningoutpost.dexdrip.models.BgReading;
 import com.eveningoutpost.dexdrip.models.BloodTest;
 import com.eveningoutpost.dexdrip.models.DateUtil;
 import com.eveningoutpost.dexdrip.models.Notifications;
+import com.eveningoutpost.dexdrip.models.OtherMarker;
 import com.eveningoutpost.dexdrip.models.Sensor;
 import com.eveningoutpost.dexdrip.models.Treatments;
 import com.eveningoutpost.dexdrip.models.UserError;
@@ -37,7 +40,7 @@ import static com.eveningoutpost.dexdrip.models.Treatments.pushTreatmentSyncToWa
 public class CareLinkDataProcessor {
 
 
-    private static final String TAG = "CareLinkFollowDP";
+    private static final String TAG = "CareLinkFollow";
     private static final boolean D = false;
 
     private static final String SOURCE_CARELINK_FOLLOW = "CareLink Follow";
@@ -72,11 +75,11 @@ public class CareLinkDataProcessor {
         //SKIP DATA processing if NO PUMP CONNECTION (time shift seems to be different in this case, needs further analysis)
         if (recentData.isNGP() && !recentData.pumpCommunicationState) {
             UserError.Log.d(TAG, "Not connected to pump => time can be wrong, leave processing!");
-            //return;
+            return;
         }
 
         //SENSOR GLUCOSE (if available)
-        if (false) {
+        if (recentData.sgs != null) {
 
             final BgReading lastBg = BgReading.lastNoSenssor();
             final long lastBgTimestamp = lastBg != null ? lastBg.timestamp : 0;
@@ -158,7 +161,6 @@ public class CareLinkDataProcessor {
         //MARKERS (if available)
         if (recentData.markers != null) {
 
-            //Filter markers
             filteredMarkerList = new ArrayList<>();
             for (Marker marker : recentData.markers) {
                 if (marker != null && marker.type != null && marker.dateTime != null) {
@@ -166,77 +168,67 @@ public class CareLinkDataProcessor {
                 }
             }
 
-            if (filteredMarkerList.size() > 0) {
-                //sort markers by time
-                Collections.sort(filteredMarkerList, (o1, o2) -> o1.dateTime.compareTo(o2.dateTime));
+            if (!filteredMarkerList.isEmpty()) {
+                filteredMarkerList.sort((o1, o2) -> o1.dateTime.compareTo(o2.dateTime));
 
-                //process markers one-by-one
                 for (Marker marker : filteredMarkerList) {
 
-                    //FINGER BG
                     if (marker.isBloodGlucose() && Pref.getBooleanDefaultFalse("clfollow_download_finger_bgs")) {
-                        //check required values
-                        if (marker.value != null && !marker.value.equals(0)) {
-                            //new blood test
-                            if (BloodTest.getForPreciseTimestamp(marker.dateTime.getTime(), 10000) == null) {
+                        if (marker.value != null && marker.value != 0) {
+                            if (!BloodTest.existsWithinTimePrecision(marker.dateTime.getTime(), 10000)) {
                                 BloodTest.create(marker.dateTime.getTime(), marker.value, SOURCE_CARELINK_FOLLOW);
                             }
                         }
+                    } else if ((marker.isInsulin() && Pref.getBooleanDefaultFalse("clfollow_download_boluses"))) {
+                        if (marker.deliveredExtendedAmount != null && marker.deliveredFastAmount != null) {
+                            double insulin = marker.deliveredExtendedAmount + marker.deliveredFastAmount;
 
-                        //INSULIN, MEAL => Treatment
-                    } else if ((marker.type.equals(Marker.MARKER_TYPE_INSULIN) && Pref.getBooleanDefaultFalse("clfollow_download_boluses"))
-                            || (marker.type.equals(Marker.MARKER_TYPE_MEAL) && Pref.getBooleanDefaultFalse("clfollow_download_meals"))) {
-
-                        //insulin, meal only for pumps (not value in case of GC)
-                        if (recentData.isNGP()) {
-
-                            final Treatments t;
-                            double carbs = 0;
-                            double insulin = 0;
-
-                            //Extract treament infos (carbs, insulin)
-                            //Insulin
-                            if (marker.type.equals(Marker.MARKER_TYPE_INSULIN)) {
-                                carbs = 0;
-                                if (marker.deliveredExtendedAmount != null && marker.deliveredFastAmount != null) {
-                                    insulin = marker.deliveredExtendedAmount + marker.deliveredFastAmount;
-                                }
-                                //SKIP if insulin = 0
-                                if (insulin == 0) continue;
-                                //Carbs
-                            } else if (marker.type.equals(Marker.MARKER_TYPE_MEAL)) {
-                                if (marker.amount != null) {
-                                    carbs = marker.amount;
-                                }
-                                insulin = 0;
-                                //SKIP if carbs = 0
-                                if (carbs == 0) continue;
-                            }
-
-                            //new Treatment
-                            if (isNewTreatment(carbs, insulin, marker.dateTime.getTime())) {
-                                t = Treatments.create(carbs, insulin, marker.dateTime.getTime());
-                                if (t != null) {
-                                    t.enteredBy = SOURCE_CARELINK_FOLLOW;
-                                    t.save();
-                                    if (Home.get_show_wear_treatments())
-                                        pushTreatmentSyncToWatch(t, true);
+                            if (!Treatments.insulinExists(insulin, marker.dateTime.getTime())) {
+                                final Treatments treatments = Treatments.createInsulin(insulin, marker.dateTime.getTime());
+                                if (Home.get_show_wear_treatments()) {
+                                    pushTreatmentSyncToWatch(treatments, true);
                                 }
                             }
                         }
-
-                    } else if (marker.type.equals(Marker.MARKER_TYPE_LOW_GLUCOSE_SUSPENDED) && Pref.getBooleanDefaultFalse("clfollow_download_notifications")) {
-                        //Delivery suspended marker only for pumps (not value in case of GC)
-                        if (recentData.isNGP()) {
-
-                            final Notifications notification;
-                            String notificationType = Notifications.NOTIFICATION_TYPE_DELIVERY_STATE;
-
-                            //new Notifications
-                            if (isNewDeliveryNotification(notificationType, marker.deliverySuspended, marker.dateTime.getTime())) {
-                                notification = Notifications.create(notificationType, "", marker.deliverySuspended, marker.dateTime.getTime());
-                                notification.save();
+                    }
+                    else if ((marker.isMeal() && Pref.getBooleanDefaultFalse("clfollow_download_meals"))) {
+                        if (marker.amount != null) {
+                            if (!Treatments.mealExists(marker.amount, marker.dateTime.getTime())) {
+                                final Treatments treatment = Treatments.createMeal(marker.amount, marker.dateTime.getTime());
+                                if (Home.get_show_wear_treatments()) {
+                                    pushTreatmentSyncToWatch(treatment, true);
+                                }
                             }
+                        }
+                    }
+                    else if (marker.isAutocorrection()  && Pref.getBooleanDefaultFalse("clfollow_download_boluses")) {
+                        if (marker.deliveredFastAmount != null) {
+                            if (!Autocorrection.exists(marker.deliveredFastAmount, marker.dateTime.getTime())) {
+                                Autocorrection.create(marker.deliveredFastAmount, marker.dateTime.getTime());
+                            }
+                            if (!Treatments.insulinExists(marker.deliveredFastAmount, marker.dateTime.getTime())) {
+                                final Treatments treatments = Treatments.createInsulin(marker.deliveredFastAmount, marker.dateTime.getTime());
+                                if (Home.get_show_wear_treatments()) {
+                                    pushTreatmentSyncToWatch(treatments, true);
+                                }
+                            }
+                        }
+                    }
+                    else if (marker.isAutoBasalDelivery()  && Pref.getBooleanDefaultFalse("clfollow_download_boluses")) {
+                        if (marker.bolusAmount != null) {
+                            if (!AutoBasalDelivery.exists(marker.bolusAmount, marker.dateTime.getTime())) {
+                                AutoBasalDelivery.create(marker.bolusAmount, marker.dateTime.getTime());
+                            }
+                        }
+                    }
+                    else if (marker.isAutoModeStatus() && Pref.getBooleanDefaultFalse("clfollow_download_notifications")) {
+                        if (!OtherMarker.autoModeStatusExists(marker.autoModeOn, marker.dateTime.getTime())) {
+                            OtherMarker.createAutoModeStatus(marker.autoModeOn, marker.dateTime.getTime());
+                        }
+                    }
+                    else if (marker.isLowGlucoseSuspend() && Pref.getBooleanDefaultFalse("clfollow_download_notifications")) {
+                        if (!OtherMarker.lowGlucoseSuspendExists(marker.deliverySuspended, marker.dateTime.getTime())) {
+                            OtherMarker.createLowGlucoseSuspend(marker.deliverySuspended, marker.dateTime.getTime());
                         }
                     }
                 }
@@ -244,24 +236,11 @@ public class CareLinkDataProcessor {
         }
 
         //PUMP INFO (Pump Status)
-        if (recentData.isNGP()) {
-            PumpStatus.setReservoir(recentData.reservoirRemainingUnits);
-            PumpStatus.setBattery(recentData.medicalDeviceBatteryLevelPercent);
-            if (recentData.activeInsulin != null)
-                PumpStatus.setBolusIoB(recentData.activeInsulin.amount);
-            PumpStatus.syncUpdate();
-        }
-		
-        // LAST ALARM -> NOTE (only for GC)
-        if (Pref.getBooleanDefaultFalse("clfollow_download_notifications")) {
-
-            // Only Guardian Connect, NGP has all in notifications
-            if (recentData.isGM() && recentData.lastAlarm != null) {
-                //Add notification from alarm
-                addGuardianNotification(recentData.lastAlarm);
-            }
-        }
-
+        PumpStatus.setReservoir(recentData.reservoirRemainingUnits);
+        PumpStatus.setBattery(recentData.medicalDeviceBatteryLevelPercent);
+        if (recentData.activeInsulin != null)
+            PumpStatus.setBolusIoB(recentData.activeInsulin.amount);
+        PumpStatus.syncUpdate();
 
         //NOTIFICATIONS -> NOTE
         if (Pref.getBooleanDefaultFalse("clfollow_download_notifications")) {
@@ -283,41 +262,8 @@ public class CareLinkDataProcessor {
 
     }
 
-    //Check if treatment is new (no identical entry (timestamp, carbs, insulin) exists)
-    protected static boolean isNewTreatment(double carbs, double insulin, long timestamp) {
-
-        List<Treatments> treatmentsList;
-        //Treatment with same timestamp and carbs + insulin exists?
-        treatmentsList = Treatments.listByTimestamp(timestamp);
-        if (treatmentsList != null) {
-            for (Treatments treatments : treatmentsList) {
-                if (treatments.carbs == carbs && treatments.insulin == insulin)
-                    return false;
-            }
-        }
-        return true;
-    }
-
-    //Check if notification is new (no identical entry (timestamp) exists)
-    protected static boolean isNewDeliveryNotification(String type, boolean deliverySuspended, long timestamp) {
-
-        List<Notifications> notificationsList;
-        int deliverySuspendedValue = deliverySuspended ? 1 : 0;
-        //Treatment with same timestamp and data exists?
-        notificationsList = Notifications.listByTimestamp(timestamp);
-        if (notificationsList != null) {
-            for (Notifications notification : notificationsList) {
-                if (notification.timestamp == timestamp &&
-                        notification.deliverySuspended == deliverySuspendedValue &&
-                        notification.type.equals(type))
-                    return false;
-            }
-        }
-        return true;
-    }
-
     //Check note is new
-    protected static boolean isNewNotification(String note, String type, long timestamp) {
+    protected static boolean isNewNotification(String note, long timestamp) {
 
         List<Notifications> notificationsList;
         //Treatment with same timestamp and note text exists?
@@ -325,8 +271,7 @@ public class CareLinkDataProcessor {
         if (notificationsList != null) {
             for (Notifications notification : notificationsList) {
                 if (notification.timestamp == timestamp &&
-                        notification.notes.contains(note) &&
-                        notification.type.equals(type))
+                        notification.notes.contains(note))
                     return false;
             }
         }
@@ -337,36 +282,27 @@ public class CareLinkDataProcessor {
     protected static void addNgpNotification(ActiveNotification activeNotification) {
         if (activeNotification != null && activeNotification.dateTime != null) {
             TextMap.NotificationMapEntry entry = TextMap.parseNgpNotification(activeNotification);
-            addNotification(activeNotification.dateTime, entry.getMessage(), entry.getType(), entry.getImage());
+            addNotification(activeNotification.dateTime, entry.getMessage(), entry.getImage());
         }
     }
 
     protected static void addNgpNotification(ClearedNotification clearedNotification) {
         if (clearedNotification != null && clearedNotification.triggeredDateTime != null) {
             TextMap.NotificationMapEntry entry = TextMap.parseNgpNotification(clearedNotification);
-            addNotification(clearedNotification.triggeredDateTime, entry.getMessage(), entry.getType(), entry.getImage());
-        }
-    }
-
-    //Create notification from CareLink messageId
-    protected static void addGuardianNotification(Alarm alarm) {
-        if (alarm != null && alarm.datetimeAsDate != null && alarm.kind != null) {
-            TextMap.NotificationMapEntry entry = TextMap.parseGuardianNotification(alarm);
-            addNotification(alarm.datetimeAsDate, entry.getMessage(), entry.getType(), entry.getImage());
+            addNotification(clearedNotification.triggeredDateTime, entry.getMessage(), entry.getImage());
         }
     }
 
     //Create notification from CareLink note info
-    protected static void addNotification(Date date, String noteText, String type, int imageId) {
+    protected static void addNotification(Date date, String noteText, int imageId) {
 
         //Valid date
         if (date != null && noteText != null) {
             //New note
-            if (isNewNotification(noteText, type, date.getTime())) {
+            if (isNewNotification(noteText, date.getTime())) {
                 //create_note in Treatment is not good, because of automatic link to other treatments in 5 mins range
                 Notifications notification = new Notifications();
                 notification.notes = noteText;
-                notification.type = type;
                 notification.imageId = imageId;
                 notification.timestamp = date.getTime();
                 notification.created_at = DateUtil.toISOString(notification.timestamp);

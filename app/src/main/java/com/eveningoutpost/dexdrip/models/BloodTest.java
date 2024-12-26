@@ -10,6 +10,7 @@ import com.activeandroid.query.Delete;
 import com.activeandroid.query.Select;
 import com.activeandroid.util.SQLiteUtils;
 import com.eveningoutpost.dexdrip.AddCalibration;
+import com.eveningoutpost.dexdrip.cgm.carelinkfollow.message.Marker;
 import com.eveningoutpost.dexdrip.glucosemeter.GlucoseReadingRx;
 import com.eveningoutpost.dexdrip.Home;
 import com.eveningoutpost.dexdrip.services.SyncService;
@@ -125,6 +126,16 @@ public class BloodTest extends Model {
 
     // static methods
     private static final long CLOSEST_READING_MS = 30000; // 30 seconds
+
+    public static boolean existsWithinTimePrecision(long timestamp, long precision) {
+        fixUpTable();
+        List<BloodTest> bloodTests = new Select()
+                .from(BloodTest.class)
+                .where("timestamp <= ?", (timestamp + precision))
+                .where("timestamp >= ?", (timestamp - precision))
+                .execute();
+        return !bloodTests.isEmpty();
+    }
 
     public static BloodTest create(long timestamp_ms, double mgdl, String source) {
         return create(timestamp_ms, mgdl, source, null);

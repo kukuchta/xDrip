@@ -888,6 +888,34 @@ public class BgReading extends Model implements ShareUploadableBg {
         return latestForGraph(number, startTime, Long.MAX_VALUE);
     }
 
+    public static BgReading maxCalculatedValue(int number, long startTime, long endTime) {
+        List<BgReading> readings = latestForGraph(number, startTime, endTime);
+        double maxValue = 0;
+        BgReading maxValueReading = null;
+
+        for (BgReading reading : readings) {
+            if (reading.calculated_value > maxValue) {
+                maxValue = reading.calculated_value;
+                maxValueReading = reading;
+            }
+        }
+
+        return maxValueReading;
+    }
+
+    public static double getMaxCalculatedValue(int number, long startTime, long endTime) {
+        BgReading maxReading = new Select()
+                .from(BgReading.class)
+                .where("timestamp >= ? and timestamp <= ?", Math.max(startTime, 0), endTime)
+                .where("calculated_value != 0")
+                .where("raw_data != 0")
+                .orderBy("calculated_value desc")
+                .limit(number)
+                .executeSingle();
+
+        return maxReading != null ? maxReading.calculated_value : 0.0;
+    }
+
     public static List<BgReading> latestForGraph(int number, long startTime, long endTime) {
         return new Select()
                 .from(BgReading.class)

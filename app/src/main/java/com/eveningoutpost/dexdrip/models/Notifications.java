@@ -53,15 +53,11 @@ public class Notifications extends Model {
     @Column(name = "uuid", unique = true, onUniqueConflicts = Column.ConflictAction.IGNORE)
     public String uuid;
     @Expose
-    @Column(name = "deliverySuspended")
-    public int deliverySuspended;
-    @Expose
     @Column(name = "created_at")
     public String created_at;
 
     public Notifications()
     {
-        deliverySuspended = 0;
         imageId = R.drawable.empty;
     }
 
@@ -72,9 +68,7 @@ public class Notifications extends Model {
         }
 
         final Notifications notification = new Notifications();
-        notification.deliverySuspended = deliverySuspended ? 1 : 0;
         notification.timestamp = timestamp;
-        notification.type = type;
         notification.notes = note;
         notification.created_at = DateUtil.toISOString(timestamp);
         notification.uuid = UUID.randomUUID().toString();
@@ -92,7 +86,6 @@ public class Notifications extends Model {
                 "ALTER TABLE Notifications ADD COLUMN imageId INTEGER;",
                 "ALTER TABLE Notifications ADD COLUMN notes TEXT;",
                 "ALTER TABLE Notifications ADD COLUMN created_at TEXT;",
-                "ALTER TABLE Notifications ADD COLUMN deliverySuspended INTEGER;",
                 "CREATE INDEX index_Notifications_timestamp on Notifications(timestamp);",
                 "CREATE UNIQUE INDEX index_Notifications_uuid on Notifications(uuid);"};
 

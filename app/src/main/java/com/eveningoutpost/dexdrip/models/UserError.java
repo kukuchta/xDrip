@@ -104,6 +104,7 @@ public class UserError extends Model {
     public String bestTime() {
         final long since = JoH.msSince(timestamp);
         if (since < Constants.DAY_IN_MS) {
+            //return JoH.preciseTimeString(timestamp);
             return JoH.hourMinuteString(timestamp);
         } else {
             return JoH.dateTimeText(timestamp);

@@ -733,6 +733,10 @@ public class JoH {
         return android.text.format.DateFormat.format("kk:mm", timestamp).toString();
     }
 
+    public static String preciseTimeString(long timestamp) {
+        return android.text.format.DateFormat.format("kk:mm:ss", timestamp).toString();
+    }
+
     public static String dateTimeText(long timestamp) {
         return android.text.format.DateFormat.format("yyyy-MM-dd kk:mm:ss", timestamp).toString();
     }

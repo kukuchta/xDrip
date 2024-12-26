@@ -68,7 +68,7 @@
                     android:layout_height="match_parent"
                     android:layout_alignParentEnd="true"
                     android:layout_alignParentStart="false"
-                    android:layout_marginTop="45dp"
+                    android:layout_marginTop="124dp"
                     android:padding="0dp" />
 
                 <TextView

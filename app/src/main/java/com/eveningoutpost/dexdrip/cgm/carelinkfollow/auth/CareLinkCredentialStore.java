@@ -12,7 +12,7 @@ import okhttp3.Cookie;
 
 public class CareLinkCredentialStore {
 
-    private static final String TAG = "CareLinkCredentialStore";
+    private static final String TAG = "CareLinkFollow";
 
     public final static int NOT_AUTHENTICATED = 0;
     public final static int ACCESS_EXPIRED = 1;

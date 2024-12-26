@@ -22,7 +22,7 @@ import static com.eveningoutpost.dexdrip.models.JoH.emptyString;
  */
 public class CareLinkFollowDownloader {
 
-    private static final String TAG = "CareLinkFollowDL";
+    private static final String TAG = "CareLinkFollow";
     private static final boolean D = false;
 
     private String carelinkUsername;

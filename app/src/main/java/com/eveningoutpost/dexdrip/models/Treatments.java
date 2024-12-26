@@ -58,7 +58,6 @@ import lombok.val;
 import static com.eveningoutpost.dexdrip.models.JoH.msSince;
 import static com.eveningoutpost.dexdrip.utilitymodels.Constants.HOUR_IN_MS;
 import static com.eveningoutpost.dexdrip.utilitymodels.Constants.MINUTE_IN_MS;
-import com.eveningoutpost.dexdrip.utilitymodels.Pref;
 import static java.lang.StrictMath.abs;
 import static com.eveningoutpost.dexdrip.models.JoH.emptyString;
 
@@ -228,6 +227,50 @@ public class Treatments extends Model {
         carbs = 0;
         insulin = 0;
         //setInsulinInjections(null);
+    }
+
+    public static boolean insulinExists(double insulin, long timestamp) {
+        fixUpTable();
+        List<Treatments> treatments = new Select()
+                .from(Treatments.class)
+                .where("timestamp = ? and insulin = ? and carbs = ?", timestamp, insulin, 0)
+                .orderBy("timestamp desc")
+                .execute();
+        return !treatments.isEmpty();
+    }
+
+    public static boolean mealExists(double carbs, long timestamp) {
+        fixUpTable();
+        List<Treatments> treatments = new Select()
+                .from(Treatments.class)
+                .where("timestamp = ? and insulin = ? and carbs = ?", timestamp, 0, carbs)
+                .orderBy("timestamp desc")
+                .execute();
+        return !treatments.isEmpty();
+    }
+
+    public static synchronized Treatments createInsulin(double insulin, long timestamp) {
+        fixUpTable();
+        final Treatments treatment = new Treatments();
+        treatment.timestamp = timestamp;
+        treatment.uuid = UUID.randomUUID().toString();
+        treatment.insulin = insulin;
+        treatment.carbs = 0;
+        treatment.created_at = DateUtil.toISOString(timestamp);
+        treatment.save();
+        return treatment;
+    }
+
+    public static synchronized Treatments createMeal(double carbs, long timestamp) {
+        fixUpTable();
+        final Treatments treatment = new Treatments();
+        treatment.timestamp = timestamp;
+        treatment.uuid = UUID.randomUUID().toString();
+        treatment.insulin = 0;
+        treatment.carbs = carbs;
+        treatment.created_at = DateUtil.toISOString(timestamp);
+        treatment.save();
+        return treatment;
     }
 
     public static synchronized Treatments create(final double carbs, final double insulin, long timestamp) {
