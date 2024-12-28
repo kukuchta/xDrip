@@ -7,6 +7,7 @@ import android.util.Log;
 import com.eveningoutpost.dexdrip.BestGlucose;
 import com.eveningoutpost.dexdrip.models.BgReading;
 import com.eveningoutpost.dexdrip.models.Calibration;
+import com.eveningoutpost.dexdrip.models.Iob;
 import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.models.UserError;
 import com.eveningoutpost.dexdrip.models.Treatments;
@@ -91,7 +92,7 @@ public class WebServicePebble extends BaseWebService {
             if (!Pref.getBooleanDefaultFalse("enable_iob_in_api_endpoint")) {
                 bgs.put("iob", 0.0);
             } else {
-                Double iob = Treatments.getCurrentIoB();
+                Double iob = Iob.getCurrentIoB();
                 bgs.put("iob", (iob == null) ? "unknown" : String.format("%.02f", iob));
             }
             // TODO output bwp and bwpo

@@ -205,12 +205,7 @@ public class CareLinkDataProcessor {
                         if (marker.deliveredFastAmount != null) {
                             if (!Autocorrection.exists(marker.deliveredFastAmount, marker.dateTime.getTime())) {
                                 Autocorrection.create(marker.deliveredFastAmount, marker.dateTime.getTime());
-                            }
-                            if (!Treatments.insulinExists(marker.deliveredFastAmount, marker.dateTime.getTime())) {
-                                final Treatments treatments = Treatments.createInsulin(marker.deliveredFastAmount, marker.dateTime.getTime());
-                                if (Home.get_show_wear_treatments()) {
-                                    pushTreatmentSyncToWatch(treatments, true);
-                                }
+                                // TODO push autocorrections to watch
                             }
                         }
                     }
