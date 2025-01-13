@@ -26,7 +26,6 @@ import com.eveningoutpost.dexdrip.utilitymodels.CollectionServiceStarter;
 import com.eveningoutpost.dexdrip.utils.DatabaseUtil;
 import com.eveningoutpost.dexdrip.utils.FileUtils;
 import com.eveningoutpost.dexdrip.utils.ListActivityWithMenu;
-import com.eveningoutpost.dexdrip.wearintegration.WatchUpdaterService;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -39,8 +38,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-
-import static com.eveningoutpost.dexdrip.Home.startWatchUpdaterService;
 
 public class ImportDatabaseActivity extends ListActivityWithMenu {
     private final static String TAG = ImportDatabaseActivity.class.getSimpleName();
@@ -239,8 +236,6 @@ public class ImportDatabaseActivity extends ListActivityWithMenu {
     }
 
     protected void postImportDB(String result) {
-
-        startWatchUpdaterService(this, WatchUpdaterService.ACTION_RESET_DB, TAG);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {

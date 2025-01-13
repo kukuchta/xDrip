@@ -164,7 +164,7 @@ public class ShareFollowService extends ForegroundService {
         // service state overrides downloader state reply
         if (emptyString(lastState)) {
             if (downloader != null) {
-                return downloader.getStatus();
+                return downloader.status;
             }
         } else {
             return lastState;

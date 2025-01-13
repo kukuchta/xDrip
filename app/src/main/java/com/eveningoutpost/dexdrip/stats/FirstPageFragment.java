@@ -17,8 +17,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.eveningoutpost.dexdrip.importedlibraries.dexcom.Dex_Constants;
 import com.eveningoutpost.dexdrip.R;
+import com.nightscout.core.dexcom.Constants;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -115,7 +115,7 @@ public class FirstPageFragment extends Fragment {
                     updateText(localView, medianView, Math.round(median * 10) / 10d + " mg/dl");
 
                 } else {
-                    updateText(localView, medianView, Math.round(median * Dex_Constants.MG_DL_TO_MMOL_L * 100) / 100d + " mmol/l");
+                    updateText(localView, medianView, Math.round(median * Constants.MG_DL_TO_MMOL_L * 100) / 100d + " mmol/l");
 
                 }
 
@@ -131,7 +131,7 @@ public class FirstPageFragment extends Fragment {
                 if (mgdl) {
                     updateText(localView, meanView, (Math.round(mean * 10) / 10d) + " mg/dl");
                 } else {
-                    updateText(localView, meanView, (Math.round(mean * Dex_Constants.MG_DL_TO_MMOL_L * 100) / 100d) + " mmol/l");
+                    updateText(localView, meanView, (Math.round(mean * Constants.MG_DL_TO_MMOL_L * 100) / 100d) + " mmol/l");
 
                 }
                 //update A1c
@@ -149,7 +149,7 @@ public class FirstPageFragment extends Fragment {
                 if (mgdl) {
                     updateText(localView, stdevView, (Math.round(stdev * 10) / 10d) + " mg/dl");
                 } else {
-                    updateText(localView, stdevView, (Math.round(stdev * Dex_Constants.MG_DL_TO_MMOL_L * 100) / 100d) + " mmol/l");
+                    updateText(localView, stdevView, (Math.round(stdev * Constants.MG_DL_TO_MMOL_L * 100) / 100d) + " mmol/l");
                 }
 
                 TextView coefficientOfVariation = (TextView) localView.findViewById(R.id.textView_coefficient_of_variation);

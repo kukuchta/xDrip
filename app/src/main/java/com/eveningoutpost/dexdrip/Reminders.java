@@ -70,15 +70,15 @@ import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.models.Reminder;
 import com.eveningoutpost.dexdrip.models.Treatments;
 import com.eveningoutpost.dexdrip.models.UserError;
+import com.eveningoutpost.dexdrip.profileeditor.DatePickerCallbacks;
+import com.eveningoutpost.dexdrip.profileeditor.TimePickerCallbacks;
 import com.eveningoutpost.dexdrip.utilitymodels.Constants;
 import com.eveningoutpost.dexdrip.utilitymodels.JamorhamShowcaseDrawer;
 import com.eveningoutpost.dexdrip.utilitymodels.NotificationChannels;
 import com.eveningoutpost.dexdrip.utilitymodels.PersistentStore;
 import com.eveningoutpost.dexdrip.utilitymodels.Pref;
 import com.eveningoutpost.dexdrip.utilitymodels.ShotStateStore;
-import com.eveningoutpost.dexdrip.utilitymodels.SpeechUtil;
 import com.eveningoutpost.dexdrip.profileeditor.DatePickerFragment;
-import com.eveningoutpost.dexdrip.profileeditor.ProfileAdapter;
 import com.eveningoutpost.dexdrip.profileeditor.TimePickerFragment;
 import com.eveningoutpost.dexdrip.receiver.ReminderReceiver;
 import com.eveningoutpost.dexdrip.utils.HomeWifi;
@@ -544,21 +544,21 @@ public class Reminders extends ActivityWithRecycler implements SensorEventListen
     }
 
     private void askWhenToReschedule(final Reminder remind) {
-        val now = tsl();
-        val oldt = remind.getPotentialNextSchedule();
-        val newt = now + remind.period;
-        val choice = String.format("%s:    %s  @  %s\n\nor\n\n%s:   %s  @  %s",
+        long now = tsl();
+        long oldt = remind.getPotentialNextSchedule();
+        long newt = now + remind.period;
+        String choice = String.format("%s:    %s  @  %s\n\nor\n\n%s:   %s  @  %s",
                 getString(R.string.old), niceTimeScalarNatural(-msSince(oldt)),hourMinuteString(oldt),
                 getString(R.string.neww), niceTimeScalarNatural(-msSince(newt)),hourMinuteString(newt));
 
-        val builder = new AlertDialog.Builder(this)
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
                 .setTitle(R.string.reschedule_with_new_timing)
                 .setMessage(choice);
 
         builder.setPositiveButton(getString(R.string.old), (dialog, which) -> rescheduleNextOld(remind));
         builder.setNegativeButton(getString(R.string.neww), (dialog, which) -> rescheduleNextNew(remind, newt));
 
-        val dialog = builder.create();
+        AlertDialog dialog = builder.create();
         try {
             if (dialog.isShowing()) {
                 dialog.dismiss();
@@ -1195,9 +1195,6 @@ public class Reminders extends ActivityWithRecycler implements SensorEventListen
 
                 //    JoH.showNotification(reminder.getTitle(), "Reminder due " + JoH.hourMinuteString(reminder.next_due), pendingIntent, NOTIFICATION_ID, true, true, deleteIntent, JoH.isOngoingCall() ? null : (reminder.sound_uri != null) ? Uri.parse(reminder.sound_uri) : Uri.parse(JoH.getResourceURI(R.raw.reminder_default_notification)));
                 UserError.Log.ueh("Reminder Alert", reminder.getTitle() + " due: " + dateTimeText(reminder.next_due) + ((reminder.snoozed_till > reminder.next_due) ? " snoozed till: " + dateTimeText(reminder.snoozed_till) : ""));
-                if (reminder.speak) {
-                    SpeechUtil.say(reminder.getTitle(), 1000, 3);
-                }
                 reminder.notified();
             }
         }, 10000);
@@ -1225,7 +1222,7 @@ public class Reminders extends ActivityWithRecycler implements SensorEventListen
         final TimePickerFragment timePickerFragment = new TimePickerFragment();
         timePickerFragment.setTime(calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE));
         timePickerFragment.setTitle(xdrip.getAppContext().getString(R.string.title_what_time_day));
-        timePickerFragment.setTimeCallback(new ProfileAdapter.TimePickerCallbacks() {
+        timePickerFragment.setTimeCallback(new TimePickerCallbacks() {
             @Override
             public void onTimeUpdated(int newmins) {
                 int min = newmins % 60;
@@ -1246,7 +1243,7 @@ public class Reminders extends ActivityWithRecycler implements SensorEventListen
             datePickerFragment.setEarliestDate(tsl());
             datePickerFragment.setInitiallySelectedDate(reminder.next_due);
             datePickerFragment.setTitle(xdrip.getAppContext().getString(R.string.title_which_day));
-            datePickerFragment.setDateCallback(new ProfileAdapter.DatePickerCallbacks() {
+            datePickerFragment.setDateCallback(new DatePickerCallbacks() {
                 @Override
                 public void onDateSet(int year, int month, int day) {
                     calendar.set(year, month, day);

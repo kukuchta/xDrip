@@ -14,25 +14,16 @@ import com.eveningoutpost.dexdrip.models.AlertType;
 import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.models.Reminder;
 import com.eveningoutpost.dexdrip.alert.Poller;
-import com.eveningoutpost.dexdrip.services.ActivityRecognizedService;
-import com.eveningoutpost.dexdrip.services.BluetoothGlucoseMeter;
 import com.eveningoutpost.dexdrip.services.MissedReadingService;
-import com.eveningoutpost.dexdrip.services.PlusSyncService;
 import com.eveningoutpost.dexdrip.utilitymodels.CollectionServiceStarter;
 import com.eveningoutpost.dexdrip.utilitymodels.ColorCache;
 import com.eveningoutpost.dexdrip.utilitymodels.IdempotentMigrations;
 import com.eveningoutpost.dexdrip.utilitymodels.PlusAsyncExecutor;
 import com.eveningoutpost.dexdrip.utilitymodels.Pref;
 import com.eveningoutpost.dexdrip.utilitymodels.VersionTracker;
-import com.eveningoutpost.dexdrip.calibrations.PluggableCalibration;
 import com.eveningoutpost.dexdrip.utils.AppCenterCrashReporting;
-import com.eveningoutpost.dexdrip.utils.NewRelicCrashReporting;
 import com.eveningoutpost.dexdrip.utils.jobs.DailyJob;
 import com.eveningoutpost.dexdrip.utils.jobs.XDripJobCreator;
-import com.eveningoutpost.dexdrip.watch.lefun.LeFunEntry;
-import com.eveningoutpost.dexdrip.watch.miband.MiBandEntry;
-import com.eveningoutpost.dexdrip.watch.thinjam.BlueJayEntry;
-import com.eveningoutpost.dexdrip.services.broadcastservice.BroadcastEntry;
 import com.eveningoutpost.dexdrip.webservices.XdripWebService;
 import com.evernote.android.job.JobManager;
 
@@ -111,19 +102,9 @@ public class xdrip extends Application {
 
         if (!isRunningTest()) {
             MissedReadingService.delayedLaunch();
-            NFCReaderX.handleHomeScreenScanPreference(getApplicationContext());
             AlertType.fromSettings(getApplicationContext());
             //new CollectionServiceStarter(getApplicationContext()).start(getApplicationContext());
             CollectionServiceStarter.restartCollectionServiceBackground();
-            PlusSyncService.startSyncService(context, "xdrip.java");
-            if (Pref.getBoolean("motion_tracking_enabled", false)) {
-                ActivityRecognizedService.startActivityRecogniser(getApplicationContext());
-            }
-            BluetoothGlucoseMeter.startIfEnabled();
-            LeFunEntry.initialStartIfEnabled();
-            MiBandEntry.initialStartIfEnabled();
-            BroadcastEntry.initialStartIfEnabled();
-            BlueJayEntry.initialStartIfEnabled();
             XdripWebService.immortality();
             VersionTracker.updateDevice();
 
@@ -131,7 +112,6 @@ public class xdrip extends Application {
             Log.d(TAG, "Detected running test mode, holding back on background processes");
         }
         Reminder.firstInit(xdrip.getAppContext());
-        PluggableCalibration.invalidateCache();
         Poller.init();
     }
 

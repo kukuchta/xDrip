@@ -14,33 +14,18 @@ import android.util.Pair;
 import android.view.View;
 import android.widget.Toast;
 
-import com.eveningoutpost.dexdrip.AddCalibration;
-import com.eveningoutpost.dexdrip.GcmActivity;
 import com.eveningoutpost.dexdrip.Home;
-import com.eveningoutpost.dexdrip.models.APStatus;
-import com.eveningoutpost.dexdrip.models.AutoBasalDelivery;
-import com.eveningoutpost.dexdrip.models.Autocorrection;
 import com.eveningoutpost.dexdrip.models.BgReading;
 import com.eveningoutpost.dexdrip.models.BloodTest;
-import com.eveningoutpost.dexdrip.models.Calibration;
 import com.eveningoutpost.dexdrip.models.Forecast;
 import com.eveningoutpost.dexdrip.models.Forecast.PolyTrendLine;
 import com.eveningoutpost.dexdrip.models.Forecast.TrendLine;
-import com.eveningoutpost.dexdrip.models.HeartRate;
 import com.eveningoutpost.dexdrip.models.Iob;
 import com.eveningoutpost.dexdrip.models.JoH;
-import com.eveningoutpost.dexdrip.models.Libre2RawValue;
 import com.eveningoutpost.dexdrip.models.Notifications;
-import com.eveningoutpost.dexdrip.models.Prediction;
-import com.eveningoutpost.dexdrip.models.Profile;
-import com.eveningoutpost.dexdrip.models.StepCounter;
 import com.eveningoutpost.dexdrip.models.Treatments;
 import com.eveningoutpost.dexdrip.models.UserError;
 import com.eveningoutpost.dexdrip.R;
-import com.eveningoutpost.dexdrip.services.ActivityRecognizedService;
-import com.eveningoutpost.dexdrip.calibrations.CalibrationAbstract;
-import com.eveningoutpost.dexdrip.calibrations.PluggableCalibration;
-import com.eveningoutpost.dexdrip.insulin.opennov.Options;
 import com.eveningoutpost.dexdrip.processing.SmootherFactory;
 import com.eveningoutpost.dexdrip.store.FastStore;
 import com.eveningoutpost.dexdrip.store.KeyStore;
@@ -49,10 +34,8 @@ import com.eveningoutpost.dexdrip.ui.dialog.DoseAdjustDialog;
 import com.eveningoutpost.dexdrip.ui.helpers.BitmapLoader;
 import com.eveningoutpost.dexdrip.ui.helpers.ColorUtil;
 import com.eveningoutpost.dexdrip.utils.DexCollectionType;
-import com.eveningoutpost.dexdrip.utils.LibreTrendGraph;
 import com.eveningoutpost.dexdrip.utils.math.RollingAverage;
 import com.eveningoutpost.dexdrip.xdrip;
-import com.google.android.gms.location.DetectedActivity;
 import com.rits.cloning.Cloner;
 
 import java.text.DecimalFormat;
@@ -60,8 +43,6 @@ import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.LinkedList;
@@ -102,6 +83,10 @@ public class BgGraphBuilder {
     public final static double NOISE_FORGIVE = 100;
     public static double low_occurs_at = -1;
     public static double previous_low_occurs_at = -1;
+
+    public static final long estimatedInterstitialLagSeconds = 600;
+    public static double minimum_shown_iob = 0.005;
+    public static double minimum_shown_cob = 0.01;
     private static double low_occurs_at_processed_till_timestamp = -1;
     private static long noise_processed_till_timestamp = -1;
     private final static String TAG = "jamorham graph";
@@ -140,8 +125,8 @@ public class BgGraphBuilder {
     public double defaultMaxY;
     public boolean doMgdl;
     public static double capturePercentage = -1;
-    @Getter
-    private int predictivehours = 0;
+
+    public int predictivehours = 0;
     private boolean prediction_enabled = false;
     private boolean simulation_enabled = false;
     private static double avg1value = 0;
@@ -153,8 +138,6 @@ public class BgGraphBuilder {
     private final int loaded_numValues;
     private final long loaded_start, loaded_end;
     private final List<BgReading> bgReadings;
-    private List<Libre2RawValue> Libre2RawValues;
-    private final List<Calibration> calibrations;
     private final List<BloodTest> bloodtests;
     private final List<PointValue> inRangeValues = new ArrayList<>();
     private final List<PointValue> backfillValues = new ArrayList<>();
@@ -179,7 +162,6 @@ public class BgGraphBuilder {
     private final List<PointValue> activityValues = new ArrayList<PointValue>();
     private final List<PointValue> annotationValues = new ArrayList<>();
     private final Pattern posPattern = Pattern.compile(".*?pos:([0-9.]+).*");
-    private final boolean hidePriming = Options.hidePrimingDoses();
     private static TrendLine noisePoly;
     public static double last_noise = -99999;
     public static double original_value = -99999;
@@ -229,8 +211,6 @@ public class BgGraphBuilder {
             loaded_start = start;
             loaded_end = end;
             bgReadings = BgReading.latestForGraph(numValues, start, end);
-            if (DexCollectionType.getDexCollectionType() == DexCollectionType.LibreReceiver)
-                Libre2RawValues = Libre2RawValue.latestForGraph(numValues, start, end);
             plugin_adjusted = false;
             smoother_adjusted = false;
         } finally {
@@ -250,7 +230,6 @@ public class BgGraphBuilder {
 
         bloodtests = BloodTest.latestForGraph(numValues, start, end);
         // get extra calibrations so we can use them for historical readings
-        calibrations = Calibration.latestForGraph(numValues, start - (3 * Constants.DAY_IN_MS), end);
         treatments = Treatments.latestForGraph(numValues, start, end + (120 * 60 * 1000));
         notifications = Notifications.latestForGraph(numValues, start, end);
         this.context = context;
@@ -308,44 +287,6 @@ public class BgGraphBuilder {
         Log.d(TAG, "Extend line size: " + points.size());
     }
 
-    private List<Line> predictiveLines() {
-        final List<Line> lines = new LinkedList<>();
-
-        final boolean g_prediction = Pref.getBooleanDefaultFalse("show_g_prediction");
-        final boolean medtrum = (DexCollectionType.getDexCollectionType() == DexCollectionType.Medtrum)
-                && Pref.getBooleanDefaultFalse("show_medtrum_secondary");
-        if (medtrum || g_prediction) {
-            final List<Prediction> plist = Prediction.latestForGraph(4000, loaded_start, loaded_end);
-            if (plist.size() > 0) {
-                final List<PointValue> gpoints = new ArrayList<>(plist.size());
-                final float yscale = !doMgdl ? (float) Constants.MGDL_TO_MMOLL : 1f;
-                for (Prediction p : plist) {
-                    switch (p.source) {
-                        case "EGlucoseRx":
-                            final PointValue point = new HPointValue(((double) (p.timestamp + (Constants.MINUTE_IN_MS * 10)) / FUZZER), (float) (p.glucose * yscale));
-                            gpoints.add(point);
-                            break;
-                        case "Medtrum2nd":
-                            final PointValue mpoint = new HPointValue(((double) p.timestamp / FUZZER), (float) (p.glucose * yscale));
-                            gpoints.add(mpoint);
-                            break;
-                    }
-                }
-
-                if (gpoints.size() > 0) {
-                    lines.add(new Line(gpoints)
-                            .setHasLabels(false)
-                            .setHasPoints(true)
-                            .setHasLines(false)
-                            .setPointRadius(1)
-                            .setColor(ChartUtils.darkenColor(ChartUtils.darkenColor(getCol(X.color_predictive)))));
-                }
-            }
-        }
-
-        return lines;
-    }
-
 
     private List<Line> basalLines() {
         final List<Line> basalLines = new ArrayList<>();
@@ -355,14 +296,14 @@ public class BgGraphBuilder {
         final double minAutoBasalHeight = 0;
         final double maxAutoBasalHeight = 20;
         final double autoBasalHeightSpan = maxAutoBasalHeight - minAutoBasalHeight;
-        final List<AutoBasalDelivery> autoBasalList = AutoBasalDelivery.latestForGraph(2000, loaded_start, loaded_end);
-        final double maxAutoBasalAmount = AutoBasalDelivery.getMaxAmount(loaded_start, loaded_end);
+        final List<Treatments> autoBasalList = Treatments.latestAutoBasalsForGraph(2000, loaded_start, loaded_end);
+        final double maxAutoBasalAmount = Treatments.getMaxAutoBasalsAmount(loaded_start, loaded_end);
 
         if (!autoBasalList.isEmpty()) {
             final List<PointValue> points = new ArrayList<>(autoBasalList.size() * 4);
             final List<PointValue> captions = new ArrayList<>(autoBasalList.size());
-            for (AutoBasalDelivery item : autoBasalList) {
-                final float yValue = (float)unitized(item.bolusAmount / maxAutoBasalAmount * autoBasalHeightSpan + minAutoBasalHeight);
+            for (Treatments item : autoBasalList) {
+                final float yValue = (float)unitized(item.insulinFastAmount / maxAutoBasalAmount * autoBasalHeightSpan + minAutoBasalHeight);
 
                 points.add(new HPointValue((double) (item.timestamp - 150000) / FUZZER, 0));
                 points.add(new HPointValue((double) (item.timestamp - 150000 + 10) / FUZZER, yValue));
@@ -370,7 +311,7 @@ public class BgGraphBuilder {
                 points.add(new HPointValue((double) (item.timestamp + 150000) / FUZZER, 0));
                 PointValueExtended caption = new PointValueExtended((double) (item.timestamp / FUZZER + 0.5), defaultMaxY + unitized(10) - yValue);
                 caption.real_timestamp = item.timestamp;
-                caption.note = (JoH.qs(item.bolusAmount, 3) + "u").replace(".0u", "u");
+                caption.note = (JoH.qs(item.insulinFastAmount, 3) + "u").replace(".0u", "u");
                 captions.add(caption);
             }
 
@@ -398,21 +339,21 @@ public class BgGraphBuilder {
         final double minAutocorrectHeight = 25;
         final double maxAutocorrectHeight = 40;
         final double autocorrectHeightSpan = maxAutocorrectHeight - minAutocorrectHeight;
-        final List<Autocorrection> autocorrectList = Autocorrection.latestForGraph(2000, loaded_start, loaded_end);
-        final double maxAutocorrectAmount = Autocorrection.getMaxAmount(loaded_start, loaded_end);
+        final List<Treatments> autocorrectList = Treatments.latestAutocorrectionsForGraph(2000, loaded_start, loaded_end);
+        final double maxAutocorrectAmount = Treatments.getMaxAutocorrectionsAmount(loaded_start, loaded_end);
 
         if (!autocorrectList.isEmpty()) {
             final List<PointValue> points = new ArrayList<>(autocorrectList.size() * 4);
             final List<PointValue> captions = new ArrayList<>(autocorrectList.size());
-            for (Autocorrection item : autocorrectList) {
-                final float yValue = (float)unitized(item.deliveredFastAmount / maxAutocorrectAmount * autocorrectHeightSpan + minAutocorrectHeight);
+            for (Treatments item : autocorrectList) {
+                final float yValue = (float)unitized(item.insulinFastAmount / maxAutocorrectAmount * autocorrectHeightSpan + minAutocorrectHeight);
                 points.add(new HPointValue((double) (item.timestamp - 50000) / FUZZER, 0));
                 points.add(new HPointValue((double) (item.timestamp - 50000 + 10) / FUZZER, yValue));
                 points.add(new HPointValue((double) (item.timestamp + 50000 - 10) / FUZZER, yValue));
                 points.add(new HPointValue((double) (item.timestamp + 50000) / FUZZER, 0));
                 PointValueExtended caption = new PointValueExtended((double) (item.timestamp / FUZZER + 0.5), defaultMaxY + unitized(10) - yValue);
                 caption.real_timestamp = item.timestamp;
-                caption.note = (JoH.qs(item.deliveredFastAmount, 3) + "u").replace(".0u", "u");
+                caption.note = (JoH.qs(item.insulinFastAmount, 3) + "u").replace(".0u", "u");
                 captions.add(caption);
             }
 
@@ -447,186 +388,6 @@ public class BgGraphBuilder {
         topMaskingLine.setHasPoints(false);
         topMaskingLine.setColor(Color.GRAY);
         return basalLines;
-    }
-
-    // line illustrating result from step counter
-    private List<Line> stepsLines() {
-        final List<Line> stepsLines = new ArrayList<>();
-        if ((prefs.getBoolean("use_pebble_health", true)
-                && prefs.getBoolean("show_pebble_movement_line", true))) {
-            final List<StepCounter> pmlist = StepCounter.deltaListFromMovementList(StepCounter.latestForGraph(2000, loaded_start, loaded_end));
-            PointValue last_point = null;
-            final boolean d = false;
-            if (d) Log.d(TAG, "Delta: pmlist size: " + pmlist.size());
-            final float yscale = doMgdl ? (float) Constants.MMOLL_TO_MGDL : 1f;
-            final float ypos = 6 * yscale; // TODO Configurable
-            //final long last_timestamp = pmlist.get(pmlist.size() - 1).timestamp;
-            final float MAX_SIZE = 50;
-            int flipper = 0;
-            int accumulator = 0;
-
-            for (StepCounter pm : pmlist) {
-                if (last_point == null) {
-                    last_point = new HPointValue((double) pm.timestamp / FUZZER, ypos);
-                } else {
-                    final PointValue this_point = new HPointValue((double) pm.timestamp / FUZZER, ypos);
-                    final double time_delta = this_point.getX() - last_point.getX();
-                    if (time_delta > 1) {
-
-                        final List<PointValue> new_points = new ArrayList<>();
-                        new_points.add(last_point);
-                        new_points.add(this_point);
-
-                        last_point = this_point; // update pointer
-                        final Line this_line = new Line(new_points);
-                        flipper ^= 1;
-                        this_line.setColor((flipper == 0) ? getCol(X.color_step_counter1) : getCol(X.color_step_counter2));
-
-                        float stroke_size = Math.min(MAX_SIZE, (float) Math.log1p(((double) (pm.metric + accumulator)) / time_delta) * 4);
-                        if (d) Log.d(TAG, "Delta stroke: " + stroke_size);
-                        this_line.setStrokeWidth((int) stroke_size);
-
-                        if (d)
-                            Log.d(TAG, "Delta-Line: " + JoH.dateTimeText(pm.timestamp) + " time delta: " + time_delta + "  total: " + (pm.metric + accumulator) + " lsize: " + stroke_size + " / " + (int) stroke_size);
-                        accumulator = 0;
-
-                        if (this_line.getStrokeWidth() > 0) {
-                            stepsLines.add(this_line);
-                            this_line.setHasPoints(false);
-                            this_line.setHasLines(true);
-                        } else {
-                            if (d) Log.d(TAG, "Delta skip: " + JoH.dateTimeText(pm.timestamp));
-                        }
-                        if (d)
-                            Log.d(TAG, "Delta-List: " + JoH.dateTimeText(pm.timestamp) + " time delta: " + time_delta + "  val: " + pm.metric);
-                    } else {
-                        accumulator += pm.metric;
-                        if (d)
-                            Log.d(TAG, "Delta: added: " + JoH.dateTimeText(pm.timestamp) + " metric: " + pm.metric + " to accumulator: " + accumulator);
-                    }
-                }
-            }
-            if (d)
-                Log.d(TAG, "Delta returning stepsLines: " + stepsLines.size() + " final accumulator remaining: " + accumulator);
-        }
-        return stepsLines;
-    }
-
-    // line illustrating result from heartrate monitor
-    private List<Line> heartLines() {
-        final boolean d = false;
-        final List<Line> heartLines = new ArrayList<>();
-        if ((prefs.getBoolean("use_pebble_health", true)
-                && prefs.getBoolean("show_pebble_movement_line", true))) {
-
-            final List<HeartRate> heartRates = HeartRate.latestForGraph(2000, loaded_start, loaded_end);
-
-//            final long condenseCutoffMs = Pref.getBooleanDefaultFalse("smooth_heartrate") ? (10 * Constants.MINUTE_IN_MS) : FUZZER;
-            final long condenseCutoffMs = Pref.getBooleanDefaultFalse("smooth_heartrate") ? (10 * Constants.MINUTE_IN_MS) : 1000 * 30 * 5;
-            final List<HeartRate> condensedHeartRateList = new ArrayList<>();
-            for (HeartRate thisHeartRateRecord : heartRates) {
-                final int condensedListSize = condensedHeartRateList.size();
-                if (condensedListSize > 0) {
-                    final HeartRate tailOfList = condensedHeartRateList.get(condensedListSize - 1);
-                    // if its close enough to merge then average with previous
-                    if ((thisHeartRateRecord.timestamp - tailOfList.timestamp) < condenseCutoffMs) {
-                        tailOfList.bpm = (tailOfList.bpm += thisHeartRateRecord.bpm) / 2;
-                    } else {
-                        // not close enough to merge
-                        condensedHeartRateList.add(thisHeartRateRecord);
-                    }
-                } else {
-                    condensedHeartRateList.add(thisHeartRateRecord); // first record
-                }
-            }
-
-            if (d) Log.d(TAG, "heartrate before size: " + heartRates.size());
-            if (d) Log.d(TAG, "heartrate after c size: " + condensedHeartRateList.size());
-            //final float yscale = doMgdl ? (float) Constants.MMOLL_TO_MGDL : 1f;
-            final float yscale = doMgdl ? 10f : 1f;
-            float ypos; //
-
-            final List<PointValue> new_points = new ArrayList<>();
-            if (d) UserError.Log.d("HEARTRATE", "Size " + condensedHeartRateList.size());
-
-            for (HeartRate pm : condensedHeartRateList) {
-                if (d)
-                    UserError.Log.d("HEARTRATE: ", JoH.dateTimeText(pm.timestamp) + " \tHR: " + pm.bpm);
-
-                ypos = (pm.bpm * yscale) / 10;
-                final PointValue this_point = new HPointValue((double) pm.timestamp / FUZZER, ypos);
-                new_points.add(this_point);
-            }
-            final Line macroHeartRateLine = new Line(new_points);
-            for (Line this_line : autoSplitLine(macroHeartRateLine, 30)) {
-                this_line.setColor(getCol(X.color_heart_rate1));
-                this_line.setStrokeWidth(6);
-                this_line.setHasPoints(false);
-                this_line.setHasLines(true);
-                this_line.setCubic(true);
-                heartLines.add(this_line);
-            }
-        }
-        return heartLines;
-    }
-
-
-    private List<Line> motionLine() {
-
-        final ArrayList<ActivityRecognizedService.motionData> motion_datas = ActivityRecognizedService.getForGraph((long) start_time * FUZZER, (long) end_time * FUZZER);
-        List<PointValue> linePoints = new ArrayList<>();
-
-        final float ypos = (float) highMark;
-        int last_type = -9999;
-
-
-        final ArrayList<Line> line_array = new ArrayList<>();
-
-        Log.d(TAG, "Motion datas size: " + motion_datas.size());
-        if (motion_datas.size() > 0) {
-            motion_datas.add(new ActivityRecognizedService.motionData((long) end_time * FUZZER, DetectedActivity.UNKNOWN)); // terminator
-
-            for (ActivityRecognizedService.motionData item : motion_datas) {
-
-                Log.d(TAG, "Motion detail: " + JoH.dateTimeText(item.timestamp) + " activity: " + item.activity);
-                if ((last_type != -9999) && (last_type != item.activity)) {
-                    extend_line(linePoints, (double)item.timestamp / FUZZER, ypos);
-                    Line new_line = new Line(linePoints);
-                    new_line.setHasLines(true);
-                    new_line.setPointRadius(0);
-                    new_line.setStrokeWidth(1);
-                    new_line.setAreaTransparency(40);
-                    new_line.setHasPoints(false);
-                    new_line.setFilled(true);
-
-                    switch (last_type) {
-                        case DetectedActivity.IN_VEHICLE:
-                            new_line.setColor(Color.parseColor("#70445599"));
-                            break;
-                        case DetectedActivity.ON_FOOT:
-                            new_line.setColor(Color.parseColor("#70995599"));
-                            break;
-                    }
-                    line_array.add(new_line);
-                    linePoints = new ArrayList<>();
-                }
-                //current
-                switch (item.activity) {
-                    case DetectedActivity.ON_FOOT:
-                    case DetectedActivity.IN_VEHICLE:
-                        extend_line(linePoints, (double)(item.timestamp / FUZZER), ypos);
-                        last_type = item.activity;
-                        break;
-
-                    default:
-                        // do nothing?
-                        break;
-                }
-            }
-
-        }
-        Log.d(TAG, "Motion array size: " + line_array.size());
-        return line_array;
     }
 
 
@@ -708,14 +469,7 @@ public class BgGraphBuilder {
             addBgReadingValues(simple);
 
             if (!simple) {
-                // motion lines
-                if (Pref.getBoolean("motion_tracking_enabled", false) && Pref.getBoolean("plot_motion", false)) {
-                    lines.addAll(motionLine());
-                }
                 lines.addAll(basalLines());
-                lines.addAll(heartLines());
-                lines.addAll(stepsLines());
-                lines.addAll(predictiveLines());
             }
 
             Line[] calib = calibrationValuesLine();
@@ -735,21 +489,11 @@ public class BgGraphBuilder {
             if (prefs.getBoolean("show_recent_average_line", true)) {
                 if (avg1value > 0) lines.add(avg1Line());
             }
-            if (prefs.getBoolean("show_target_line", false)) {
-                lines.add(idealLine());
-            }
 
             lines.add(treatments[3]); // activity
             lines.add(treatments[5]); // predictive
             lines.add(treatments[6]); // cob
             lines.add(treatments[7]); // poly predict
-
-
-            if (prefs.getBoolean("show_libre_trend_line", false)) {
-                if (DexCollectionType.hasLibre()) {
-                    lines.add(libreTrendLine());
-                }
-            }
 
             lines.add(minShowLine());
             lines.add(maxShowLine());
@@ -1149,7 +893,7 @@ public class BgGraphBuilder {
 
             final boolean show_pseudo_filtered = prefs.getBoolean("show_pseudo_filtered", false);
             final RollingAverage rollingAverage = show_pseudo_filtered ? new RollingAverage(2) : null;
-            final long rollingOffset = show_pseudo_filtered ? (long) (rollingAverage.getPeak() * DEXCOM_PERIOD) : 0;
+            final long rollingOffset = show_pseudo_filtered ? (long) (rollingAverage.peak * DEXCOM_PERIOD) : 0;
 
 
             long highest_bgreading_timestamp = -1; // most recent bgreading timestamp we have
@@ -1192,54 +936,19 @@ public class BgGraphBuilder {
             double last_calibration = 0;
             double last_bloodtest = 0;
 
-            if (doMgdl) {
-                Profile.scale_factor = Constants.MMOLL_TO_MGDL;
-            } else {
-                Profile.scale_factor = 1;
-            }
-
             final long close_to_side_time = (long) (end_time * FUZZER) - (Constants.MINUTE_IN_MS * 10);
-
-
-            // enumerate calibrations
-            try {
-                for (Calibration calibration : calibrations) {
-                    if (calibration.timestamp < (start_time * FUZZER)) break;
-                    if (calibration.slope_confidence != 0) {
-                        final long adjusted_timestamp = (calibration.timestamp + (AddCalibration.estimatedInterstitialLagSeconds * 1000));
-                        final PointValueExtended this_point = new PointValueExtended((double) (adjusted_timestamp / FUZZER), unitized(calibration.bg));
-                        if (adjusted_timestamp >= close_to_side_time) {
-                            predictivehours = Math.max(predictivehours, 1);
-                        }
-                        this_point.real_timestamp = calibration.timestamp;
-                        calibrationValues.add(this_point);
-                        if (calibration.timestamp > last_calibration) {
-                            last_calibration = calibration.timestamp;
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Exception doing calibration values in bggraphbuilder: " + e.toString());
-            }
 
 
             // enumerate blood tests
             try {
                 for (BloodTest bloodtest : bloodtests) {
-                    final long adjusted_timestamp = (bloodtest.timestamp + (AddCalibration.estimatedInterstitialLagSeconds * 1000));
+                    final long adjusted_timestamp = (bloodtest.timestamp + (estimatedInterstitialLagSeconds * 1000));
                     final PointValueExtended this_point = new PointValueExtended((double) (adjusted_timestamp / FUZZER), unitized(bloodtest.mgdl))
                             .setType(PointValueExtended.BloodTest)
                             .setUUID(bloodtest.uuid);
                     this_point.real_timestamp = bloodtest.timestamp;
-                    // exclude any which have been used for calibration
-                    boolean matches = false;
-                    for (PointValue calibration_point : calibrationValues) {
-                        if ((abs(calibration_point.getX() - this_point.getX())) <= ((AddCalibration.estimatedInterstitialLagSeconds * 1000) / FUZZER) && (calibration_point.getY() == calibration_point.getY())) {
-                            matches = true;
-                            break;
-                        }
-                    }
-                    if (!matches) bloodTestValues.add(this_point);
+
+                    bloodTestValues.add(this_point);
                     if (bloodtest.timestamp > last_bloodtest) {
                         last_bloodtest = bloodtest.timestamp;
                     }
@@ -1257,56 +966,13 @@ public class BgGraphBuilder {
             final boolean interpret_raw = prefs.getBoolean("interpret_raw", false);
             final boolean show_filtered = prefs.getBoolean("show_filtered_curve", false) && has_filtered;
             final boolean predict_lows = prefs.getBoolean("predict_lows", true);
-            final boolean show_plugin = prefs.getBoolean("plugin_plot_on_graph", false);
             final boolean glucose_from_plugin = prefs.getBoolean("display_glucose_from_plugin", false);
             final boolean illustrate_backfilled_data = prefs.getBoolean("illustrate_backfilled_data", false);
             final boolean illustrate_remote_data = prefs.getBoolean("illustrate_remote_data", false);
 
-            if ((Home.get_follower()) && (bgReadings.size() < 3)) {
-                GcmActivity.requestBGsync();
-            }
-
-            final CalibrationAbstract plugin = (show_plugin) ? PluggableCalibration.getCalibrationPluginFromPreferences() : null;
-            CalibrationAbstract.CalibrationData cd = (plugin != null) ? plugin.getCalibrationData() : null;
-            int cdposition = 0;
-
-            if ((glucose_from_plugin) && (cd != null)) {
-                plugin_adjusted = true; // plugin will be adjusting data
-            }
-
             for (final BgReading bgReading : bgReadings) {
                 // jamorham special
 
-                if ((cd != null) && (calibrations.size() > 0)) {
-
-                    while ((bgReading.timestamp < calibrations.get(cdposition).timestamp) || (calibrations.get(cdposition).slope == 0)) {
-
-                        Log.d(TAG, "BG reading earlier than calibration at index: " + cdposition + "  " + JoH.dateTimeText(bgReading.timestamp) + " cal: " + JoH.dateTimeText(calibrations.get(cdposition).timestamp));
-
-                        if (cdposition < calibrations.size() - 1) {
-                            cdposition++;
-                            //  cd = (plugin != null) ? plugin.getCalibrationData(calibrations.get(cdposition).timestamp) : null;
-                            final CalibrationAbstract.CalibrationData oldcd = cd;
-                            cd = plugin.getCalibrationData(calibrations.get(cdposition).timestamp);
-                            if (cd == null) {
-                                Log.d(TAG, "cd went to null during adjustment - likely graph spans multiple sensors");
-                                cd = oldcd;
-                            }
-                            Log.d(TAG, "Now using calibration from: " + JoH.dateTimeText(calibrations.get(cdposition).timestamp) + " slope: " + cd.slope + " intercept: " + cd.intercept);
-                        } else {
-                            Log.d(TAG, "No more calibrations to choose from");
-                            break;
-                        }
-                    }
-                }
-
-                // swap main and plugin plot if display glucose is from plugin
-                if ((glucose_from_plugin) && (cd != null)) {
-                    pluginValues.add(new HPointValue((double) (bgReading.timestamp / FUZZER), (float) unitized(bgReading.calculated_value)));
-                    // recalculate from plugin - beware floating / cached references!
-                    bgReading.calculated_value = plugin.getGlucoseFromBgReading(bgReading, cd);
-                    bgReading.filtered_calculated_value = plugin.getGlucoseFromFilteredBgReading(bgReading, cd);
-                }
 
                 if ((show_filtered) && (bgReading.filtered_calculated_value > 0) && (bgReading.filtered_calculated_value != bgReading.calculated_value)) {
                     filteredValues.add(new HPointValue((double) ((bgReading.timestamp - timeshift) / FUZZER), (float) unitized(Math.min(bgReading.filtered_calculated_value, BgReading.BG_READING_MAXIMUM_VALUE))));
@@ -1320,9 +986,6 @@ public class BgGraphBuilder {
                 if ((interpret_raw && (bgReading.raw_calculated > 0))) {
                     rawInterpretedValues.add(new HPointValue((double) (bgReading.timestamp / FUZZER), (float) unitized(Math.min(bgReading.raw_calculated, BgReading.BG_READING_MAXIMUM_VALUE))));
                 }
-                if ((!glucose_from_plugin) && (plugin != null) && (cd != null)) {
-                    pluginValues.add(new HPointValue((double) (bgReading.timestamp / FUZZER), (float) unitized(Math.min(plugin.getGlucoseFromBgReading(bgReading, cd), BgReading.BG_READING_MAXIMUM_VALUE))));
-                }
                 if (bgReading.ignoreForStats) {
                     if (unitized(bgReading.calculated_value) <= defaultMaxY) { // Don't display value marked as bad if greater than the default Max (defaultMaxY)
                         badValues.add(new HPointValue((double) (bgReading.timestamp / FUZZER), (float) unitized(bgReading.calculated_value)));
@@ -1332,7 +995,7 @@ public class BgGraphBuilder {
                 } else if (unitized(bgReading.calculated_value) >= highMark) {
                     highValues.add(new HPointValue((double) (bgReading.timestamp / FUZZER), (float) unitized(bgReading.calculated_value)));
                 } else if (unitized(bgReading.calculated_value) >= lowMark) {
-                    val ppx = new HPointValue((double) (bgReading.timestamp / FUZZER), (float) unitized(bgReading.calculated_value));
+                    HPointValue ppx = new HPointValue((double) (bgReading.timestamp / FUZZER), (float) unitized(bgReading.calculated_value));
                     inRangeValues.add(ppx);
                 } else if (bgReading.calculated_value >= 40) {
                     lowValues.add(new HPointValue((double) (bgReading.timestamp / FUZZER), (float) unitized(bgReading.calculated_value)));
@@ -1399,17 +1062,6 @@ public class BgGraphBuilder {
 
             }
 
-            try {
-                if (DexCollectionType.getDexCollectionType() == DexCollectionType.LibreReceiver && prefs.getBoolean("Libre2_showRawGraph", false)) {
-                    for (final Libre2RawValue bgLibre : Libre2RawValues) {
-                        if (bgLibre.glucose > 0) {
-                            rawInterpretedValues.add(new HPointValue((double) (bgLibre.timestamp / FUZZER), (float) unitized(bgLibre.glucose)));
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                Log.wtf(TAG, "Exception to generate Raw-Graph Libre2");
-            }
             if (avg1counter > 0) {
                 avg1value = avg1value / avg1counter;
             }
@@ -1512,13 +1164,12 @@ public class BgGraphBuilder {
                 low_occurs_at = -1;
                 try {
                     if ((predict_lows) && (prediction_enabled) && (poly != null)) {
-                        final double offset = ActivityRecognizedService.raise_limit_due_to_vehicle_mode() ? unitized(ActivityRecognizedService.getVehicle_mode_adjust_mgdl()) : 0;
                         final double plow_now = JoH.ts();
                         double plow_timestamp = plow_now + (1000 * 60 * 99); // max look-ahead
                         double polyPredicty = poly.predict(plow_timestamp);
                         Log.d(TAG, "Low predictor at max lookahead is: " + JoH.qs(polyPredicty));
                         low_occurs_at_processed_till_timestamp = highest_bgreading_timestamp; // store that we have processed up to this timestamp
-                        if (polyPredicty <= (lowMark + offset)) {
+                        if (polyPredicty <= (lowMark)) {
                             low_occurs_at = plow_timestamp;
                             final double lowMarkIndicator = (lowMark - (lowMark / 4));
                             //if (d) Log.d(TAG, "Poly predict: "+JoH.qs(polyPredict)+" @ "+JoH.qsz(iob.timestamp));
@@ -1526,7 +1177,7 @@ public class BgGraphBuilder {
 //                                plow_timestamp = plow_timestamp - FUZZER;
                                 plow_timestamp = plow_timestamp - (1000 * 30 * 5); // TODO check this! 2.5 minute accuracy on dots and low mark intercept for low_occurs at
                                 polyPredicty = poly.predict(plow_timestamp);
-                                if (polyPredicty > (lowMark + offset)) {
+                                if (polyPredicty > (lowMark)) {
                                     PointValue zv = new HPointValue((double) (plow_timestamp / FUZZER), (float) polyPredicty);
                                     polyBgValues.add(zv);
                                 } else {
@@ -1618,7 +1269,7 @@ public class BgGraphBuilder {
                                 BitmapLoader.loadAndSetKey(pv, R.drawable.mini_blue, 0);
                                 //pv.setBitmapTint(getCol(X.color_smb_icon));
                                 pv.setBitmapScale((float) (1f)); // 0.1U == 100% 0.2U = 150%
-                                pv.note = "SMB: " + JoH.qs(treatment.insulin, 2) + "U" + (treatment.notes != null ? " " + treatment.notes : "");
+                                pv.note = "SMB: " + JoH.qs(treatment.getTotalInsulinAmount(), 2) + "U" + (treatment.notes != null ? " " + treatment.notes : "");
                                 pv.real_timestamp = treatment.timestamp;
                                 smbValues.add(pv);
                                 continue;
@@ -1628,8 +1279,8 @@ public class BgGraphBuilder {
                         }
 
                         double height = 6 * bgScale;
-                        if (treatment.insulin > 0)
-                            height = treatment.insulin; // some scaling needed I think
+                        if (treatment.getTotalInsulinAmount() > 0)
+                            height = treatment.getTotalInsulinAmount(); // some scaling needed I think
                         if (height > highMark) height = highMark;
                         if (height < lowMark) height = lowMark;
                         final PointValueExtended pv = new PointValueExtended((double) (treatment.timestamp / FUZZER), height);
@@ -1638,10 +1289,10 @@ public class BgGraphBuilder {
                             pv.setType(PointValueExtended.AdjustableDose).setUUID(treatment.uuid);
                         }
                         String mylabel = "";
-                        if (treatment.insulin > 0) {
+                        if (treatment.getTotalInsulinAmount() > 0) {
                             if (mylabel.length() > 0)
                                 mylabel = mylabel + System.getProperty("line.separator");
-                            mylabel = mylabel + (JoH.qs(treatment.insulin, 2) + "u").replace(".0u", "u");
+                            mylabel = mylabel + (JoH.qs(treatment.getTotalInsulinAmount(), 2) + "u").replace(".0u", "u");
                         }
                         if (treatment.carbs > 0) {
                             if (mylabel.length() > 0)
@@ -1649,18 +1300,6 @@ public class BgGraphBuilder {
                             mylabel = mylabel + (JoH.qs(treatment.carbs, 1) + "g").replace(".0g", "g");
                         }
                         pv.setLabel(mylabel); // standard label
-
-                        // show basal dose as blue syringe icon
-                        if (treatment.isBasalOnly()) {
-                            //pv.setBitmapScale((float) (0.5f + (treatment.insulin * 5f))); // 0.1U == 100% 0.2U = 150%
-                            BitmapLoader.loadAndSetKey(pv, R.drawable.ic_eyedropper_variant_grey600_24dp, 0);
-                            pv.setBitmapTint(getCol(X.color_basal_tbr));
-                            final Pair<Float, Float> yPositions = GraphTools.bestYPosition(bgReadings, treatment.timestamp, doMgdl, false, highMark, 27d);
-                            pv.set(treatment.timestamp / FUZZER, yPositions.first);
-                            pv.note = treatment.getBestShortText();
-                            iconValues.add(pv);
-                            continue;
-                        }
 
                         //Log.d(TAG, "watchkeypad pv.mylabel: " + mylabel);
                         if ((treatment.notes != null) && (treatment.notes.length() > 0)) {
@@ -1795,31 +1434,8 @@ public class BgGraphBuilder {
                     BgReading mylastbg = bgReadings.get(0);
                     long lasttimestamp = 0;
 
-                    // this can be optimised to oncreate and onchange
-                    Profile.reloadPreferencesIfNeeded(prefs); // TODO handle this better now we use profile time blocks
-
-
-                    try {
-                        if (mylastbg != null) {
-                            if (doMgdl) {
-                                predictedbg = mylastbg.calculated_value;
-                            } else {
-                                predictedbg = mylastbg.calculated_value_mmol();
-                            }
-                            //if (d) Log.d(TAG, "Starting prediction with bg of: " + JoH.qs(predictedbg));
-                            lasttimestamp = mylastbg.timestamp / FUZZER;
-
-                            if (d)
-                                Log.d(TAG, "Starting prediction with bg of: " + JoH.qs(predictedbg) + " secs ago: " + (JoH.ts() - mylastbg.timestamp) / 1000);
-                        } else {
-                            Log.i(TAG, "COULD NOT GET LAST BG READING FOR PREDICTION!!!");
-                        }
-                    } catch (Exception e) {
-                        // could not get a bg reading
-                    }
 
                     final double iobscale = 1 * bgScale;
-                    final double cobscale = 0.2 * bgScale;
                     final double initial_predicted_bg = predictedbg;
                     final double relaxed_predicted_bg_limit = initial_predicted_bg * 1.20;
                     final double cob_insulin_max_draw_value = highMark * 1.20;
@@ -1835,85 +1451,26 @@ public class BgGraphBuilder {
                         Log.d(TAG, "initial Fuzzed end timestamp: " + android.text.format.DateFormat.format("yyyy-MM-dd HH:mm:ss", fuzzed_timestamp * FUZZER));
                     if (d)
                         Log.d(TAG, "initial Fuzzed start timestamp: " + android.text.format.DateFormat.format("yyyy-MM-dd HH:mm:ss", (long) start_time * FUZZER));
-                    if ((iobinfo != null) && (prediction_enabled) && (simulation_enabled)) {
+                    if ((iobinfo != null) && (simulation_enabled)) {
 
                         double predict_weight = 0.1;
                         boolean iob_shown_already = false;
                         for (Iob iob : iobinfo) {
 
                             //double activity = iob.activity;
-                            if ((iob.iob > 0) || (iob.cob > 0) || (iob.jActivity > 0) || (iob.jCarbImpact > 0)) {
+                            if ((iob.iob > 0)) {
                                 fuzzed_timestamp = iob.timestamp / FUZZER;
                                 if (d) Log.d(TAG, "iob timestamp: " + iob.timestamp);
-                                if (iob.iob > Profile.minimum_shown_iob) {
+                                if (iob.iob > 0.005) {
                                     double height = iob.iob * iobscale;
                                     if (height > cob_insulin_max_draw_value)
                                         height = cob_insulin_max_draw_value;
                                     PointValue pv = new HPointValue((double) fuzzed_timestamp, (float) height);
                                     iobValues.add(pv);
-                                    double activityheight = iob.jActivity * 3; // currently scaled by profile
-                                    if (activityheight > cob_insulin_max_draw_value)
-                                        activityheight = cob_insulin_max_draw_value;
-                                    PointValue av = new HPointValue((double) fuzzed_timestamp, (float) activityheight);
-                                    activityValues.add(av);
                                 }
 
-                                if (iob.cob > 0) {
-                                    double height = iob.cob * cobscale;
-                                    if (height > cob_insulin_max_draw_value)
-                                        height = cob_insulin_max_draw_value;
-                                    PointValue pv = new HPointValue((double) fuzzed_timestamp, (float) height);
-                                    if (d)
-                                        Log.d(TAG, "Cob total record: " + JoH.qs(height) + " " + JoH.qs(iob.cob) + " " + Double.toString(pv.getY()) + " @ timestamp: " + Long.toString(iob.timestamp));
-                                    cobValues.add(pv); // warning should not be hardcoded
-                                }
 
-                                // momentum curve
-                                // do we actually need to calculate this within the loop - can we use only the last datum?
-                                if (fuzzed_timestamp > (lasttimestamp)) {
-                                    double polyPredict = 0;
-                                    if (poly != null) {
-                                        try {
-                                            polyPredict = poly.predict(iob.timestamp);
-                                            if (d)
-                                                Log.d(TAG, "Poly predict: " + JoH.qs(polyPredict) + " @ " + JoH.dateTimeText(iob.timestamp));
-                                            if (show_moment_working_line) {
-                                                if (((polyPredict < highMark) || (polyPredict < initial_predicted_bg)) && (polyPredict > 0)) {
-                                                    PointValue zv = new HPointValue((double) fuzzed_timestamp, (float) polyPredict);
-                                                    polyBgValues.add(zv);
-                                                }
-                                            }
-                                        } catch (Exception e) {
-                                            Log.e(TAG, "Got exception with poly predict: " + e.toString());
-                                        }
-                                    }
-                                    if (d)
-                                        Log.d(TAG, "Processing prediction: before: " + JoH.qs(predictedbg) + " activity: " + JoH.qs(iob.jActivity) + " jcarbimpact: " + JoH.qs(iob.jCarbImpact));
-                                    predictedbg -= iob.jActivity; // lower bg by current insulin activity
-                                    predictedbg += iob.jCarbImpact;
-
-                                    double predictedbg_final = predictedbg;
-                                    // add momentum characteristics if we have them
-                                    final boolean momentum_smoothing = true;
-                                    if ((predict_use_momentum) && (polyPredict > 0)) {
-                                        predictedbg_final = ((predictedbg * predict_weight) + polyPredict) / (predict_weight + 1);
-                                        if (momentum_smoothing) predictedbg = predictedbg_final;
-
-                                        if (d)
-                                            Log.d(TAG, "forecast predict_weight: " + JoH.qs(predict_weight));
-                                    }
-                                    predict_weight = predict_weight * 2.5; // from 0-infinity - // TODO account for step!!!
-                                    // we should pull in actual graph upper and lower limits here
-                                    if (((predictedbg_final < cob_insulin_max_draw_value) || (predictedbg_final < relaxed_predicted_bg_limit)) && (predictedbg_final > 0)) {
-                                        PointValue zv = new HPointValue((double) fuzzed_timestamp, (float) predictedbg_final);
-                                        predictedBgValues.add(zv);
-                                    }
-                                }
-                                if (fuzzed_timestamp > end_time) {
-                                    predictivehours = (int) (((fuzzed_timestamp - end_time) * FUZZER) / (1000 * 60 * 60)) + 1; // round up to nearest future hour - timestamps in minutes here
-                                    if (d)
-                                        Log.d(TAG, "Predictive hours updated to: " + predictivehours);
-                                } else {
+                                if (fuzzed_timestamp <= end_time) {
                                     //KS Log.d(TAG, "IOB DEBUG: " + (fuzzed_timestamp - end_time) + " " + iob.iob);
                                     if (!iob_shown_already && (abs(fuzzed_timestamp - end_time) < ((Constants.MINUTE_IN_MS * 5) / FUZZER)) && (iob.iob > 0)) {
                                         iob_shown_already = true;
@@ -1928,7 +1485,7 @@ public class BgGraphBuilder {
                                         df.setMaximumFractionDigits(2);
                                         df.setMinimumIntegerDigits(1);
                                         //  iv.setLabel("IoB: " + df.format(iob.iob));
-                                        val iobformatted = df.format(iob.iob);
+                                        String iobformatted = df.format(iob.iob);
                                         keyStore.putS("last_iob", iobformatted);
                                         keyStore.putL("last_iob_timestamp", JoH.tsl());
                                         Home.updateStatusLine("iob", iobformatted);
@@ -1946,42 +1503,6 @@ public class BgGraphBuilder {
                         // calculate bolus or carb adjustment - these should have granularity for injection / pump and thresholds
                     } else {
                         if (d) Log.i(TAG, "iobinfo was null");
-                    }
-
-                    double[] evaluation;
-                    if (prediction_enabled && simulation_enabled) {
-                        // if (doMgdl) {
-                        // These routines need to understand how the profile is defined to use native instead of scaled
-                        evaluation = Profile.evaluateEndGameMmol(predictedbg, lasttimestamp * FUZZER, end_time * FUZZER);
-                        // } else {
-                        //    evaluation = Profile.evaluateEndGameMmol(predictedbg, lasttimestamp * FUZZER, end_time * FUZZER);
-
-                        // }
-
-                        String bwp_update = "";
-                        keyStore.putL("bwp_last_insulin_timestamp", -1);
-                        if (d)
-                            Log.i(TAG, "Predictive BWP: Current prediction: " + JoH.qs(predictedbg) + " / carbs: " + JoH.qs(evaluation[0]) + " insulin: " + JoH.qs(evaluation[1]));
-                        if (!BgReading.isDataStale()) {
-                            if (((low_occurs_at < 1) || Pref.getBooleanDefaultFalse("always_show_bwp")) && (Pref.getBooleanDefaultFalse("show_bwp"))) {
-                                if (evaluation[0] > Profile.minimum_carb_recommendation) {
-                                    //PointValue iv = new HPointValue((double) fuzzed_timestamp, (float) (10 * bgScale));
-                                    //iv.setLabel("+Carbs: " + JoH.qs(evaluation[0], 0));
-                                    bwp_update = "\u224F" + " Carbs: " + JoH.qs(evaluation[0], 0); // TODO I18n
-                                    //annotationValues.add(iv); // needs to be different value list so we can make annotation nicer
-                                } else if (evaluation[1] > Profile.minimum_insulin_recommendation) {
-                                    //PointValue iv = new HPointValue((double) fuzzed_timestamp, (float) (11 * bgScale));
-                                    //iv.setLabel("+Insulin: " + JoH.qs(evaluation[1], 1));
-                                    keyStore.putS("bwp_last_insulin", JoH.qs(evaluation[1], 1) + ((low_occurs_at > 0) ? ("!") : ""));
-                                    keyStore.putL("bwp_last_insulin_timestamp", JoH.tsl());
-                                    bwp_update = "\u224F" + " Insulin: " + JoH.qs(evaluation[1], 1) + ((low_occurs_at > 0) ? (" " + "\u26A0") : ""); // warning symbol // TODO I18n
-                                    //annotationValues.add(iv); // needs to be different value list so we can make annotation nicer
-                                }
-                            }
-                        }
-                        keyStore.putS("last_bwp", bwp_update);
-                        keyStore.putL("last_bwp_timestamp", JoH.tsl());
-                        Home.updateStatusLine("bwp", bwp_update); // always send so we can blank if needed
                     }
 
                 } catch (Exception e) {
@@ -2044,20 +1565,6 @@ public class BgGraphBuilder {
         myLine.setStrokeWidth(1);
         myLine.setColor(getCol(X.color_average2_line));
         myLine.setPathEffect(new DashPathEffect(new float[]{30.0f, 10.0f}, 0));
-        myLine.setAreaTransparency(50);
-        return myLine;
-    }
-
-    public Line idealLine() {
-        // if profile has more than 1 target bg value then we need to iterate those and plot them for completeness
-        List<PointValue> myLineValues = new ArrayList<PointValue>();
-        myLineValues.add(new HPointValue((double) start_time, (float) Profile.getTargetRangeInUnits(start_time)));
-        myLineValues.add(new HPointValue((double) predictive_end_time, (float) Profile.getTargetRangeInUnits(predictive_end_time)));
-        Line myLine = new Line(myLineValues);
-        myLine.setHasPoints(false);
-        myLine.setStrokeWidth(1);
-        myLine.setColor(getCol(X.color_target_line));
-        myLine.setPathEffect(new DashPathEffect(new float[]{5f, 5f}, 0));
         myLine.setAreaTransparency(50);
         return myLine;
     }
@@ -2139,18 +1646,6 @@ public class BgGraphBuilder {
         minShowLine.setHasPoints(false);
         minShowLine.setHasLines(false);
         return minShowLine;
-    }
-
-    private Line libreTrendLine() {
-        final List<PointValue> libreTrendValues = LibreTrendGraph.getTrendDataPoints(doMgdl, (long) (start_time * FUZZER), (long) (end_time * FUZZER));
-        final Line line = new Line(libreTrendValues);
-        line.setHasPoints(true);
-        line.setHasLines(false);
-        line.setCubic(false);
-        line.setStrokeWidth(2);
-        line.setPointRadius(1);
-        line.setColor(Color.argb(240, 25, 206, 244)); // temporary pending preference
-        return line;
     }
 
     private List<Line> smbLines() { // Trójkąty bolusów do 0.3u (smbValues)
@@ -2374,22 +1869,18 @@ public class BgGraphBuilder {
     }
 
     public String unitizedDeltaString(boolean showUnit, boolean highGranularity) {
-        return unitizedDeltaString(showUnit, highGranularity, Home.get_follower());
+        return unitizedDeltaString(showUnit, highGranularity, doMgdl);
     }
 
-    public String unitizedDeltaString(boolean showUnit, boolean highGranularity, boolean is_follower) {
-        return unitizedDeltaString(showUnit, highGranularity, is_follower, doMgdl);
-    }
+    public static String unitizedDeltaString(boolean showUnit, boolean highGranularity, boolean doMgdl) {
 
-    public static String unitizedDeltaString(boolean showUnit, boolean highGranularity, boolean is_follower, boolean doMgdl) {
-
-        List<BgReading> last2 = BgReading.latest(2, is_follower);
+        List<BgReading> last2 = BgReading.latest(2);
         if (last2.size() < 2 || last2.get(0).timestamp - last2.get(1).timestamp > 20 * 60 * 1000) {
             // don't show delta if there are not enough values or the values are more than 20 mintes apart
             return "???";
         }
 
-        double value = BgReading.currentSlope(is_follower) * 5 * 60 * 1000;
+        double value = BgReading.currentSlope() * 5 * 60 * 1000;
 
         return unitizedDeltaStringRaw(showUnit, highGranularity, value, doMgdl);
     }

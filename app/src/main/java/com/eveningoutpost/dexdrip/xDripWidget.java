@@ -16,14 +16,12 @@ import android.widget.RemoteViews;
 
 import com.eveningoutpost.dexdrip.models.BgReading;
 import com.eveningoutpost.dexdrip.models.JoH;
-import com.eveningoutpost.dexdrip.models.Sensor;
 import com.eveningoutpost.dexdrip.models.UserError.Log;
 import com.eveningoutpost.dexdrip.utilitymodels.BgGraphBuilder;
 import com.eveningoutpost.dexdrip.utilitymodels.BgSparklineBuilder;
 import com.eveningoutpost.dexdrip.utilitymodels.ColorCache;
 import com.eveningoutpost.dexdrip.utilitymodels.Pref;
 import com.eveningoutpost.dexdrip.utilitymodels.StatusLine;
-import com.eveningoutpost.dexdrip.calibrations.PluggableCalibration;
 
 import java.text.MessageFormat;
 import java.util.Date;
@@ -153,10 +151,6 @@ public class xDripWidget extends AppWidgetProvider {
                         extrastring = " \u26A0"; // warning symbol !
 
                     }
-                    // TODO functionize this check as it is in multiple places
-                    if (Pref.getBooleanDefaultFalse("display_glucose_from_plugin") && (PluggableCalibration.getCalibrationPluginFromPreferences() != null)) {
-                        extrastring += " " + context.getString(R.string.p_in_circle);
-                    }
                 } else {
                     // TODO make a couple of getters in dg for these functions
                     extrastring = " " + dg.extra_string + ((dg.from_plugin) ? " " + context.getString(R.string.p_in_circle) : "");
@@ -186,28 +180,24 @@ public class xDripWidget extends AppWidgetProvider {
 
                     views.setInt(R.id.widgetBg, "setPaintFlags", 0);
                 }
-                if (Sensor.isActive() || Home.get_follower()) {
-                    views.setTextViewText(R.id.widgetBg, stringEstimate);
-                    views.setTextViewText(R.id.widgetArrow, slope_arrow);
-                    if (stringEstimate.length() > 3) {  // affects mmol xx.x
-                        views.setFloat(R.id.widgetBg, "setTextSize", 45);
-                    } else {
-                        views.setFloat(R.id.widgetBg, "setTextSize", 55);
-                    }
+
+                views.setTextViewText(R.id.widgetBg, stringEstimate);
+                views.setTextViewText(R.id.widgetArrow, slope_arrow);
+                if (stringEstimate.length() > 3) {  // affects mmol xx.x
+                    views.setFloat(R.id.widgetBg, "setTextSize", 45);
                 } else {
-                    views.setTextViewText(R.id.widgetBg, "");
-                    views.setTextViewText(R.id.widgetArrow, "");
+                    views.setFloat(R.id.widgetBg, "setTextSize", 55);
                 }
 
                 // is it really necessary to read this data once here and again in unitizedDeltaString?
                 // couldn't we just use the unitizedDeltaString to detect the error condition?
-                List<BgReading> bgReadingList = BgReading.latest(2, Home.get_follower());
+                List<BgReading> bgReadingList = BgReading.latest(2);
 
                 if (estimated_delta == -9999) {
                     // use original delta
                     if (bgReadingList != null && bgReadingList.size() == 2) {
 
-                        views.setTextViewText(R.id.widgetDelta, bgGraphBuilder.unitizedDeltaString(true, true, Home.get_follower()));
+                        views.setTextViewText(R.id.widgetDelta, bgGraphBuilder.unitizedDeltaString(true, true));
                     } else {
                         views.setTextViewText(R.id.widgetDelta, "--");
                     }

@@ -25,11 +25,6 @@ public class RouteFinder {
     RouteFinder() {
         // route url starts with , class name to process it
 
-        // support for desert sync
-        routes.add(new RouteInfo("sync/", "WebServiceSync").useRaw());
-
-        // support for pebble nightscout watchface emulates /pebble Nightscout endpoint
-        routes.add(new RouteInfo("pebble", "WebServicePebble"));
 
         // support for nightscout style sgv.json endpoint
         routes.add(new RouteInfo("sgv.json", "WebServiceSgv"));
@@ -42,17 +37,8 @@ public class RouteFinder {
         // support for nightscout style barebones status.json endpoint
         routes.add(new RouteInfo("status.json", "WebServiceStatus"));
 
-        // support for working with step counter
-        routes.add(new RouteInfo("steps/", "WebServiceSteps"));
-
-        // support for working with heart monitor
-        routes.add(new RouteInfo("heart/", "WebServiceHeart"));
-
         // tasker interface
         routes.add(new RouteInfo("tasker/", "WebServiceTasker"));
-
-        // libre2 start connection code.
-        routes.add(new RouteInfo("Libre2ConnectCode.json", "Libre2ConnectCode"));
     }
 
     // process a received route

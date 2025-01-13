@@ -101,7 +101,7 @@ public class XbridgePlus {
             // TODO we may want to use getForPreciseTimestamp instead..
             if (BgReading.readingNearTimeStamp(this_timestamp) == null) {
                 UserError.Log.d(TAG, "Creating a new reading at: " + JoH.dateTimeText(this_timestamp));
-                BgReading.create(val, val, xdrip.getAppContext(), this_timestamp, min_offset != 0);
+                BgReading.create(val, val, xdrip.getAppContext(), this_timestamp);
             } else {
                 UserError.Log.d(TAG, "Already a reading for minute offset: " + min_offset);
             }

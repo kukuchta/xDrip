@@ -35,10 +35,6 @@ public class Singleton extends SingletonHotel {
     Lazy<RouteFinder> routeFinder;
 
     @Inject
-    @Named("WebServicePebble")
-    Lazy<BaseWebService> webServicePebble;
-
-    @Inject
     @Named("WebServiceTasker")
     Lazy<BaseWebService> webServiceTasker;
 
@@ -54,22 +50,6 @@ public class Singleton extends SingletonHotel {
     @Named("WebServiceStatus")
     Lazy<BaseWebService> webServiceStatus;
 
-    @Inject
-    @Named("WebServiceSteps")
-    Lazy<BaseWebService> webServiceSteps;
-
-    @Inject
-    @Named("WebServiceHeart")
-    Lazy<BaseWebService> webServiceHeart;
-
-    @Inject
-    @Named("WebServiceSync")
-    Lazy<BaseWebService> webServiceSync;
-
-    @Inject
-    @Named("Libre2ConnectCode")
-    Lazy<BaseWebService> libre2ConnectCode;
-
     private Singleton() {
         super(Singleton.class);
         // inject from whatever components we are using
@@ -82,13 +62,9 @@ public class Singleton extends SingletonHotel {
         final Singleton self = getSelf();
         // if you want to totally avoid reflection just add yourself to this switch statement
         // if you just want an easy life then don't bother and we'll look up and cache the result
-        switch (singleton) {
-            case "WebServicePebble":
-                return self.webServicePebble.get();
 
-            default:
-                return ((Lazy) self.getObject(singleton)).get();
-        }
+        return ((Lazy) self.getObject(singleton)).get();
+
     }
 
     // find ourself

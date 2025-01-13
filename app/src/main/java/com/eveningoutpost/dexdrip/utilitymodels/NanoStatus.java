@@ -17,8 +17,6 @@ import android.text.SpannableString;
 import android.util.Log;
 
 import com.eveningoutpost.dexdrip.BuildConfig;
-import com.eveningoutpost.dexdrip.g5model.SensorDays;
-import com.eveningoutpost.dexdrip.GcmActivity;
 import com.eveningoutpost.dexdrip.Home;
 import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.models.UserError;
@@ -128,21 +126,9 @@ public class NanoStatus {
         switch (module) {
             case "collector":
                 return collectorNano(DexCollectionType.getCollectorServiceClass());
-            case "mtp-configure":
-                return collectorNano(getClassByName(".utilitymodels.MtpConfigure"));
-            case "sensor-expiry":
-            case "s-expiry":
-                return getLocalOrRemoteSensorExpiry();
             default:
-                return new SpannableString("Invalid module type");
+                return new SpannableString("");
         }
-    }
-
-    private static SpannableString getLocalOrRemoteSensorExpiry() {
-        if (Home.get_follower()) {
-            return getRemote("s-expiry");
-        }
-        return SensorDays.get().getSpannable();
     }
 
 
@@ -161,7 +147,7 @@ public class NanoStatus {
                 }
 
             } catch (Exception e) {
-              val exceptionString = e + " " + service.getSimpleName();
+              String exceptionString = e + " " + service.getSimpleName();
                 if (!exceptionString.equals(lastException)) {
                     Log.d(TAG, "reflection exception: " + exceptionString);
                     lastException = exceptionString;
@@ -169,35 +155,6 @@ public class NanoStatus {
             }
         }
         return null;
-    }
-
-
-    public static void keepFollowerUpdated() {
-        keepFollowerUpdated(true);
-    }
-
-    public static void keepFollowerUpdated(final boolean ratelimits) {
-        keepFollowerUpdated("", 0); // legacy defaults to collector
-        keepFollowerUpdated("s-expiry", ratelimits ? 3600 : 0);
-    }
-
-    public static void keepFollowerUpdated(final String prefix, final int rateLimit) {
-        try {
-            if (Home.get_master()) {
-                UserError.Log.d(TAG, "keepfollower updated called: " + prefix + " " + rateLimit);
-                if (rateLimit == 0 || JoH.pratelimit("keep-follower-updated" + prefix, rateLimit)) {
-                    final String serialized = SpannableSerializer.serializeSpannableString(nanoStatusColor(prefix.equals("") ? "collector" : prefix));
-                    if (PersistentStore.updateStringIfDifferent(LAST_COLLECTOR_STATUS_STORE + prefix, serialized)) {
-                        Inevitable.task("update-follower-to-nanostatus" + prefix, 500, () ->
-                                GcmActivity.sendNanoStatusUpdate(prefix, PersistentStore.getString(LAST_COLLECTOR_STATUS_STORE + prefix)));
-                    }
-                } else {
-                    UserError.Log.d(TAG, "Ratelimiting keepFollowerUpdated check on " + prefix + " @ " + rateLimit);
-                }
-            }
-        } catch (Exception e) {
-            UserError.Log.wtf(TAG, "Got exception serializing: " + e);
-        }
     }
 
     public static void setRemote(final String json) {
@@ -219,7 +176,7 @@ public class NanoStatus {
 
         // TODO apply timeout?
         try {
-            val result = PersistentStore.getString(REMOTE_COLLECTOR_STATUS_STORE + prefix);
+            String result = PersistentStore.getString(REMOTE_COLLECTOR_STATUS_STORE + prefix);
             if (emptyString(result)) return new SpannableString("");
             return SpannableSerializer.unserializeSpannableString(result);
         } catch (Exception e) {

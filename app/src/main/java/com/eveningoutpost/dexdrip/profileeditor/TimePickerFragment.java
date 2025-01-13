@@ -11,7 +11,6 @@ import android.os.Bundle;
 import android.text.format.DateFormat;
 import android.widget.TimePicker;
 
-
 public class TimePickerFragment extends DialogFragment implements TimePickerDialog.OnTimeSetListener {
 
     private int hour;
@@ -21,7 +20,7 @@ public class TimePickerFragment extends DialogFragment implements TimePickerDial
 
     private Runnable closeRunnable;
 
-    ProfileAdapter.TimePickerCallbacks callback;
+    TimePickerCallbacks callback;
 
     public void setTime(int hour, int minute) {
         this.hour = hour;
@@ -38,7 +37,7 @@ public class TimePickerFragment extends DialogFragment implements TimePickerDial
         this.title = title;
     }
 
-    public void setTimeCallback(ProfileAdapter.TimePickerCallbacks callback) {
+    public void setTimeCallback(TimePickerCallbacks callback) {
         this.callback = callback;
     }
 

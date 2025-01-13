@@ -81,7 +81,7 @@ public class BgReadingTable extends BaseListActivity implements NavigationDrawer
     private void parseDataForStats(List<BgReading> list) {
         long cutoff = JoH.tsl() - Constants.DAY_IN_MS;
         long oldest = 0;
-        for (val item : list) {
+        for (BgReading item : list) {
             if (item.timestamp < cutoff) break;
             oldest = item.timestamp;
             total++;
@@ -91,7 +91,7 @@ public class BgReadingTable extends BaseListActivity implements NavigationDrawer
         }
 
         if (total > 0) {
-            val expectedReadings = (JoH.tsl() - oldest) / DexCollectionType.getCurrentSamplePeriod();
+            long expectedReadings = (JoH.tsl() - oldest) / DexCollectionType.getCurrentSamplePeriod();
             missing = (int) (expectedReadings - total);
         }
 
@@ -161,16 +161,12 @@ public class BgReadingTable extends BaseListActivity implements NavigationDrawer
                                     bgReading.ignoreForStats = true;
                                     bgReading.save();
                                     notifyDataSetChanged();
-                                    if (Pref.getBooleanDefaultFalse("wear_sync"))
-                                        BgReading.pushBgReadingSyncToWatch(bgReading, false);
                                     break;
 
                                 case DialogInterface.BUTTON_NEGATIVE:
                                     bgReading.ignoreForStats = false;
                                     bgReading.save();
                                     notifyDataSetChanged();
-                                    if (Pref.getBooleanDefaultFalse("wear_sync"))
-                                        BgReading.pushBgReadingSyncToWatch(bgReading, false);
                                     break;
                             }
                         }

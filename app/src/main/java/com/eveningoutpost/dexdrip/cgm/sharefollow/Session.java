@@ -36,9 +36,7 @@ public class Session {
     public volatile String accountId;
     public volatile String sessionId;
 
-    @Setter
-    @Getter
-    private int lastResponseCode = 0;
+    public int lastResponseCode = 0;
     private volatile long sessionId_timestamp = 0;
 
     {

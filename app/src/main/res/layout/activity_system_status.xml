@@ -234,13 +234,6 @@
                         android:layout_height="wrap_content"
                         android:text="@string/restart_collector" />
 
-                    <Button
-                        android:id="@+id/forget_device"
-                        app:showIfTrue="@{ms.bluetooth()}"
-                        style="?android:attr/buttonStyleSmall"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/forget_device" />
                 </LinearLayout>
 
                 <LinearLayout

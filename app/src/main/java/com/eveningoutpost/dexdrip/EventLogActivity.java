@@ -32,25 +32,21 @@ import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.models.UserError;
 import com.eveningoutpost.dexdrip.utilitymodels.Inevitable;
 import com.eveningoutpost.dexdrip.utilitymodels.PersistentStore;
-import com.eveningoutpost.dexdrip.utilitymodels.Pref;
 import com.eveningoutpost.dexdrip.utilitymodels.SaveLogs;
 import com.eveningoutpost.dexdrip.utilitymodels.SendFeedBack;
 import com.eveningoutpost.dexdrip.databinding.ActivityEventLogBinding;
 import com.eveningoutpost.dexdrip.ui.helpers.BitmapUtil;
 import com.eveningoutpost.dexdrip.utils.ExtensionMethods;
-import com.eveningoutpost.dexdrip.wearintegration.WatchUpdaterService;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.experimental.ExtensionMethod;
 import me.tatarka.bindingcollectionadapter2.BindingRecyclerViewAdapter;
 import me.tatarka.bindingcollectionadapter2.ItemBinding;
 import me.tatarka.bindingcollectionadapter2.collections.MergeObservableList;
 
-import static com.eveningoutpost.dexdrip.Home.startWatchUpdaterService;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.getBestCollectorHardwareName;
 
 /*
@@ -114,20 +110,10 @@ public class EventLogActivity extends BaseAppCompatActivity {
 
     }
 
-    // check if should stream wear logs
-    private boolean shouldStreamWearLogs() {
-        return Pref.getBooleanDefaultFalse("wear_sync") && Pref.getBooleanDefaultFalse("sync_wear_logs");
-    }
-
-    // ask for wear updated logs
-    private void getWearData() {
-        startWatchUpdaterService(this, WatchUpdaterService.ACTION_SYNC_LOGS, TAG);
-    }
-
     // load in bulk of remaining data
     private void getOlderData() {
 
-        if (model.initial_items.size() == 0) {
+        if (model.initial_items.isEmpty()) {
             UserError.Log.d(TAG, "No initial items loaded yet to find index from");
             return;
         }
@@ -172,8 +158,6 @@ public class EventLogActivity extends BaseAppCompatActivity {
             int c;
             int turbo = 0;
 
-            final boolean streamWearLogs = shouldStreamWearLogs();
-
             while (runRefresh) {
                 if (D) UserError.Log.d(TAG, "refreshing data " + highest_id);
                 if (refreshData()) {
@@ -184,9 +168,6 @@ public class EventLogActivity extends BaseAppCompatActivity {
                     JoH.threadSleep(100);
                     turbo--;
                 } else {
-                    if (streamWearLogs && JoH.quietratelimit("stream-wear-logs", 2)) {
-                        getWearData();
-                    }
                     // long sleep
                     c = 0;
                     while (c < 2 && runRefresh) {
@@ -614,11 +595,14 @@ public class EventLogActivity extends BaseAppCompatActivity {
     }
 
     // scale gesture listener to handler element pinch zoom
-    @RequiredArgsConstructor
     public class SimpleOnScaleGestureListener extends
             ScaleGestureDetector.SimpleOnScaleGestureListener {
 
         private final ViewModel viewModel;
+
+        SimpleOnScaleGestureListener(ViewModel viewModel){
+            this.viewModel = viewModel;
+        }
 
         @Override
         public boolean onScale(ScaleGestureDetector detector) {

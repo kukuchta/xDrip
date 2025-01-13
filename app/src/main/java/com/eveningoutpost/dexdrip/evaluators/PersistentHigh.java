@@ -11,7 +11,6 @@ package com.eveningoutpost.dexdrip.evaluators;
 import com.eveningoutpost.dexdrip.Home;
 import com.eveningoutpost.dexdrip.models.BgReading;
 import com.eveningoutpost.dexdrip.models.JoH;
-import com.eveningoutpost.dexdrip.models.Sensor;
 import com.eveningoutpost.dexdrip.models.UserError.Log;
 import com.eveningoutpost.dexdrip.R;
 import com.eveningoutpost.dexdrip.utilitymodels.Constants;
@@ -108,22 +107,13 @@ public class PersistentHigh {
 
     public static boolean dataQualityCheck(final long since, final double highMarkMgDl) {
 
-        final Sensor sensor = Sensor.currentSensor();
-        if (sensor == null) {
-            Log.e(TAG, "Cannot raise persistent high alert as no active sensor!");
-            return false;
-        }
-        if (since < sensor.started_at) {
-            Log.e(TAG, "Cannot raise persistent high alert as high time pre-dates sensor start");
-            return false;
-        }
         final long duration = msSince(since);
         if (duration > Constants.DAY_IN_MS || duration < 0) {
             Log.e(TAG, "Cannot raise persistent high alert as duration doesn't make sense: " + JoH.niceTimeScalar(duration));
             return false;
         }
 
-        final List<BgReading> readings = BgReading.latestForSensorAsc(2000, since, JoH.tsl(), Home.get_follower());
+        final List<BgReading> readings = BgReading.latestForSensorAsc(2000, since, JoH.tsl());
         if (readings == null) {
             Log.e(TAG, "Cannot raise persistent high alert as there are no readings for this sensor!");
             return false;

@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 
 import com.eveningoutpost.dexdrip.models.UserError;
-import com.eveningoutpost.dexdrip.services.PlusSyncService;
 import com.eveningoutpost.dexdrip.utilitymodels.CollectionServiceStarter;
 import com.eveningoutpost.dexdrip.utilitymodels.Inevitable;
 import com.eveningoutpost.dexdrip.utilitymodels.Pref;
@@ -32,14 +31,6 @@ public class AutoStart extends BroadcastReceiver {
             CollectionServiceStarter.restartCollectionServiceBackground();
         } catch (Exception e) {
             UserError.Log.wtf(TAG, "Failed to start collector: " + e);
-        }
-
-
-        try {
-            PlusSyncService.startSyncService(context, "AutoStart");
-
-        } catch (Exception e) {
-            UserError.Log.wtf(TAG, "Failed to start sync service: " + e);
         }
 
 

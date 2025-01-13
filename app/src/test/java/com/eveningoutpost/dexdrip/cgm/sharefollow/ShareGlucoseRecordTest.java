@@ -1,6 +1,5 @@
 package com.eveningoutpost.dexdrip.cgm.sharefollow;
 
-import com.eveningoutpost.dexdrip.importedlibraries.dexcom.Dex_Constants;
 import com.eveningoutpost.dexdrip.models.BgReading;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -25,7 +24,7 @@ public class ShareGlucoseRecordTest {
     @BeforeClass
     public static void setUp() {
         GsonBuilder gsonBuilder = new GsonBuilder();
-        gsonBuilder.registerTypeAdapter(Dex_Constants.TREND_ARROW_VALUES.class, new ShareTrendDeserializer());
+        gsonBuilder.registerTypeAdapter(TREND_ARROW_VALUES.class, new ShareTrendDeserializer());
         gson = gsonBuilder.create();
     }
 
@@ -33,7 +32,7 @@ public class ShareGlucoseRecordTest {
     public void slopePerMsFromDirectionTest() {
         for (int direction = 1; direction < 8; direction++) {
             final ShareGlucoseRecord record = new ShareGlucoseRecord();
-            record.Trend = Dex_Constants.TREND_ARROW_VALUES.getEnum(direction);
+            record.Trend = TREND_ARROW_VALUES.getEnum(direction);
             assertWithMessage("Slope check " + direction).that(BgReading.slopeName(record.slopePerMsFromDirection() * 60000)).isEqualTo(record.Trend.friendlyTrendName());
         }
     }
@@ -43,7 +42,7 @@ public class ShareGlucoseRecordTest {
         String json = "{\"WT\":\"Date(1638396953000)\",\"ST\":\"Date(1638396953000)\",\"DT\":\"Date(1638396953000+0000)\",\"Value\":167,\"Trend\":4,\"extraString\":\"two\",\"extraFloat\":2.2}";
         ShareGlucoseRecord record = gson.fromJson(json, ShareGlucoseRecord.class);
         assertEquals(new Double(167), record.Value);
-        assertEquals(Dex_Constants.TREND_ARROW_VALUES.FLAT, record.Trend);
+        assertEquals(TREND_ARROW_VALUES.FLAT, record.Trend);
     }
 
     @Test
@@ -51,7 +50,7 @@ public class ShareGlucoseRecordTest {
         String json = "{\"WT\":\"Date(1638396953000)\",\"ST\":\"Date(1638396953000)\",\"DT\":\"Date(1638396953000+0000)\",\"Value\":167,\"Trend\":\"Flat\"}";
         ShareGlucoseRecord record = gson.fromJson(json, ShareGlucoseRecord.class);
         assertEquals(new Double(167), record.Value);
-        assertEquals(Dex_Constants.TREND_ARROW_VALUES.FLAT, record.Trend);
+        assertEquals(TREND_ARROW_VALUES.FLAT, record.Trend);
     }
 
     @Test
@@ -61,7 +60,7 @@ public class ShareGlucoseRecordTest {
         Collection<ShareGlucoseRecord> records = gson.fromJson(json, targetClassType);
         assertTrue(records instanceof ArrayList);
         assertEquals(2, records.size());
-        assertEquals(Dex_Constants.TREND_ARROW_VALUES.SINGLE_DOWN, ((ArrayList<ShareGlucoseRecord>) records).get(1).Trend);
+        assertEquals(TREND_ARROW_VALUES.SINGLE_DOWN, ((ArrayList<ShareGlucoseRecord>) records).get(1).Trend);
     }
 
 }

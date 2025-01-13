@@ -33,11 +33,6 @@ public class Registry {
     public static void refresh() {
         synchronized (registry) {
             registry.clear();
-            if (Pref.getBooleanDefaultFalse("alert_raise_for_sensor_expiry")) {
-                registry.add(new SensorExpiry());
-            }
-            //  addGlucoseAlerts();
-            // sort();
         }
     }
 

@@ -33,7 +33,6 @@
             android:ems="10"
             android:text="@string/enable_streaming_dialog_text"
             android:textSize="18sp" />
-            android:layout_toEndOf="@+id/enable_streaming_title"
 
 
 

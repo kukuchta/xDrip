@@ -9,15 +9,9 @@ import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.eveningoutpost.dexdrip.models.APStatus;
 import com.eveningoutpost.dexdrip.models.AlertType;
 import com.eveningoutpost.dexdrip.models.BgReading;
-import com.eveningoutpost.dexdrip.models.DesertSync;
 import com.eveningoutpost.dexdrip.models.JoH;
-import com.eveningoutpost.dexdrip.models.Libre2RawValue;
-import com.eveningoutpost.dexdrip.models.Libre2Sensor;
-import com.eveningoutpost.dexdrip.models.LibreBlock;
-import com.eveningoutpost.dexdrip.models.LibreData;
 import com.eveningoutpost.dexdrip.models.PenData;
 import com.eveningoutpost.dexdrip.models.Prediction;
 import com.eveningoutpost.dexdrip.models.UserNotification;
@@ -48,14 +42,8 @@ public class IdempotentMigrations {
         migrateBGAlerts();
         migrateToNewStyleRestUris();
         BgReading.updateDB();
-        LibreBlock.updateDB();
-        LibreData.updateDB();
-        APStatus.updateDB();
         Prediction.updateDB();
-        DesertSync.updateDB();
         PenData.updateDB();
-        Libre2RawValue.updateDB();
-        Libre2Sensor.updateDB();
 //        BgReadingArchive.updateDB();
         AlertType.fixUpTable();
         UserNotification.updateDB();
@@ -140,8 +128,8 @@ public class IdempotentMigrations {
     // This function moves us from calibrate_external_libre_2_algorithm which is a boolean to a
     // multi value list option
     public static void migrateOOP2CalibrationPreferences() {
-        val oldPref = "calibrate_external_libre_2_algorithm";
-        val newPref = "calibrate_external_libre_2_algorithm_type";
+        String oldPref = "calibrate_external_libre_2_algorithm";
+        String newPref = "calibrate_external_libre_2_algorithm_type";
         if (Pref.isPreferenceSet(oldPref) && !Pref.isPreferenceSet(newPref)) {
             Log.e(TAG, oldPref + " found - updating to new style");
             Pref.setString(newPref, Pref.getBooleanDefaultFalse(oldPref) ? "calibrate_raw" : "no_calibration");

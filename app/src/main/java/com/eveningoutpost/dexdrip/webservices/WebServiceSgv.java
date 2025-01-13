@@ -119,13 +119,11 @@ public class WebServiceSgv extends BaseWebService {
 
         final JSONArray reply = new JSONArray();
 
-        // whether to include data which doesn't match the current sensor
-        final boolean ignore_sensor = Home.get_follower() || cgi.containsKey("all_data");
 
         // Store a cache of the last BgReading.latest() query for the duration in which there is no
         // new latest reading. Since obtaining the latest reading is fast, but a larger number of
         // readings is significantly slower, this optimizes the most often use case.
-        List<BgReading> bgr = BgReading.latest(1, ignore_sensor);
+        List<BgReading> bgr = BgReading.latest(1);
         BgReading latestReading = null;
         if (bgr != null && bgr.size() > 0) {
             latestReading = bgr.iterator().next();
@@ -149,9 +147,9 @@ public class WebServiceSgv extends BaseWebService {
             UserError.Log.d(TAG, "Fetching latest " + count + " readings from BgReading");
             if (brief) {
                 // TODO this de-dupe period calculation should move in to DexCollectionType once a suitable method is available.
-                readings = BgReading.latestDeduplicateToPeriod(count, ignore_sensor, BgGraphBuilder.DEXCOM_PERIOD - BgGraphBuilder.DEXCOM_PERIOD / 6);
+                readings = BgReading.latestDeduplicateToPeriod(count, BgGraphBuilder.DEXCOM_PERIOD - BgGraphBuilder.DEXCOM_PERIOD / 6);
             } else {
-                readings = BgReading.latest(count, ignore_sensor);
+                readings = BgReading.latest(count);
             }
             cachedReadings = readings;
         }

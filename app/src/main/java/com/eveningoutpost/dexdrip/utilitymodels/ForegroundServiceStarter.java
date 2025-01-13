@@ -27,7 +27,7 @@ public class ForegroundServiceStarter {
 
     public static boolean shouldRunCollectorInForeground() {
         // Force foreground with Oreo and above
-        return (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !Home.get_follower())
+        return (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
                 || Pref.getBoolean("run_service_in_foreground", true);
     }
 

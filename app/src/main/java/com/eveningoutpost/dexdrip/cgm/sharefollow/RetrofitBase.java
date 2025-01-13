@@ -2,10 +2,7 @@ package com.eveningoutpost.dexdrip.cgm.sharefollow;
 
 import androidx.annotation.NonNull;
 
-import com.eveningoutpost.dexdrip.importedlibraries.dexcom.Dex_Constants;
 import com.eveningoutpost.dexdrip.models.UserError;
-import com.eveningoutpost.dexdrip.cgm.nsfollow.GzipRequestInterceptor;
-import com.eveningoutpost.dexdrip.tidepool.InfoInterceptor;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -45,7 +42,7 @@ public class RetrofitBase {
     }
 
     // TODO make fully reusable
-    public static Retrofit getRetrofitInstance(final String TAG, final String url, boolean useGzip) throws IllegalArgumentException {
+    public static Retrofit getRetrofitInstance(final String TAG, final String url) throws IllegalArgumentException {
 
         Retrofit instance = instances.get(TAG);
         if (instance == null || !urls.get(TAG).equals(url)) {
@@ -55,9 +52,7 @@ public class RetrofitBase {
                     return null;
                 }
                 UserError.Log.d(TAG, "Creating new instance for: " + url);
-                final OkHttpClient.Builder httpClient = enableTls12OnPreLollipop(new OkHttpClient.Builder())
-                        .addInterceptor(new InfoInterceptor(TAG))
-                        .addInterceptor(useGzip ? new GzipRequestInterceptor() : new NullInterceptor());
+                final OkHttpClient.Builder httpClient = enableTls12OnPreLollipop(new OkHttpClient.Builder());
 
                 if (UserError.ExtraLogTags.shouldLogTag(TAG, android.util.Log.VERBOSE)) {
                     UserError.Log.v(TAG, "Enable logging of request and response lines and their respective headers and bodies.");
@@ -71,7 +66,7 @@ public class RetrofitBase {
                 instances.put(TAG, instance = new retrofit2.Retrofit.Builder()
                         .baseUrl(url)
                         .client(httpClient.build())
-                        .addConverterFactory(createGsonConverter(Dex_Constants.TREND_ARROW_VALUES.class, new ShareTrendDeserializer()))
+                        .addConverterFactory(createGsonConverter(TREND_ARROW_VALUES.class, new ShareTrendDeserializer()))
                         .build());
                 urls.put(TAG, url); // save creation url for quick search
             }

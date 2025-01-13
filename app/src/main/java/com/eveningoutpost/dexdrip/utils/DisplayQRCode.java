@@ -21,12 +21,10 @@ import android.util.Log;
 import android.view.View;
 
 import com.eveningoutpost.dexdrip.BaseAppCompatActivity;
-import com.eveningoutpost.dexdrip.GcmActivity;
 import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.R;
 import com.eveningoutpost.dexdrip.utilitymodels.Pref;
 import com.eveningoutpost.dexdrip.utilitymodels.PrefsViewImpl;
-import com.eveningoutpost.dexdrip.utilitymodels.desertsync.RouteTools;
 import com.eveningoutpost.dexdrip.databinding.ActivityDisplayQrcodeBinding;
 import com.eveningoutpost.dexdrip.xdrip;
 import com.google.zxing.WriterException;
@@ -85,9 +83,6 @@ public class DisplayQRCode extends BaseAppCompatActivity {
             final String action = intent.getAction();
             if (action != null) {
                 switch (action) {
-                    case "xdrip_plus_desert_sync_qr":
-                        desertSyncSettings(null);
-                        break;
                     case "xdrip_plus_keks_qr":
                         showGKey(null);
                         break;
@@ -120,27 +115,7 @@ public class DisplayQRCode extends BaseAppCompatActivity {
         showQRCode();
     }
 
-    public synchronized void alarmSettings(View view) {
-        prefsMap.clear();
-        prefsMap.put("bg_alert_profile", prefs.getString("bg_alert_profile", "ascending"));
-        prefsMap.put("smart_snoozing", Boolean.toString(prefs.getBoolean("smart_snoozing", true)));
-        prefsMap.put("smart_alerting", Boolean.toString(prefs.getBoolean("smart_alerting", true)));
-        prefsMap.put("calibration_notifications", Boolean.toString(prefs.getBoolean("calibration_notifications", true)));
-        // need to support alert profiles
-        showQRCode();
-    }
 
-    public synchronized void desertSyncSettings(View view) {
-        prefsMap.clear();
-        prefsMap.put("desert_sync_enabled", Boolean.toString(true));
-        prefsMap.put("desert_sync_master_ip", RouteTools.getBestInterfaceAddress());
-        prefsMap.put("dex_collection_method", "Follower");
-        prefsMap.put("custom_sync_key", Pref.getString("custom_sync_key", ""));
-        prefsMap.put("use_custom_sync_key", Boolean.toString(Pref.getBoolean("use_custom_sync_key", false)));
-        prefsMap.put("desert_use_https", Boolean.toString(Pref.getBooleanDefaultFalse("desert_use_https")));
-        prefsMap.put("xdrip_webservice_secret", Pref.getString("xdrip_webservice_secret", ""));
-        showQRCode();
-    }
 
 
     public boolean generateKeksBinaryPrefs() {
@@ -219,10 +194,6 @@ public class DisplayQRCode extends BaseAppCompatActivity {
                                                 } else {
                                                     Log.e(TAG, "mInstance null");
                                                 }
-                                                break;
-                                            }
-                                            case 2: {
-                                                GcmActivity.backfillLink(reply.substring(3, 35), JoH.bytesToHex(mykey));
                                                 break;
                                             }
                                             default: {

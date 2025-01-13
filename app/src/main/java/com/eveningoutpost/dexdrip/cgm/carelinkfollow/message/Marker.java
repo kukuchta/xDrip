@@ -79,7 +79,7 @@ public class Marker {
             return (type.equals(TYPE_MEAL));
     }
 
-    public boolean isInsulin() {
+    public boolean isBolus() {
         if (type == null || activationType == null)
             return false;
         else

@@ -11,7 +11,6 @@ import com.activeandroid.Model;
 import com.activeandroid.annotation.Column;
 import com.activeandroid.annotation.Table;
 import com.activeandroid.query.Select;
-import com.eveningoutpost.dexdrip.services.ActivityRecognizedService;
 import com.eveningoutpost.dexdrip.utilitymodels.AlertPlayer;
 import com.eveningoutpost.dexdrip.utilitymodels.Notifications;
 
@@ -193,21 +192,19 @@ public class AlertType extends Model {
     private static AlertType get_highest_active_alert_helper(double bg, SharedPreferences prefs) {
         // Chcek the low alerts
 
-        final double offset = ActivityRecognizedService.raise_limit_due_to_vehicle_mode() ? ActivityRecognizedService.getVehicle_mode_adjust_mgdl() : 0;
-
         if(prefs.getLong("low_alerts_disabled_until", 0) > new Date().getTime()){
             Log.i("NOTIFICATIONS", "get_highest_active_alert_helper: Low alerts are currently disabled!! Skipping low alerts");
 
         } else {
             List<AlertType> lowAlerts  = new Select()
                     .from(AlertType.class)
-                    .where("threshold >= ?", bg-offset)
+                    .where("threshold >= ?", bg)
                     .where("above = ?", false)
                     .orderBy("threshold asc")
                     .execute();
 
             for (AlertType lowAlert : lowAlerts) {
-                if(lowAlert.should_alarm(bg-offset)) {
+                if(lowAlert.should_alarm(bg)) {
                     return filter_alert_on_stale(lowAlert,prefs);
                 }
             }
@@ -445,10 +442,10 @@ public class AlertType extends Model {
     }
 
     public static AlertType getMostExtremeAlert(boolean highAlerts) {
-        val alerts = getAll(highAlerts);
+        List<AlertType> alerts = getAll(highAlerts);
         if (alerts == null) return null;
-        val filtered = new ArrayList<AlertType>();
-        for (val alert : alerts) {
+        ArrayList<AlertType> filtered = new ArrayList<AlertType>();
+        for (AlertType alert : alerts) {
             if (alert.active && alert.in_time_frame()) {    // remove alerts which are not live now
                 filtered.add(alert);
             }

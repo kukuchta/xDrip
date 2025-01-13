@@ -35,8 +35,8 @@ public class ShareFollowDownload extends RetrofitBase {
     private String login;
     private String password;
     private String serverUrl;
-    @Getter
-    private String status;
+
+    public String status;
     private boolean loginDataLooksOkay;
 
 
@@ -91,11 +91,11 @@ public class ShareFollowDownload extends RetrofitBase {
     }
 
     private void handleLoginFailure() {
-        UserError.Log.d(TAG, "Login failure: " + session.getErrorString() + " code: " + session.getLastResponseCode());
-        if (session.getLastResponseCode() == 0) {
+        UserError.Log.d(TAG, "Login failure: " + session.getErrorString() + " code: " + session.lastResponseCode);
+        if (session.lastResponseCode == 0) {
             msg(xdrip.gs(R.string.connectivity_problem_reaching_share_servers));
         } else {
-            msg("Share login error: " + session.getErrorString() + " code: " + session.getLastResponseCode());
+            msg("Share login error: " + session.getErrorString() + " code: " + session.lastResponseCode);
             loginBackoff += Constants.MINUTE_IN_MS;
             loginBlockedTill = JoH.tsl() + loginBackoff;
         }
@@ -143,12 +143,12 @@ public class ShareFollowDownload extends RetrofitBase {
     }
 
     private void handleGetDataFailure() {
-        UserError.Log.d(TAG, "Last response code: " + session.getLastResponseCode());
-        if (session.getLastResponseCode() == 0) {
+        UserError.Log.d(TAG, "Last response code: " + session.lastResponseCode);
+        if (session.lastResponseCode == 0) {
             msg(xdrip.gs(R.string.connectivity_problem_reaching_share_servers));
         } else {
             session.invalidateSessionId(); // could be due to invalid session handle so reset that
-            msg("Share get data error: " + session.getErrorString() + " code: " + session.getLastResponseCode());
+            msg("Share get data error: " + session.getErrorString() + " code: " + session.lastResponseCode);
         }
         releaseWakeLock();
     }
@@ -174,7 +174,7 @@ public class ShareFollowDownload extends RetrofitBase {
     private DexcomShareInterface getService() {
         if (service == null) {
             try {
-                service = getRetrofitInstance(TAG, serverUrl, false).create(DexcomShareInterface.class);
+                service = getRetrofitInstance(TAG, serverUrl).create(DexcomShareInterface.class);
             } catch (NullPointerException e) {
                 UserError.Log.e(TAG, "Null pointer trying to getService()");
             }

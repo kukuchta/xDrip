@@ -1,15 +1,11 @@
 package com.eveningoutpost.dexdrip.cgm.carelinkfollow;
 
 import com.eveningoutpost.dexdrip.Home;
-import com.eveningoutpost.dexdrip.cgm.carelinkfollow.message.Alarm;
-import com.eveningoutpost.dexdrip.models.AutoBasalDelivery;
-import com.eveningoutpost.dexdrip.models.Autocorrection;
 import com.eveningoutpost.dexdrip.models.BgReading;
 import com.eveningoutpost.dexdrip.models.BloodTest;
 import com.eveningoutpost.dexdrip.models.DateUtil;
 import com.eveningoutpost.dexdrip.models.Notifications;
 import com.eveningoutpost.dexdrip.models.OtherMarker;
-import com.eveningoutpost.dexdrip.models.Sensor;
 import com.eveningoutpost.dexdrip.models.Treatments;
 import com.eveningoutpost.dexdrip.models.UserError;
 import com.eveningoutpost.dexdrip.utilitymodels.Inevitable;
@@ -29,7 +25,6 @@ import java.util.List;
 import java.util.UUID;
 
 import static com.eveningoutpost.dexdrip.models.BgReading.SPECIAL_FOLLOWER_PLACEHOLDER;
-import static com.eveningoutpost.dexdrip.models.Treatments.pushTreatmentSyncToWatch;
 
 
 /**
@@ -95,9 +90,6 @@ public class CareLinkDataProcessor {
 
             if (filteredSgList.size() > 0) {
 
-                final Sensor sensor = Sensor.createDefaultIfMissing();
-                sensor.save();
-
                 // place in order of oldest first
                 Collections.sort(filteredSgList, (o1, o2) -> o1.datetimeAsDate.compareTo(o2.datetimeAsDate));
 
@@ -130,8 +122,6 @@ public class CareLinkDataProcessor {
                                                 bg.noise = "";
                                                 bg.uuid = UUID.randomUUID().toString();
                                                 bg.calculated_value_slope = 0;
-                                                bg.sensor = sensor;
-                                                bg.sensor_uuid = sensor.uuid;
                                                 bg.source_info = SOURCE_CARELINK_FOLLOW;
                                                 bg.save();
                                                 bg.find_slope();
@@ -179,40 +169,31 @@ public class CareLinkDataProcessor {
                                 BloodTest.create(marker.dateTime.getTime(), marker.value, SOURCE_CARELINK_FOLLOW);
                             }
                         }
-                    } else if ((marker.isInsulin() && Pref.getBooleanDefaultFalse("clfollow_download_boluses"))) {
+                    } else if ((marker.isBolus() && Pref.getBooleanDefaultFalse("clfollow_download_boluses"))) {
                         if (marker.deliveredExtendedAmount != null && marker.deliveredFastAmount != null) {
-                            double insulin = marker.deliveredExtendedAmount + marker.deliveredFastAmount;
-
-                            if (!Treatments.insulinExists(insulin, marker.dateTime.getTime())) {
-                                final Treatments treatments = Treatments.createInsulin(insulin, marker.dateTime.getTime());
-                                if (Home.get_show_wear_treatments()) {
-                                    pushTreatmentSyncToWatch(treatments, true);
-                                }
+                            if (!Treatments.bolusExists(marker.deliveredFastAmount, marker.deliveredExtendedAmount, marker.dateTime.getTime())) {
+                                Treatments.createBolus(marker.deliveredFastAmount, marker.deliveredExtendedAmount, marker.dateTime.getTime());
                             }
                         }
                     }
                     else if ((marker.isMeal() && Pref.getBooleanDefaultFalse("clfollow_download_meals"))) {
                         if (marker.amount != null) {
                             if (!Treatments.mealExists(marker.amount, marker.dateTime.getTime())) {
-                                final Treatments treatment = Treatments.createMeal(marker.amount, marker.dateTime.getTime());
-                                if (Home.get_show_wear_treatments()) {
-                                    pushTreatmentSyncToWatch(treatment, true);
-                                }
+                                Treatments.createMeal(marker.amount, marker.dateTime.getTime());
                             }
                         }
                     }
                     else if (marker.isAutocorrection()  && Pref.getBooleanDefaultFalse("clfollow_download_boluses")) {
                         if (marker.deliveredFastAmount != null) {
-                            if (!Autocorrection.exists(marker.deliveredFastAmount, marker.dateTime.getTime())) {
-                                Autocorrection.create(marker.deliveredFastAmount, marker.dateTime.getTime());
-                                // TODO push autocorrections to watch
+                            if (!Treatments.autocorrectionExists(marker.deliveredFastAmount, marker.dateTime.getTime())) {
+                                Treatments.createAutocorrection(marker.deliveredFastAmount, marker.dateTime.getTime());
                             }
                         }
                     }
                     else if (marker.isAutoBasalDelivery()  && Pref.getBooleanDefaultFalse("clfollow_download_boluses")) {
                         if (marker.bolusAmount != null) {
-                            if (!AutoBasalDelivery.exists(marker.bolusAmount, marker.dateTime.getTime())) {
-                                AutoBasalDelivery.create(marker.bolusAmount, marker.dateTime.getTime());
+                            if (!Treatments.autoBasalDeliveryExists(marker.bolusAmount, marker.dateTime.getTime())) {
+                                Treatments.createAutoBasalDelivery(marker.bolusAmount, marker.dateTime.getTime());
                             }
                         }
                     }
@@ -235,7 +216,6 @@ public class CareLinkDataProcessor {
         PumpStatus.setBattery(recentData.medicalDeviceBatteryLevelPercent);
         if (recentData.activeInsulin != null)
             PumpStatus.setBolusIoB(recentData.activeInsulin.amount);
-        PumpStatus.syncUpdate();
 
         //NOTIFICATIONS -> NOTE
         if (Pref.getBooleanDefaultFalse("clfollow_download_notifications")) {

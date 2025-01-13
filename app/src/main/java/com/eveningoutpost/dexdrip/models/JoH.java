@@ -41,6 +41,7 @@ import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.ParcelFileDescriptor;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.provider.Settings;
@@ -679,16 +680,6 @@ public class JoH {
         benchmarks.put(backTrace(0), ts());
     }
 
-    public static void benchmark_method_end() {
-        String name = backTrace(0);
-        try {
-
-            double timing = ts() - benchmarks.get(name);
-            Log.i(TAG, "Benchmark: " + name + " " + timing + "ms");
-        } catch (Exception e) {
-            Log.e(TAG, "Benchmark: " + name + " no benchmark set!");
-        }
-    }
 
     public static void fixActionBar(AppCompatActivity context) {
         try {
@@ -1179,7 +1170,7 @@ public class JoH {
                 mp.setDataSource(context, uri);
             } else {
                 UserError.Log.d(TAG, "Setting new style uri: " + uri);
-                val pfd = context.getContentResolver().openFileDescriptor(uri, "r");
+                ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(uri, "r");
                 mp.setDataSource(pfd.getFileDescriptor());
                 pfd.close();
             }

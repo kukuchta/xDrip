@@ -1,7 +1,6 @@
 package com.eveningoutpost.dexdrip.cgm.sharefollow;
 
 import com.eveningoutpost.dexdrip.models.BgReading;
-import com.eveningoutpost.dexdrip.models.Sensor;
 import com.eveningoutpost.dexdrip.models.UserError;
 import com.eveningoutpost.dexdrip.utilitymodels.Inevitable;
 
@@ -25,8 +24,6 @@ public class EntryProcessor {
     static synchronized void processEntries(final List<ShareGlucoseRecord> entries, final boolean live) {
 
         if (entries == null) return;
-
-        final Sensor sensor = Sensor.createDefaultIfMissing();
 
         // place in order of oldest first
         Collections.sort(entries, (o1, o2) -> o1.getTimestamp().compareTo(o2.getTimestamp()));
@@ -56,8 +53,6 @@ public class EntryProcessor {
                                 bg.hide_slope = true;
                             }
 
-                            bg.sensor = sensor;
-                            bg.sensor_uuid = sensor.uuid;
                             bg.source_info = "Share Follow";
                             bg.save();
                             Inevitable.task("entry-proc-post-pr", 500, () -> bg.postProcess(false));

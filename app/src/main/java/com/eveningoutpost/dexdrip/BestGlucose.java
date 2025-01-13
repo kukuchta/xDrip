@@ -9,18 +9,15 @@ import android.util.Log;
 
 import com.eveningoutpost.dexdrip.models.BgReading;
 import com.eveningoutpost.dexdrip.models.JoH;
-import com.eveningoutpost.dexdrip.models.SensorSanity;
 import com.eveningoutpost.dexdrip.models.UserError;
 import com.eveningoutpost.dexdrip.utilitymodels.BgGraphBuilder;
 import com.eveningoutpost.dexdrip.utilitymodels.ColorCache;
 import com.eveningoutpost.dexdrip.utilitymodels.Pref;
-import com.eveningoutpost.dexdrip.calibrations.CalibrationAbstract;
 import com.eveningoutpost.dexdrip.utils.DexCollectionType;
 
 import java.util.List;
 
 import static com.eveningoutpost.dexdrip.utilitymodels.ColorCache.getCol;
-import static com.eveningoutpost.dexdrip.calibrations.PluggableCalibration.getCalibrationPluginFromPreferences;
 
 /**
  * Created by jamorham on 17/10/2016.
@@ -150,17 +147,13 @@ public class BestGlucose {
             prefs = PreferenceManager.getDefaultSharedPreferences(xdrip.getAppContext());
         final DisplayGlucose dg = new DisplayGlucose(); // return value
         final boolean doMgdl = (prefs.getString("units", "mgdl").equals("mgdl"));
-        final boolean is_follower = Home.get_follower();
 
         dg.doMgDl = doMgdl;
 
         List<BgReading> last_2 = BgReading.latest(2);
 
-        final BgReading lastBgReading = BgReading.last(is_follower);
+        final BgReading lastBgReading = BgReading.last();
         if (lastBgReading == null) return null;
-
-        final CalibrationAbstract.CalibrationData pcalibration;
-        final CalibrationAbstract plugin = getCalibrationPluginFromPreferences();
 
         double estimate = -1;
         double filtered = -1;
@@ -182,22 +175,6 @@ public class BestGlucose {
         dg.mssince = JoH.msSince(lastBgReading.timestamp);
 
         dg.timestamp = lastBgReading.timestamp;
-
-        // if we are actively using a plugin, get the glucose calculation from there
-        if ((plugin != null) && ((pcalibration = plugin.getCalibrationData()) != null) && (Pref.getBoolean("display_glucose_from_plugin", false))) {
-            dg.plugin_name = plugin.getAlgorithmName();
-            Log.d(TAG, "Using plugin: " + dg.plugin_name);
-            dg.from_plugin = true;
-            estimate = plugin.getGlucoseFromBgReading(lastBgReading, pcalibration);
-            filtered = plugin.getGlucoseFromFilteredBgReading(lastBgReading, pcalibration);
-
-            // also try to update the previous values in the same way
-            if (last_2.size() == 2) {
-                previous_estimate = plugin.getGlucoseFromBgReading(last_2.get(1), pcalibration);
-                previous_filtered = plugin.getGlucoseFromFilteredBgReading(last_2.get(1), pcalibration);
-            }
-
-        }
 
         int warning_level = 0;
         String slope_arrow = "";
@@ -272,21 +249,6 @@ public class BestGlucose {
         dg.delta_arrow = slope_arrow;
         dg.extra_string = extrastring;
         dg.delta_name = slope_name;
-
-        // fail safe for excessive raw data values - this may want
-        // to be moved one day
-        if (!SensorSanity.isRawValueSane(lastBgReading.raw_data)) {
-            dg.delta_arrow = "!";
-            dg.unitized = ">!?";
-            dg.mgdl = 0;
-            dg.delta_mgdl = 0;
-            dg.unitized_value = 0;
-            dg.unitized_delta = "";
-            dg.slope = 0;
-            if (JoH.ratelimit("exceeding_max_raw", 120)) {
-                UserError.Log.wtf(TAG, "Failing raw bounds validation: " + lastBgReading.raw_data);
-            }
-        }
 
         if (d)
             Log.d(TAG, "dg result: " + dg.unitized + " previous: " + BgGraphBuilder.unitized_string(previous_estimate, doMgdl));

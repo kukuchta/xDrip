@@ -100,20 +100,6 @@ public class Unitized {
     }
 
 
-    public static String unitizedDeltaString(boolean showUnit, boolean highGranularity, boolean is_follower, boolean doMgdl) {
-
-        List<BgReading> last2 = BgReading.latest(2,is_follower);
-        if (last2.size() < 2 || last2.get(0).timestamp - last2.get(1).timestamp > 20 * 60 * 1000) {
-            // don't show delta if there are not enough values or the values are more than 20 mintes apart
-            return "???";
-        }
-
-        double value = BgReading.currentSlope(is_follower) * 5 * 60 * 1000;
-
-        return unitizedDeltaStringRaw(showUnit, highGranularity, value, doMgdl);
-    }
-
-
     public static String unitizedDeltaStringRaw(boolean showUnit, boolean highGranularity,double value, boolean doMgdl) {
 
 

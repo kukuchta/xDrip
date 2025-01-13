@@ -18,12 +18,9 @@ import com.eveningoutpost.dexdrip.models.UserError;
 import com.eveningoutpost.dexdrip.utilitymodels.PersistentStore;
 import com.eveningoutpost.dexdrip.utilitymodels.SendFeedBack;
 import com.eveningoutpost.dexdrip.utils.ActivityWithMenu;
-import com.eveningoutpost.dexdrip.wearintegration.WatchUpdaterService;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.eveningoutpost.dexdrip.Home.startWatchUpdaterService;
 
 /**
  * Created by Emma Black on 8/3/15.
@@ -53,9 +50,6 @@ public class ErrorsActivity extends ActivityWithMenu {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mPrefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        if (mPrefs.getBoolean("wear_sync", false) && mPrefs.getBoolean("sync_wear_logs", false)) {
-            startWatchUpdaterService(this, WatchUpdaterService.ACTION_SYNC_LOGS, TAG);
-        }
         setContentView(R.layout.activity_errors);
 
         highCheckboxView = (CheckBox) findViewById(R.id.highSeverityCheckbox);
@@ -142,9 +136,6 @@ public class ErrorsActivity extends ActivityWithMenu {
 
             if (autoRefresh) {
                 getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-                if (mPrefs.getBoolean("wear_sync", false) && mPrefs.getBoolean("sync_wear_logs", false)) {
-                    startWatchUpdaterService(getApplicationContext(), WatchUpdaterService.ACTION_SYNC_LOGS, TAG);
-                }
             } else {
                 getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             }

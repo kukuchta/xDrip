@@ -68,7 +68,7 @@ public class Experience {
 
     public static boolean gotData() {
         if (got_data) return true;
-        if (BgReading.last(true) != null) {
+        if (BgReading.last() != null) {
             got_data = true;
             return true;
         } else {

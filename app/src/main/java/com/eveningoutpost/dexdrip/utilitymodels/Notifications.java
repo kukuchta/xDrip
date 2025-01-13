@@ -25,30 +25,21 @@ import androidx.core.app.NotificationManagerCompat;
 import android.text.SpannableString;
 import android.widget.RemoteViews;
 
-import com.eveningoutpost.dexdrip.AddCalibration;
 import com.eveningoutpost.dexdrip.BestGlucose;
-import com.eveningoutpost.dexdrip.DoubleCalibrationActivity;
 import com.eveningoutpost.dexdrip.EditAlertActivity;
 import com.eveningoutpost.dexdrip.Home;
 import com.eveningoutpost.dexdrip.models.ActiveBgAlert;
 import com.eveningoutpost.dexdrip.models.AlertType;
 import com.eveningoutpost.dexdrip.models.BgReading;
-import com.eveningoutpost.dexdrip.models.Calibration;
-import com.eveningoutpost.dexdrip.models.CalibrationRequest;
 import com.eveningoutpost.dexdrip.models.JoH;
-import com.eveningoutpost.dexdrip.models.Sensor;
 import com.eveningoutpost.dexdrip.models.UserError.Log;
 import com.eveningoutpost.dexdrip.models.UserNotification;
 import com.eveningoutpost.dexdrip.R;
-import com.eveningoutpost.dexdrip.services.ActivityRecognizedService;
 import com.eveningoutpost.dexdrip.services.MissedReadingService;
 import com.eveningoutpost.dexdrip.services.SnoozeOnNotificationDismissService;
 import com.eveningoutpost.dexdrip.evaluators.PersistentHigh;
 import com.eveningoutpost.dexdrip.ui.NumberGraphic;
 import com.eveningoutpost.dexdrip.utils.DexCollectionType;
-import com.eveningoutpost.dexdrip.utils.PowerStateReceiver;
-import com.eveningoutpost.dexdrip.wearintegration.Amazfitservice;
-import com.eveningoutpost.dexdrip.services.broadcastservice.BroadcastEntry;
 import com.eveningoutpost.dexdrip.xdrip;
 
 import java.util.Date;
@@ -133,11 +124,6 @@ public class Notifications extends IntentService {
             Log.d("Notifications", "Running Notifications Intent Service");
             final Context context = getApplicationContext();
 
-            if (Pref.getBoolean("motion_tracking_enabled", false)) {
-                // TODO move this
-                ActivityRecognizedService.reStartActivityRecogniser(context);
-            }
-
             ReadPerfs(context);
             unclearReading = notificationSetter(context);
             scheduleWakeup(context, unclearReading);
@@ -181,7 +167,6 @@ public class Notifications extends IntentService {
 // TODO REFACTOR
     private void FileBasedNotifications(Context context) {
         ReadPerfs(context);
-        Sensor sensor = Sensor.currentSensor();
 
         final BgReading bgReading = BgReading.last();
         if (bgReading == null) {
@@ -212,7 +197,7 @@ public class Notifications extends IntentService {
         // If the last reading does not have a sensor, or that sensor was stopped.
         // or the sensor was started, but the 2 hours did not still pass? or there is no calibrations.
         // In all this cases, bgReading.calculated_value should be 0.
-        if (((sensor != null) || (Home.get_follower())) && calculated_value != 0) {
+        if (calculated_value != 0) {
             AlertType newAlert = AlertType.get_highest_active_alert(context, calculated_value);
 
             if (newAlert == null) {
@@ -319,10 +304,6 @@ public class Notifications extends IntentService {
         
         boolean unclearReading = BgReading.getAndRaiseUnclearReading(context);
 
-        boolean forced_wear = Home.get_forced_wear();
-        Log.d(TAG, "forced_wear=" + forced_wear + " bg_notifications_watch=" + bg_notifications_watch + " persistent_high_alert_enabled_watch=" + bg_persistent_high_alert_enabled_watch);
-
-        //boolean watchAlert = (Home.get_forced_wear() && bg_notifications_watch);
         if (unclearReading) {
             AlertPlayer.getPlayer().stopAlert(context, false, true);
         } else {
@@ -336,73 +317,13 @@ public class Notifications extends IntentService {
         evaluateLowPredictionAlarm();
         reportNoiseChanges();
 
-
-        Sensor sensor = Sensor.currentSensor();
         // TODO need to check performance of rest of this method when in follower mode
         final List<BgReading> bgReadings = BgReading.latest(3);
-        final List<Calibration> calibrations = Calibration.allForSensorLimited(3);
         if (bgReadings == null || bgReadings.size() < 3) {
-            return unclearReading;
-        }
-        if (calibrations == null || calibrations.size() < 2) {
             return unclearReading;
         }
         BgReading bgReading = bgReadings.get(0);
 
-        if (calibration_notifications) {
-
-            int calibration_reminder_secs = 0;
-            try {
-                calibration_reminder_secs = Integer.parseInt(Pref.getString("calibration_reminder_hours","0")) * 60 * 60;
-                Log.d(TAG,"Calibration reminder seconds: "+calibration_reminder_secs);
-            } catch (Exception e) {
-                Log.wtf(TAG,"Could not parse calibration_reminder_hours");
-            }
-
-            // TODO this should only clear double calibration once after calibrations are achieved
-            if (bgReadings.size() >= 3) {
-                if (calibrations.size() == 0 && (new Date().getTime() - bgReadings.get(2).timestamp <= (60000 * 30)) && sensor != null) {
-                    if ((sensor.started_at + (60000 * 60 * 2)) < new Date().getTime()) {
-                        doubleCalibrationRequest();
-                    } else {
-                        // TODO should be aware of state
-                        clearDoubleCalibrationRequest();
-                    }
-                } else {
-                    clearDoubleCalibrationRequest();
-                }
-            } else {
-                clearDoubleCalibrationRequest();
-            }
-            // bgreadings criteria possibly needs a review
-            if (CalibrationRequest.shouldRequestCalibration(bgReading) && (new Date().getTime() - bgReadings.get(2).timestamp <= (60000 * 24))) {
-                if ((!PowerStateReceiver.is_power_connected()) || (Pref.getBooleanDefaultFalse("calibration_alerts_while_charging"))) {
-                    if (JoH.pratelimit("calibration-request-notification", Math.max(CALIBRATION_REQUEST_MAX_FREQUENCY, calibration_reminder_secs))) {
-                        extraCalibrationRequest();
-                    }
-                }
-            } else {
-                // TODO should be aware of state
-                clearExtraCalibrationRequest();
-            }
-            // questionable use of abs for time since
-            if (calibrations.size() >= 1 && (Math.abs(JoH.msSince(Math.max(calibrations.get(0).timestamp,
-                    PersistentStore.getLong("last-calibration-pipe-timestamp")))) > (calibration_reminder_secs * 1000))
-                    && (CalibrationRequest.isSlopeFlatEnough(BgReading.last(true)))) {
-                Log.d("NOTIFICATIONS", "Calibration difference in hours: " + ((new Date().getTime() - calibrations.get(0).timestamp)) / (1000 * 60 * 60));
-                if ((!PowerStateReceiver.is_power_connected()) || (Pref.getBooleanDefaultFalse("calibration_alerts_while_charging"))) {
-                    if (JoH.pratelimit("calibration-request-notification", Math.max(CALIBRATION_REQUEST_MIN_FREQUENCY, calibration_reminder_secs)) || Pref.getBooleanDefaultFalse("calibration_alerts_repeat")) {
-                        calibrationRequest();
-                    }
-                }
-            } else {
-                // TODO should be aware of state
-                clearCalibrationRequest();
-            }
-
-        } else {
-            clearAllCalibrationNotifications();
-        }
         return unclearReading;
     }
 
@@ -857,45 +778,6 @@ public class Notifications extends IntentService {
         mNotifyMgr.cancel(notificationId);
     }
 
-    private void calibrationRequest() {
-        UserNotification userNotification = UserNotification.lastCalibrationAlert();
-        if ((userNotification == null) || (userNotification.timestamp <= ((new Date().getTime()) - (60000 * calibration_snooze)))) {
-            if (userNotification != null) {
-                userNotification.delete();
-            }
-            final long calibration_hours = Calibration.msSinceLastCalibration() / (1000 * 60 * 60);
-            UserNotification.create(calibration_hours + " hours since last Calibration  (@" + JoH.hourMinuteString() + ")", "calibration_alert", new Date().getTime());
-            String title = "Calibration Needed";
-            String content = calibration_hours + " hours since last calibration";
-            Intent intent = new Intent(mContext, AddCalibration.class);
-            calibrationNotificationCreate(title, content, intent, calibrationNotificationId);
-        }
-    }
-
-    private void doubleCalibrationRequest() {
-        UserNotification userNotification = UserNotification.lastDoubleCalibrationAlert();
-        if ((userNotification == null) || (userNotification.timestamp <= ((new Date().getTime()) - (60000 * calibration_snooze)))) {
-            if (userNotification != null) { userNotification.delete(); }
-            UserNotification.create("Double Calibration", "double_calibration_alert", new Date().getTime());
-            String title = "Sensor is ready";
-            String content = getString(R.string.sensor_is_ready_please_enter_double_calibration) + "  (@" + JoH.hourMinuteString() + ")";
-            Intent intent = new Intent(mContext, DoubleCalibrationActivity.class);
-            calibrationNotificationCreate(title, content, intent, calibrationNotificationId);
-        }
-    }
-
-    private void extraCalibrationRequest() {
-        UserNotification userNotification = UserNotification.lastExtraCalibrationAlert();
-        if ((userNotification == null) || (userNotification.timestamp <= ((new Date().getTime()) - (60000 * calibration_snooze)))) {
-            if (userNotification != null) { userNotification.delete(); }
-            UserNotification.create("Extra Calibration Requested", "extra_calibration_alert", new Date().getTime());
-            String title = "Calibration Requested";
-            String content = "Increase performance by calibrating now" + "  (@" + JoH.hourMinuteString() + ")";
-            Intent intent = new Intent(mContext, AddCalibration.class);
-            calibrationNotificationCreate(title, content, intent, extraCalibrationNotificationId);
-        }
-    }
-
     public static void bgUnclearAlert(Context context) {
         long otherAlertReraiseSec = MissedReadingService.getOtherAlertReraiseSec(context, "bg_unclear_readings_alert");
         OtherAlert(context, "bg_unclear_readings_alert", "Unclear Sensor Readings" + "  (@" + JoH.hourMinuteString() + ")", uncleanAlertNotificationId, NotificationChannels.BG_ALERT_CHANNEL, true, otherAlertReraiseSec);
@@ -923,9 +805,6 @@ public class Notifications extends IntentService {
         if (on) {
             if ((Pref.getLong("alerts_disabled_until", 0) < JoH.tsl()) && (Pref.getLong("low_alerts_disabled_until", 0) < JoH.tsl())) {
                 OtherAlert(context, type, msg, lowPredictAlertNotificationId, NotificationChannels.BG_PREDICTED_LOW_CHANNEL, false, 20 * 60);
-                if (Pref.getBooleanDefaultFalse("speak_alerts")) {
-                   if (JoH.pratelimit("low-predict-speak", 1800)) SpeechUtil.say(msg, 4000);
-                }
             } else {
                 Log.ueh(TAG, "Not Low predict alerting due to snooze: " + msg);
             }
@@ -949,11 +828,6 @@ public class Notifications extends IntentService {
                 if (snooze_time < 1) snooze_time = 1;       // not less than 1 minute
                 if (snooze_time > 1440) snooze_time = 1440; // not more than 1 day
                 OtherAlert(context, type, msg, persistentHighAlertNotificationId, NotificationChannels.BG_PERSISTENT_HIGH_CHANNEL, false, snooze_time * 60);
-                if (Pref.getBooleanDefaultFalse("speak_alerts")) {
-                    if (JoH.pratelimit("persist-high-speak", 1800)) {
-                        SpeechUtil.say(msg, 4000);
-                    }
-                }
             } else {
                 Log.ueh(TAG, "Not persistent high alerting due to snooze: " + msg);
             }
@@ -996,13 +870,6 @@ public class Notifications extends IntentService {
                 Log.d(TAG, "Delete");
             }
             UserNotification.create(message, type, new Date().getTime() + reraiseSec * 1000);
-
-
-            boolean localOnly =false;
-            if (notificatioId == persistentHighAlertNotificationId) {
-                localOnly = (Home.get_forced_wear() && bg_notifications_watch && bg_persistent_high_alert_enabled_watch);
-            }
-            Log.d(TAG,"OtherAlert forced_wear localOnly=" + localOnly);
             Intent intent = new Intent(context, Home.class);
             NotificationCompat.Builder mBuilder =
                     new NotificationCompat.Builder(context, channelId)
@@ -1010,7 +877,7 @@ public class Notifications extends IntentService {
                             .setSmallIcon(R.drawable.ic_action_communication_invert_colors_on)
                             .setContentTitle(title)
                             .setContentText(message)
-                            .setLocalOnly(localOnly)
+                            .setLocalOnly(false)
                             .setStyle(new NotificationCompat.BigTextStyle().bigText(message))
                             .setContentIntent(PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT));
             if (addDeleteIntent) {
@@ -1033,37 +900,6 @@ public class Notifications extends IntentService {
             //Log.d(TAG, "Notify");
             Log.ueh("Other Alert",message);
             mNotifyMgr.notify(notificatioId, XdripNotificationCompat.build(mBuilder));
-
-            if (Pref.getBooleanDefaultFalse("pref_amazfit_enable_key")
-                    && Pref.getBooleanDefaultFalse("pref_amazfit_other_alert_enable_key")) {
-                Amazfitservice.start("xDrip_Otheralert", message, 30);
-            }
-
-            BroadcastEntry.sendAlert(type, message);
-        }
-    }
-
-    private void clearCalibrationRequest() {
-        UserNotification userNotification = UserNotification.lastCalibrationAlert();
-        if (userNotification != null) {
-            userNotification.delete();
-            notificationDismiss(calibrationNotificationId);
-        }
-    }
-
-    private void clearDoubleCalibrationRequest() {
-        UserNotification userNotification = UserNotification.lastDoubleCalibrationAlert();
-        if (userNotification != null) {
-            userNotification.delete();
-            notificationDismiss(doubleCalibrationNotificationId);
-        }
-    }
-
-    private void clearExtraCalibrationRequest() {
-        UserNotification userNotification = UserNotification.lastExtraCalibrationAlert();
-        if (userNotification != null) {
-            userNotification.delete();
-            notificationDismiss(extraCalibrationNotificationId);
         }
     }
 

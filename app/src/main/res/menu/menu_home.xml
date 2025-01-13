@@ -16,13 +16,6 @@
         android:onClick="showRemindersFromMenu"
         android:showAsAction="never"/>
 
-    <item android:id="@+id/showassist"
-        android:title="@string/emergency_messages"
-        android:checkable="false"
-        android:orderInCategory="1"
-        android:visible="true"
-        android:onClick="showAssistFromMenu"
-        android:showAsAction="never"/>
 
     <item android:id="@+id/export_submenu"
         android:title="@string/export_submenu"
@@ -51,13 +44,6 @@
                 android:onClick="restoreDatabase"
                 android:showAsAction="never"/>
 
-            <item android:id="@+id/action_export_csv_sidiary"
-                android:title="@string/menu_export_csv_sidiary"
-                android:checkable="false"
-                android:orderInCategory="1"
-                android:onClick="exportCSVasSiDiary"
-                android:showAsAction="never"/>
-
             <item android:id="@+id/importsettings"
                 android:title="@string/load_save_settings_on_sdcard"
                 android:checkable="false"
@@ -67,41 +53,6 @@
                 android:showAsAction="never"/>
         </menu>
     </item>
-
-    <item android:id="@+id/showmap"
-        android:title="@string/show_parakeet_map"
-        android:checkable="false"
-        android:onClick="showMapFromMenu"
-        android:visible="true"
-        android:orderInCategory="1"
-        android:showAsAction="never"/>
-
-    <item android:id="@+id/parakeetsetup"
-        android:title="@string/switch_parakeet_to_setup_mode"
-        android:checkable="false"
-        android:onClick="parakeetSetupMode"
-        android:visible="true"
-        android:orderInCategory="1"
-        android:showAsAction="never"/>
-
-    <item
-        android:id="@+id/action_resend_last_bg"
-        android:orderInCategory="100"
-        android:title="@string/action_resend_to_watch"
-        android:onClick="resendGlucoseToWatch"
-        android:showAsAction="never" />
-    <item
-        android:id="@+id/action_open_watch_settings"
-        android:orderInCategory="100"
-        android:title="@string/action_open_watch_setting"
-        android:onClick="openSettingsOnWatch"
-        android:showAsAction="never" />
-    <item
-        android:id="@+id/action_sync_watch_db"
-        android:orderInCategory="100"
-        android:title="@string/action_sync_watch_db"
-        android:onClick="resetWearDb"
-        android:showAsAction="never" />
 
     <item android:id="@+id/deleteAllBG"
         android:title="@string/delete_all_bg_readings"
@@ -134,14 +85,6 @@
         android:onClick="viewEventLog"
         android:visible="true"
         android:showAsAction="never"/>
-
-    <item android:id="@+id/libreLastMinutes"
-        android:title="@string/show_libre_trend"
-        android:checkable="false"
-        android:orderInCategory="1"
-        android:onClick="ShowLibreTrend"
-        android:visible="true"
-        android:showAsAction="never"/>
     
     <item android:id="@+id/synctreatments"
         android:title="@string/sync_treatments"
@@ -158,14 +101,6 @@
         android:onClick="shareMyConfig"
         android:showAsAction="never"/>
 
-    <item android:id="@+id/sendbackfill"
-        android:title="@string/send_bg_readings_to_backfill"
-        android:checkable="false"
-        android:orderInCategory="1"
-        android:onClick="doBackFillBroadcast"
-        android:visible="false"
-        android:showAsAction="never"/>
-
     <item android:id="@+id/checkforupdate"
         android:title="@string/check_for_updated_version"
         android:checkable="false"
@@ -180,11 +115,4 @@
         android:onClick="sendFeedback"
         android:showAsAction="never"/>
 
-    <item android:id="@+id/action_toggle_speakreadings"
-        android:title="@string/speak_readings"
-        android:checkable="true"
-        android:orderInCategory="2"
-        android:onClick="toggleSpeakReadings"
-        android:visible="false"
-        android:showAsAction="never"/>
 </menu>

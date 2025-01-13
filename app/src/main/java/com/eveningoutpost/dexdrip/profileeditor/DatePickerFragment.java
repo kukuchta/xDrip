@@ -8,10 +8,6 @@ import android.widget.DatePicker;
 
 import java.util.Calendar;
 
-/**
- * Created by jamorham on 25/01/2017.
- */
-
 public class DatePickerFragment extends DialogFragment
         implements DatePickerDialog.OnDateSetListener {
 
@@ -19,7 +15,7 @@ public class DatePickerFragment extends DialogFragment
     private long earliest = -1;
     private long initial = -1;
     private boolean allow_future = true;
-    ProfileAdapter.DatePickerCallbacks callback;
+    DatePickerCallbacks callback;
 
     public void setTitle(String title) {
         this.title = title;
@@ -37,7 +33,7 @@ public class DatePickerFragment extends DialogFragment
         this.initial = time;
     }
 
-    public void setDateCallback(ProfileAdapter.DatePickerCallbacks callback) {
+    public void setDateCallback(DatePickerCallbacks callback) {
         this.callback = callback;
     }
 

@@ -15,7 +15,6 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.eveningoutpost.dexdrip.BaseAppCompatActivity;
-import com.eveningoutpost.dexdrip.GcmActivity;
 import com.eveningoutpost.dexdrip.Home;
 import com.eveningoutpost.dexdrip.models.AlertType;
 import com.eveningoutpost.dexdrip.models.JoH;
@@ -122,8 +121,7 @@ public class SdcardImportExport extends BaseAppCompatActivity {
     }
 
     public static void hardReset_orig() {
-        // shared preferences are cached so we need a hard restart
-        GcmActivity.last_sync_request = 0;
+        // shared preferences are cached so we need a hard restart]
         android.os.Process.killProcess(android.os.Process.myPid());
     }
 

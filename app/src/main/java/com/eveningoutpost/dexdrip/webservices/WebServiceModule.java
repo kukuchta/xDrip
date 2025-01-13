@@ -31,14 +31,6 @@ public class WebServiceModule {
 
     @Provides
     @Singleton
-    @Named("WebServicePebble")
-    BaseWebService providesWebServicePebble() {
-        UserError.Log.d(TAG, "creating WebServicePebble");
-        return new WebServicePebble();
-    }
-
-    @Provides
-    @Singleton
     @Named("WebServiceSgv")
     BaseWebService providesWebServiceSgv() {
         UserError.Log.d(TAG, "creating WebServiceSgv");
@@ -71,34 +63,10 @@ public class WebServiceModule {
 
     @Provides
     @Singleton
-    @Named("WebServiceSteps")
-    BaseWebService providesWebServiceSteps() {
-        UserError.Log.d(TAG, "creating WebServiceSteps");
-        return new WebServiceSteps();
-    }
-
-    @Provides
-    @Singleton
     @Named("WebServiceHeart")
     BaseWebService providesWebServiceHeart() {
         UserError.Log.d(TAG, "creating WebServiceHeart");
         return new WebServiceHeart();
-    }
-
-    @Provides
-    @Singleton
-    @Named("WebServiceSync")
-    BaseWebService providesWebServiceSync() {
-        UserError.Log.d(TAG, "creating WebServiceSync");
-        return new WebServiceSync();
-    }
-
-    @Provides
-    @Singleton
-    @Named("Libre2ConnectCode")
-    BaseWebService providesLibre2ConnectCode() {
-        UserError.Log.d(TAG, "creating Libre2ConnectCode");
-        return new WebLibre2ConnectCode();
     }
 
 }

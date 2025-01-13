@@ -151,25 +151,11 @@
                     android:textAppearance="?android:attr/textAppearanceSmall" />
 
                 <TextView
-                    android:id="@+id/textBridgeBattery"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentStart="true"
-                    android:layout_below="@+id/extraStatusLine"
-                    android:layout_marginLeft="10dp"
-                    android:background="@android:color/transparent"
-                    android:inputType="none"
-                    android:text="Battery Status"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:textSize="12sp"
-                    android:textStyle="normal" />
-
-                <TextView
                     android:id="@+id/lowpredict"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
                     android:layout_alignParentStart="true"
-                    android:layout_below="@+id/textBridgeBattery"
+                    android:layout_below="@+id/extraStatusLine"
                     android:layout_marginRight="5dp"
                     android:layout_marginTop="-2dp"
                     android:background="@android:color/transparent"
@@ -255,26 +241,6 @@
                     android:paddingRight="3dp"
                     android:paddingTop="1dp"
                     android:src="@drawable/ic_redo_variant_grey600_24dp" />
-
-
-                <TextView
-                    android:id="@+id/treatmentTextView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignTop="@+id/btnTreatment"
-                    android:layout_marginTop="6dp"
-                    android:layout_toStartOf="@+id/btnTreatment"
-                    android:background="@android:color/transparent"
-                    android:gravity="right"
-                    android:shadowColor="@android:color/black"
-
-                    android:shadowDx="1"
-                    android:shadowDy="1"
-                    android:shadowRadius="0"
-                    android:text="Treatment voice data appears here"
-                    android:textAlignment="gravity"
-                    android:textColor="@android:color/holo_green_light"
-                    android:textSize="14dp" />
 
                 <ImageButton
                     android:id="@+id/approveTreatment"
@@ -445,86 +411,6 @@
                     android:textColor="@android:color/holo_green_light"
                     android:textSize="22dp"
                     android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/parakeetbattery"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@+id/extraStatusLine"
-                    android:layout_marginLeft="10dp"
-                    android:layout_toEndOf="@+id/textBridgeBattery"
-                    android:background="@android:color/transparent"
-                    android:inputType="none"
-                    android:text="Battery Status"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:textSize="12sp"
-                    android:textStyle="normal" />
-
-                <TextView
-                    android:id="@+id/libstatus"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@+id/extraStatusLine"
-                    android:layout_marginLeft="10dp"
-                    android:layout_toEndOf="@+id/parakeetbattery"
-                    android:background="@android:color/transparent"
-                    android:inputType="none"
-                    android:text="Sensor Age"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:textSize="12sp"
-                    android:textStyle="normal" />
-
-                <ImageButton
-                    android:id="@+id/vehicleModeButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:layout_below="@+id/btnRedo"
-                    android:layout_marginRight="8dp"
-                    android:layout_marginTop="8dp"
-                    android:background="@android:color/transparent"
-                    android:paddingBottom="2dp"
-                    android:paddingRight="4dp"
-                    android:src="@drawable/ic_car_grey600_24dp" />
-
-                <Button
-                    android:id="@+id/bpmButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="40dp"
-                    android:layout_alignStart="@+id/vehicleModeButton"
-                    android:layout_below="@+id/vehicleModeButton"
-                    android:layout_marginBottom="10dp"
-                    android:layout_marginRight="8dp"
-                    android:layout_marginTop="10dp"
-                    android:background="@android:color/transparent"
-                    android:drawableTop="@drawable/ic_heart_pulse_grey600_24dp"
-                    android:gravity="center_horizontal|center_vertical"
-                    android:onClick="toggleStepsVisibility"
-                    android:paddingBottom="2dp"
-                    android:paddingEnd="4dp"
-                    android:text="123"
-                    android:textSize="10sp" />
-
-                <Button
-                    android:id="@+id/walkButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="40dp"
-                    android:layout_alignStart="@+id/vehicleModeButton"
-                    android:layout_below="@+id/bpmButton"
-                    android:layout_marginLeft="-10dp"
-                    android:layout_marginRight="0dp"
-                    android:layout_marginTop="0dp"
-                    android:background="@android:color/transparent"
-                    android:drawableTop="@drawable/ic_walk_grey600_24dp"
-                    android:gravity="center_horizontal|center_vertical"
-                    android:onClick="toggleStepsVisibility"
-                    android:paddingBottom="0dp"
-                    android:paddingEnd="0dp"
-                    android:paddingStart="0dp"
-                    android:paddingTop="0dp"
-                    android:text="99999"
-                    android:textSize="10sp" />
-
 
             </RelativeLayout>
 

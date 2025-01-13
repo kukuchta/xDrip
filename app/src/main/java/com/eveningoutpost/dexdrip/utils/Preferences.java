@@ -5,20 +5,15 @@ import static com.eveningoutpost.dexdrip.EditAlertActivity.unitsConvert2Disp;
 import static com.eveningoutpost.dexdrip.models.JoH.showNotification;
 import static com.eveningoutpost.dexdrip.models.JoH.tolerantParseDouble;
 import static com.eveningoutpost.dexdrip.utilitymodels.Constants.OUT_OF_RANGE_GLUCOSE_ENTRY_ID;
-import static com.eveningoutpost.dexdrip.utils.DexCollectionType.getBestCollectorHardwareName;
 import static com.eveningoutpost.dexdrip.xdrip.gs;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.appwidget.AppWidgetManager;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -30,7 +25,6 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
@@ -41,95 +35,43 @@ import android.preference.PreferenceGroup;
 import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
 import android.preference.RingtonePreference;
-import android.preference.SwitchPreference;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import android.text.InputFilter;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.BaseAdapter;
 import android.widget.Toast;
 
 import com.bytehamster.lib.preferencesearch.SearchConfiguration;
 import com.bytehamster.lib.preferencesearch.SearchPreferenceResult;
 import com.bytehamster.lib.preferencesearch.SearchPreferenceResultListener;
 import com.eveningoutpost.dexdrip.BasePreferenceActivity;
-import com.eveningoutpost.dexdrip.GcmActivity;
 import com.eveningoutpost.dexdrip.Home;
-import com.eveningoutpost.dexdrip.NFCReaderX;
-import com.eveningoutpost.dexdrip.ParakeetHelper;
 import com.eveningoutpost.dexdrip.R;
 import com.eveningoutpost.dexdrip.WidgetUpdateService;
 import com.eveningoutpost.dexdrip.alert.Registry;
-import com.eveningoutpost.dexdrip.calibrations.PluggableCalibration;
 import com.eveningoutpost.dexdrip.cgm.carelinkfollow.CareLinkFollowService;
 import com.eveningoutpost.dexdrip.cgm.carelinkfollow.auth.CareLinkAuthType;
-import com.eveningoutpost.dexdrip.cgm.nsfollow.NightscoutFollow;
 import com.eveningoutpost.dexdrip.cgm.sharefollow.ShareFollowService;
-import com.eveningoutpost.dexdrip.cgm.webfollow.Cpref;
 import com.eveningoutpost.dexdrip.cgm.carelinkfollow.auth.CareLinkAuthenticator;
 import com.eveningoutpost.dexdrip.cgm.carelinkfollow.auth.CareLinkCredentialStore;
-import com.eveningoutpost.dexdrip.cloud.jamcm.Pusher;
-import com.eveningoutpost.dexdrip.g5model.DexSyncKeeper;
-import com.eveningoutpost.dexdrip.g5model.Ob1G5StateMachine;
-import com.eveningoutpost.dexdrip.healthconnect.HealthConnectEntry;
-import com.eveningoutpost.dexdrip.healthconnect.HealthGamut;
-import com.eveningoutpost.dexdrip.insulin.inpen.InPenEntry;
-import com.eveningoutpost.dexdrip.models.DesertSync;
 import com.eveningoutpost.dexdrip.models.JoH;
-import com.eveningoutpost.dexdrip.models.Profile;
 import com.eveningoutpost.dexdrip.models.UserError;
 import com.eveningoutpost.dexdrip.models.UserError.ExtraLogTags;
 import com.eveningoutpost.dexdrip.models.UserError.Log;
-import com.eveningoutpost.dexdrip.models.UserNotification;
 import com.eveningoutpost.dexdrip.plugin.Dialog;
-import com.eveningoutpost.dexdrip.profileeditor.ProfileEditor;
 import com.eveningoutpost.dexdrip.receiver.InfoContentProvider;
-import com.eveningoutpost.dexdrip.services.ActivityRecognizedService;
-import com.eveningoutpost.dexdrip.services.BluetoothGlucoseMeter;
-import com.eveningoutpost.dexdrip.services.DexCollectionService;
-import com.eveningoutpost.dexdrip.services.G5BaseService;
-import com.eveningoutpost.dexdrip.services.Ob1G5CollectionService;
-import com.eveningoutpost.dexdrip.services.PlusSyncService;
-import com.eveningoutpost.dexdrip.services.UiBasedCollector;
-import com.eveningoutpost.dexdrip.services.broadcastservice.BroadcastService;
-import com.eveningoutpost.dexdrip.tidepool.AuthFlowOut;
-import com.eveningoutpost.dexdrip.tidepool.TidepoolUploader;
-import com.eveningoutpost.dexdrip.tidepool.UploadChunk;
 import com.eveningoutpost.dexdrip.ui.LockScreenWallPaper;
 import com.eveningoutpost.dexdrip.ui.dialog.GenericConfirmDialog;
 import com.eveningoutpost.dexdrip.utilitymodels.BgGraphBuilder;
 import com.eveningoutpost.dexdrip.utilitymodels.CollectionServiceStarter;
 import com.eveningoutpost.dexdrip.utilitymodels.Constants;
-import com.eveningoutpost.dexdrip.utilitymodels.Experience;
 import com.eveningoutpost.dexdrip.utilitymodels.Inevitable;
-import com.eveningoutpost.dexdrip.utilitymodels.Intents;
 import com.eveningoutpost.dexdrip.utilitymodels.Pref;
 import com.eveningoutpost.dexdrip.utilitymodels.ShotStateStore;
-import com.eveningoutpost.dexdrip.utilitymodels.SpeechUtil;
 import com.eveningoutpost.dexdrip.utilitymodels.UpdateActivity;
-import com.eveningoutpost.dexdrip.utilitymodels.WholeHouse;
-import com.eveningoutpost.dexdrip.utilitymodels.pebble.PebbleUtil;
-import com.eveningoutpost.dexdrip.utilitymodels.pebble.PebbleWatchSync;
-import com.eveningoutpost.dexdrip.utilitymodels.pebble.watchface.InstallPebbleClassicTrendWatchface;
-import com.eveningoutpost.dexdrip.utilitymodels.pebble.watchface.InstallPebbleSnoozeControlApp;
-import com.eveningoutpost.dexdrip.utilitymodels.pebble.watchface.InstallPebbleTrendClayWatchFace;
-import com.eveningoutpost.dexdrip.utilitymodels.pebble.watchface.InstallPebbleTrendWatchFace;
-import com.eveningoutpost.dexdrip.utilitymodels.pebble.watchface.InstallPebbleWatchFace;
-import com.eveningoutpost.dexdrip.utils.framework.IncomingCallsReceiver;
-import com.eveningoutpost.dexdrip.watch.lefun.LeFunEntry;
-import com.eveningoutpost.dexdrip.watch.miband.MiBand;
-import com.eveningoutpost.dexdrip.watch.miband.MiBandEntry;
-import com.eveningoutpost.dexdrip.watch.miband.MiBandService;
-import com.eveningoutpost.dexdrip.watch.thinjam.BlueJay;
-import com.eveningoutpost.dexdrip.watch.thinjam.BlueJayAdapter;
-import com.eveningoutpost.dexdrip.watch.thinjam.BlueJayEntry;
-import com.eveningoutpost.dexdrip.wearintegration.Amazfitservice;
-import com.eveningoutpost.dexdrip.wearintegration.WatchUpdaterService;
 import com.eveningoutpost.dexdrip.webservices.XdripWebService;
 import com.eveningoutpost.dexdrip.xDripWidget;
 import com.eveningoutpost.dexdrip.xdrip;
@@ -154,10 +96,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import lombok.val;
+import java.util.Set;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On
@@ -185,7 +124,6 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
     private static Preference nfc_expiry_days;
 
     private static AllPrefsFragment pFragment;
-    private BroadcastReceiver mibandStatusReceiver;
 
     // The following three variables enable us to create a common state from the input,
     // whether we scan from camera or a file, and continue with the same following
@@ -201,8 +139,9 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
     public static final double MAX_GLUCOSE_INPUT = 400; // The largest acceptable input glucose value in mg/dL
 
     private void refreshFragments(final String jumpTo) {
-        this.preferenceFragment = new AllPrefsFragment(jumpTo);
-        this.preferenceFragment.setParent(this);
+        this.preferenceFragment = new AllPrefsFragment();
+        this.preferenceFragment.jumpTo = jumpTo;
+        this.preferenceFragment.parent = this;
         pFragment = this.preferenceFragment;
         getFragmentManager().beginTransaction().replace(android.R.id.content,
                 this.preferenceFragment).commit();
@@ -302,8 +241,8 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                     return;
                 }
 
-                val sb = getMapKeysString(prefsmap);
-                val msg = getString(R.string.import_qr_code_warning) + sb;
+                String sb = getMapKeysString(prefsmap);
+                String msg = getString(R.string.import_qr_code_warning) + sb;
 
                 GenericConfirmDialog.show(this, gs(R.string.are_you_sure), msg, () -> {
                     final SharedPreferences.Editor editor = prefs.edit();
@@ -324,14 +263,7 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                     refreshFragments();
                     ExtraLogTags.readPreference(Pref.getStringDefaultBlank("extra_tags_for_logging"));
                     Toast.makeText(getApplicationContext(), "Loaded " + Integer.toString(changes) + " preferences from QR code", Toast.LENGTH_LONG).show();
-                    PlusSyncService.clearandRestartSyncService(getApplicationContext());
-                    DesertSync.settingsChanged(); // refresh
                     InfoContentProvider.ping("pref");
-                    if (prefs.getString("dex_collection_method", "").equals("Follower")) {
-                        PlusSyncService.clearandRestartSyncService(getApplicationContext());
-                        GcmActivity.last_sync_request = 0;
-                        GcmActivity.requestBGsync();
-                    }
                 });
 
             } else {
@@ -344,11 +276,11 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
     }
 
     public static String getMapKeysString(final Map<String, ?> prefsmap) {
-        val sb = new StringBuilder();
-        val keysSet = prefsmap.keySet();
-        val keyList = new ArrayList<>(keysSet);
+        StringBuilder sb = new StringBuilder();
+        Set<String> keysSet = prefsmap.keySet();
+        ArrayList<String> keyList = new ArrayList<>(keysSet);
         Collections.sort(keyList);
-        for (val entry : keyList) {
+        for (String entry : keyList) {
             sb.append(entry);
             sb.append("\n");
         }
@@ -372,15 +304,6 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
         scanFormat = null;
         scanContents = null;
         scanRawBytes = null;
-        if (requestCode == Constants.HEALTH_CONNECT_RESPONSE_ID) {
-            if (HealthConnectEntry.enabled()) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    if (JoH.ratelimit("health-connect-bump", 2)) {
-                        HealthGamut.init(this);
-                    }
-                }
-            }
-        }
 
         if (requestCode == Constants.ZXING_FILE_REQ_CODE) { // If we are scanning an image file, not using the camera
             // The core of the following section, selecting the file, converting it into a bitmap, and then to a bitstream, is from:
@@ -436,15 +359,6 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
             if (QRcodeUtils.hasDecoderMarker(scanContents)) {
                 installxDripPlusPreferencesFromQRCode(prefs, scanContents);
                 return;
-            }
-
-            try {
-                if (BlueJay.processQRCode(scanRawBytes)) {
-                    refreshFragments();
-                    return;
-                }
-            } catch (Exception e) {
-                // meh
             }
 
 
@@ -525,23 +439,6 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
         } catch (Exception e) {
             Log.e(TAG,"Got exception registering lockListener: "+e+ " "+(preferenceFragment.lockListener == null));
         }
-
-        mibandStatusReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-            final MiBandService.MIBAND_INTEND_STATES state = MiBandService.MIBAND_INTEND_STATES.valueOf(intent.getStringExtra("state"));
-            switch (state) {
-                case UPDATE_PREF_SCREEN:
-                    preferenceFragment.updateMiBandScreen();
-                    break;
-                case UPDATE_PREF_DATA:
-                    preferenceFragment.updateMibandPreferencesData();
-                    break;
-                }
-            }
-        };
-
-        UiBasedCollector.onEnableCheckPermission(this);
     }
 
     @Override
@@ -575,49 +472,17 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
         }
     }
 
-
-    private final SharedPreferences.OnSharedPreferenceChangeListener uiPrefListener = UiBasedCollector.getListener(this);
-
-    private final SharedPreferences.OnSharedPreferenceChangeListener xDripCloudListener = (sharedPreferences, key) -> {
-        if (key!= null && key.equals("use_xdrip_cloud_sync")) {
-            Pusher.requestReconnect();
-            CollectionServiceStarter.restartCollectionServiceBackground();
-        }
-    };
-
     @Override
     protected void onResume()
     {
         super.onResume();
-        PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(ActivityRecognizedService.prefListener);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && DexCollectionType.hasBluetooth() && !WholeHouse.isRpi()) {
-            LocationHelper.requestLocationForBluetooth(this); // double check!
-        }
-        PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(LeFunEntry.prefListener);
-        PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(Cpref.prefListener);
-        PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(MiBandEntry.prefListener);
-        PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(BroadcastService.prefListener);
-        PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(BlueJayEntry.prefListener);
-        PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(uiPrefListener);
         PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(Registry.prefListener);
-        PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(xDripCloudListener);
-        LocalBroadcastManager.getInstance(this).registerReceiver(mibandStatusReceiver,
-                new IntentFilter(Intents.PREFERENCE_INTENT));
     }
 
     @Override
     protected void onPause()
     {
-        PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(ActivityRecognizedService.prefListener);
-        PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(LeFunEntry.prefListener);
-        PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(Cpref.prefListener);
-        PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(MiBandEntry.prefListener);
-        PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(BroadcastService.prefListener);
-        PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(BlueJayEntry.prefListener);
-        PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(uiPrefListener);
         PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(Registry.prefListener);
-        PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(xDripCloudListener);
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mibandStatusReceiver);
         pFragment = null;
         super.onPause();
     }
@@ -684,22 +549,10 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
             final Bundle bundle = intent.getExtras();
             if (bundle != null) {
                 final String str = bundle.getString("refresh");
-                if (str != null) {
-                    refreshProfileRatios();
-                    return true;
-                }
+                return str != null;
             }
         }
         return false;
-    }
-
-    private static void refreshProfileRatios() {
-        profile_carb_ratio_default.setTitle(format_carb_ratio(profile_carb_ratio_default.getTitle().toString(), ProfileEditor.minMaxCarbs(ProfileEditor.loadData(false))));
-        profile_insulin_sensitivity_default.setTitle(format_insulin_sensitivity(profile_insulin_sensitivity_default.getTitle().toString(), ProfileEditor.minMaxSens(ProfileEditor.loadData(false))));
-    }
-
-    private static void restartPebble() {
-        xdrip.getAppContext().startService(new Intent(xdrip.getAppContext(), PebbleWatchSync.class));
     }
 
     private static Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = new Preference.OnPreferenceChangeListener() {
@@ -1030,7 +883,7 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
     }
 
     public static void applyPrefSettingRange(String pref_key, String def, Double min, Double max) { // Correct a preference glucose setting if the value is out of range
-        val notificationId = OUT_OF_RANGE_GLUCOSE_ENTRY_ID;
+        int notificationId = OUT_OF_RANGE_GLUCOSE_ENTRY_ID;
         String mySettingString = Pref.getString(pref_key, def);
         final boolean doMgdl = (Pref.getString("units", "mgdl").equals("mgdl"));
         double mySettingMgdl = doMgdl ? tolerantParseDouble(mySettingString) : tolerantParseDouble(mySettingString) * Constants.MMOLL_TO_MGDL; // The preference value in mg/dL
@@ -1056,12 +909,9 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
         }
     }
 
-    @RequiredArgsConstructor
     public static class AllPrefsFragment extends PreferenceFragment {
 
-        final String jumpTo;
-
-        @Setter
+        String jumpTo = null;
         Preferences parent;
         SharedPreferences prefs;
         SearchConfiguration searchConfiguration;
@@ -1075,10 +925,6 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
         private Preference miband_nightmode_interval;
         private Preference miband_graph_category;
 
-        // default constructor is required in addition on some platforms
-        public AllPrefsFragment() {
-            this(null);
-        }
 
         private void setSummary(String pref_name) {
      /*       try {
@@ -1139,12 +985,7 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
 
             addPreferencesFromResource(R.xml.pref_data_sync);
             setupBarcodeConfigScanner();
-            setupBarcodeShareScanner();
             setupQrFromFile();
-            bindPreferenceSummaryToValue(findPreference("cloud_storage_mongodb_uri"));
-            bindPreferenceSummaryToValue(findPreference("cloud_storage_mongodb_collection"));
-            bindPreferenceSummaryToValue(findPreference("cloud_storage_mongodb_device_status_collection"));
-            bindPreferenceSummaryToValue(findPreference("cloud_storage_api_base"));
 
             addPreferencesFromResource(R.xml.pref_advanced_settings);
             addPreferencesFromResource(R.xml.xdrip_plus_prefs);
@@ -1158,9 +999,7 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
 
             profile_insulin_sensitivity_default = findPreference("profile_insulin_sensitivity_default");
             profile_carb_ratio_default = findPreference("profile_carb_ratio_default");
-            refreshProfileRatios();
 
-            nfc_expiry_days = findPreference("nfc_expiry_days");
             locale_choice = (ListPreference) findPreference("forced_language");
             force_english = findPreference("force_english");
 
@@ -1188,111 +1027,6 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                                                         }
             );
 
-            findPreference("disable_all_sync").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    prefs.edit().putBoolean("disable_all_sync", (boolean) newValue).commit();
-                    SdcardImportExport.hardReset();
-                    return true;
-                }
-
-            });
-
-            // this gets cached in a static final field at the moment so needs hard reset
-            findPreference("g5-battery-warning-level").setOnPreferenceChangeListener((preference, newValue) -> {
-                prefs.edit().putString("g5-battery-warning-level", (String) newValue).commit();
-                G5BaseService.resetTransmitterBatteryStatus();
-                SdcardImportExport.hardReset();
-                return true;
-            });
-
-            try {
-                final Activity activity = this.getActivity();
-                findPreference("lefun_option_call_notifications").setOnPreferenceChangeListener((preference, newValue) -> {
-                    prefs.edit().putBoolean("lefun_option_call_notifications", (Boolean) newValue).apply();
-                    IncomingCallsReceiver.checkPermission(activity);
-                    return true;
-                });
-            } catch (Exception e) {
-                //
-            }
-
-            try {
-                miband2_screen = findPreference("miband2_screen");
-                miband3_4_screen = findPreference("miband3_4_screen");
-                miband_graph_category = findPreference("miband_graph_category");
-                miband_send_readings_as_notification = findPreference(MiBandEntry.PREF_MIBAND_SEND_READINGS_AS_NOTIFICATION);
-                miband_authkey = findPreference(MiBandEntry.PREF_MIBAND_AUTH_KEY);
-                miband_nightmode_category = findPreference("miband_nightmode_category");
-                miband_nightmode_interval = findPreference(MiBandEntry.PREF_MIBAND_NIGHTMODE_INTERVAL);
-
-                miband_nightmode_interval.setOnPreferenceChangeListener(MiBandEntry.sBindMibandPreferenceChangeListener);
-                MiBandEntry.sBindMibandPreferenceChangeListener.onPreferenceChange(miband_nightmode_interval,
-                        PreferenceManager
-                                .getDefaultSharedPreferences(miband_nightmode_interval.getContext())
-                                .getInt(miband_nightmode_interval.getKey(), -1));
-
-                findPreference(MiBandEntry.PREF_CALL_ALERTS).setOnPreferenceChangeListener((preference, newValue) -> {
-                    IncomingCallsReceiver.checkPermission(this.getActivity());
-                    return true;
-                });
-
-                findPreference(MiBandEntry.PREF_MIBAND_ENABLED).setOnPreferenceChangeListener((preference, newValue) -> {
-                    if ((Boolean) newValue) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && (boolean) newValue) {
-                            LocationHelper.requestLocationForBluetooth((Activity) preference.getContext());
-                        }
-                        checkReadPermission(this.getActivity());
-                    }
-                    return true;
-                });
-
-                updateMiBandScreen();
-
-                bindPreferenceTitleAppendToMacValue(findPreference(MiBandEntry.PREF_MIBAND_MAC));
-
-                findPreference(MiBandEntry.PREF_MIBAND_UPDATE_BG).setOnPreferenceClickListener(preference -> {
-                    updateMiBandBG(preference.getContext());
-                    return true;
-                });
-
-                if (!Home.get_engineering_mode()){
-                    PreferenceScreen settings = (PreferenceScreen) findPreference(MiBandEntry.PREF_MIBAND_SETTINGS);
-                    settings.removePreference(findPreference("debug_miband4"));
-                }
-
-            } catch (Exception e) {
-                //
-            }
-
-            try {
-                final Activity activity = this.getActivity();
-                findPreference("bluejay_option_call_notifications").setOnPreferenceChangeListener((preference, newValue) -> {
-                    prefs.edit().putBoolean("bluejay_option_call_notifications", (Boolean) newValue).apply();
-                    IncomingCallsReceiver.checkPermission(activity);
-                    return true;
-                });
-            } catch (Exception e) {
-                //
-            }
-
-
-            final Preference profile_carb_absorption_default = findPreference("profile_carb_absorption_default");
-            profile_carb_absorption_default.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    if (!isNumeric(newValue.toString())) {
-                        return false;
-                    }
-                    preference.setTitle(format_carb_absorption_rate(preference.getTitle().toString(), newValue.toString()));
-                    Profile.reloadPreferences(AllPrefsFragment.this.prefs);
-                    Home.staticRefreshBGCharts();
-                    return true;
-                }
-            });
-
-            profile_carb_absorption_default.setTitle(format_carb_absorption_rate(profile_carb_absorption_default.getTitle().toString(), this.prefs.getString("profile_carb_absorption_default", "")));
-
 
             refresh_extra_items();
             findPreference("plus_extra_features").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
@@ -1315,94 +1049,8 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                 }
             });
 
-            bindTTSListener();
             final Preference collectionMethod = findPreference("dex_collection_method");
-            final Preference runInForeground = findPreference("run_service_in_foreground");
-            final Preference g5nonraw = findPreference("g5_non_raw_method");
-            final Preference wifiRecievers = findPreference("wifi_recievers_addresses");
-            final Preference predictiveBG = findPreference("predictive_bg");
-            final Preference interpretRaw = findPreference("interpret_raw");
-            final Preference bfappid = findPreference("bugfender_appid");
-            final Preference nfcSettings = findPreference("xdrip_plus_nfc_settings");
-            final Preference bluereadersettings = findPreference("xdrip_blueReader_advanced_settings");
-            final Preference libre2settings = findPreference("xdrip_libre2_advanced_settings");
-            //DexCollectionType collectionType = DexCollectionType.getType(findPreference("dex_collection_method").)
-
-            final ListPreference currentCalibrationPlugin = (ListPreference)findPreference("current_calibration_plugin");
             final PreferenceCategory collectionCategory = (PreferenceCategory) findPreference("collection_category");
-
-            final Preference shareKey = findPreference("share_key");
-            shareKey.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-                @Override
-                public boolean onPreferenceClick(Preference preference) {
-                    AllPrefsFragment.this.prefs.edit().remove("dexcom_share_session_id").apply();
-                    return true;
-                }
-            });
-
-            Preference.OnPreferenceChangeListener shareTokenResettingListener = new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    AllPrefsFragment.this.prefs.edit().remove("dexcom_share_session_id").apply();
-                    return true;
-                }
-            };
-
-            final Preference sharePassword = findPreference("dexcom_account_password");
-            sharePassword.setOnPreferenceChangeListener(shareTokenResettingListener);
-            final Preference shareAccountName = findPreference("dexcom_account_name");
-            shareAccountName.setOnPreferenceChangeListener(shareTokenResettingListener);
-
-            final Preference tidepoolTestLogin = findPreference("tidepool_test_login");
-            tidepoolTestLogin.setOnPreferenceClickListener(preference -> {
-                if (Pref.getBooleanDefaultFalse("tidepool_new_auth")) {
-                    Inevitable.task("tidepool-upload", 200, AuthFlowOut::doTidePoolInitialLogin);
-                } else {
-                    Inevitable.task("tidepool-upload", 200, TidepoolUploader::doLoginFromUi);
-                }
-                return false;
-            });
-
-            try {
-                final Preference tidePoolType = findPreference("tidepool_dev_servers");
-                tidePoolType.setOnPreferenceChangeListener((preference, newValue) -> {
-                    TidepoolUploader.resetInstance();
-                    return true;
-                });
-                findPreference("tidepool_username")
-                        .setOnPreferenceChangeListener((preference, newValue) -> {
-                            TidepoolUploader.resetInstance();
-                            if (!newValue.equals(Pref.getStringDefaultBlank("tidepool_username"))) {
-                                Pref.setString("tidepool_username", (String) newValue);
-                                AuthFlowOut.doTidePoolInitialLogin(true);
-                            }
-                            return true;
-                        });
-                findPreference("tidepool_password")
-                        .setOnPreferenceChangeListener((preference, newValue) -> {
-                            TidepoolUploader.resetInstance();
-                            AuthFlowOut.doTidePoolInitialLogin(true);
-                            return true;
-                        });
-            } catch (Exception e) {
-                UserError.Log.e(TAG,"Could not attach listener for tidepool prefs: " + e);
-            }
-
-
-            final Preference nsFollowDownload = findPreference("nsfollow_download_treatments_screen");
-            final Preference nsFollowUrl = findPreference("nsfollow_url");
-            final Preference nsFollowLag = findPreference("nsfollow_lag"); // Show the Nightscout follow wake delay setting only when NS follow is the data source
-            bindPreferenceSummaryToValue(findPreference("nsfollow_lag")); // Show the selected value as summary
-            try {
-                nsFollowUrl.setOnPreferenceChangeListener((preference, newValue) -> {
-                    NightscoutFollow.resetInstance();
-                    return true;
-                });
-            } catch (Exception e) {
-                //
-            }
-
-
             final Preference shFollowUser = findPreference("shfollow_user");
             final Preference shFollowPass = findPreference("shfollow_pass");
             final Preference shFollowServerUS = findPreference("dex_share_us_acct");
@@ -1435,19 +1083,7 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                 }
             }
 
-
-            if (collectionType != DexCollectionType.WebFollow) {
-                try {
-                    final Preference webfollow = findPreference("xdrip_plus_web_follow_settings");
-                    collectionCategory.removePreference(webfollow);
-                } catch (Exception e) {
-                    //
-                }
-            }
-
             //CareLink Follow preferences
-            //final Preference carelinkFollowUser = findPreference("clfollow_user");
-            //final Preference carelinkFollowPass = findPreference("clfollow_pass");
             final Preference carelinkFollowCountry = findPreference("clfollow_country");
             final Preference carelinkFollowPatient = findPreference("clfollow_patient");
             final Preference carelinkFollowLogin = findPreference("clfollow_login");
@@ -1460,8 +1096,6 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
             //Add CL prefs for CLFollower
             if (collectionType == DexCollectionType.CLFollow) {
                 //Add CL prefs
-                //collectionCategory.addPreference(carelinkFollowUser);
-                //collectionCategory.addPreference(carelinkFollowPass);
                 collectionCategory.addPreference(carelinkFollowCountry);
                 collectionCategory.addPreference(carelinkFollowPatient);
                 collectionCategory.addPreference(carelinkFollowLogin);
@@ -1541,83 +1175,9 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                 }
             }
 
-            final Preference inpen_enabled = findPreference("inpen_enabled");
-            try {
-                inpen_enabled.setOnPreferenceChangeListener((preference, newValue) -> {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && (boolean) newValue) {
-                        LocationHelper.requestLocationForBluetooth((Activity) preference.getContext()); // double check!
-                    }
-                    InPenEntry.startWithRefresh();
-                    return true;
-                });
-            } catch (Exception e) {
-                //
-            }
-
-
-
-            final Preference scanShare = findPreference("scan_share2_barcode");
-            final EditTextPreference transmitterId = (EditTextPreference) findPreference("dex_txid");
-           // final Preference closeGatt = findPreference("close_gatt_on_ble_disconnect");
-
-            final Preference pebbleSync2 = findPreference("broadcast_to_pebble_type");
-            final Preference pebbleSync1 = findPreference("broadcast_to_pebble");
-
-            // Pebble Trend - START
-            final Preference watchIntegration = findPreference("watch_integration");
-            final PreferenceCategory watchCategory = (PreferenceCategory) findPreference("pebble_integration");
-            //final ListPreference pebbleType = (ListPreference) findPreference("watch_integration");
-            final Preference pebbleTrend = findPreference("pebble_display_trend");
-            final Preference pebbleFilteredLine = findPreference("pebble_filtered_line");
-            final Preference pebbleHighLine = findPreference("pebble_high_line");
-            final Preference pebbleLowLine = findPreference("pebble_low_line");
-            final Preference pebbleTrendPeriod = findPreference("pebble_trend_period");
-            final Preference pebbleDelta = findPreference("pebble_show_delta");
-            final Preference pebbleDeltaUnits = findPreference("pebble_show_delta_units");
-            final Preference pebbleShowArrows = findPreference("pebble_show_arrows");
-            final Preference pebbleVibrateNoSignal = findPreference("pebble_vibrate_no_signal");
-            final Preference pebbleVibrateNoBluetooth = findPreference("pebble_vibrate_no_bluetooth");
-            final Preference pebbleTinyDots = findPreference("pebble_tiny_dots");
-            final EditTextPreference pebbleSpecialValue = (EditTextPreference) findPreference("pebble_special_value");
-            bindPreferenceSummaryToValueAndEnsureNumeric(pebbleSpecialValue);
-            final Preference pebbleSpecialText = findPreference("pebble_special_text");
-            bindPreferenceSummaryToValue(pebbleSpecialText);
-            // Pebble Trend - END
-
-            bindPreferenceSummaryToValue(findPreference("node_wearG5"));//KS
-            bindPreferenceSummaryToValue(findPreference("wear_logs_prefix"));
-            bindPreferenceSummaryToValue(findPreference("disable_wearG5_on_missedreadings_level"));
-
-            try {
-                final Preference blueJayScreenTimeout = findPreference("bluejay_screen_timeout");
-                BlueJayAdapter.sBindPreferenceTitleAppendToBlueJayTimeoutValueListener.onPreferenceChange(blueJayScreenTimeout,
-                        PreferenceManager
-                                .getDefaultSharedPreferences(blueJayScreenTimeout.getContext())
-                                .getInt(blueJayScreenTimeout.getKey(), -1));
-                blueJayScreenTimeout.setOnPreferenceChangeListener(BlueJayAdapter.sBindPreferenceTitleAppendToBlueJayTimeoutValueListener);
-
-                findPreference("bluejay_run_as_phone_collector").setOnPreferenceChangeListener(BlueJayAdapter.changeToPhoneSlotListener);
-                findPreference("bluejay_run_phone_collector").setOnPreferenceChangeListener(BlueJayAdapter.changeToPhoneCollectorListener);
-
-            } catch (Exception e) {
-                //
-            }
-
-            final Preference useCustomSyncKey = findPreference("use_custom_sync_key");
-            final Preference CustomSyncKey = findPreference("custom_sync_key");
-
             final PreferenceCategory flairCategory = (PreferenceCategory) findPreference("xdrip_plus_display_colorset9_android5plus");
-            //final PreferenceScreen updateScreen = (PreferenceScreen) findPreference("xdrip_plus_update_settings");
-            final PreferenceScreen loggingScreen = (PreferenceScreen) findPreference("xdrip_logging_adv_settings");
-            final PreferenceScreen motionScreen = (PreferenceScreen) findPreference("xdrip_plus_motion_settings");
-            final PreferenceScreen nfcScreen = (PreferenceScreen) findPreference("xdrip_plus_nfc_settings");
-            final PreferenceCategory otherCategory = (PreferenceCategory) findPreference("other_category");
-            final PreferenceScreen calibrationAlertsScreen = (PreferenceScreen) findPreference("calibration_alerts_screen");
-            final PreferenceCategory alertsCategory = (PreferenceCategory) findPreference("alerts_category");
             final Preference disableAlertsStaleDataMinutes = findPreference("disable_alerts_stale_data_minutes");
-            final PreferenceScreen calibrationSettingsScreen = (PreferenceScreen) findPreference("xdrip_plus_calibration_settings");
             final PreferenceScreen colorScreen = (PreferenceScreen) findPreference("xdrip_plus_color_settings");
-            final Preference old_school_calibration_mode = findPreference("old_school_calibration_mode");
             final Preference extraTagsForLogs = findPreference("extra_tags_for_logging");
             final Preference enableBF = findPreference("enable_bugfender");
             final PreferenceCategory displayCategory = (PreferenceCategory) findPreference("xdrip_plus_display_category");
@@ -1625,74 +1185,9 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
 
             lockListener.setSummaryPreference(findPreference("pick_numberwall_start"));
 
-            final Preference enableAmazfit = findPreference("pref_amazfit_enable_key");
 
 
-            enableAmazfit.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-               @Override
-               public boolean onPreferenceChange(Preference preference, Object newValue) {
-                  final Context context = preference.getContext();
-                  Boolean enabled = (boolean) newValue;
-                   if (enabled==true) {
-                       context.startService(new Intent(context, Amazfitservice.class));
 
-                   }else {
-                       context.stopService(new Intent(context, Amazfitservice.class));
-                   }
-
-                return true;
-                }
-            });
-
-            // TODO build list of preferences to cause wear refresh from list
-            findPreference("wear_sync").setOnPreferenceChangeListener((preference, newValue) -> {
-                        WatchUpdaterService.startSelf();
-                        return true;
-                    }
-            );
-
-            // TODO build list of preferences to cause wear refresh from list
-            findPreference("use_wear_heartrate").setOnPreferenceChangeListener((preference, newValue) -> {
-                        WatchUpdaterService.startSelf();
-                        return true;
-                    }
-            );
-
-            findPreference("bluetooth_meter_enabled").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    if ((boolean) newValue) {
-                        if (preference.getSharedPreferences().getString("selected_bluetooth_meter_address", "").length() > 5) {
-                            BluetoothGlucoseMeter.start_service("auto");
-                        } else {
-                            return false;
-                        }
-                    } else {
-                        BluetoothGlucoseMeter.stop_service();
-                    }
-                    return true;
-                }
-            });
-
-            findPreference("scan_and_pair_meter").setSummary(prefs.getString("selected_bluetooth_meter_info", ""));
-
-            findPreference("xdrip_webservice").setOnPreferenceChangeListener((preference, newValue) -> {
-                preference.getEditor().putBoolean(preference.getKey(), (boolean) newValue).apply(); // write early for method below
-                XdripWebService.immortality(); // start or stop service when preference toggled
-                return true;
-            });
-
-            findPreference("xdrip_webservice_open").setOnPreferenceChangeListener((preference, newValue) -> {
-                preference.getEditor().putBoolean(preference.getKey(), (boolean) newValue).apply(); // write early for method below
-                XdripWebService.settingsChanged(); // refresh
-                return true;
-            });
-
-            findPreference("desert_sync_enabled").setOnPreferenceChangeListener((preference, newValue) -> {
-                preference.getEditor().putBoolean(preference.getKey(), (boolean) newValue).apply(); // write early for method below
-                DesertSync.settingsChanged(); // refresh
-                return true;
-            });
 
 
 
@@ -1812,69 +1307,9 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
             bindPreferenceSummaryToValue(findPreference("xplus_liver_maximpact"));
 
             bindPreferenceSummaryToValue(findPreference("low_predict_alarm_level"));
-            Profile.validateTargetRange();
             bindPreferenceSummaryToValue(findPreference("plus_target_range"));
 
-            useCustomSyncKey.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    Context context = preference.getContext();
-                    PlusSyncService.clearandRestartSyncService(context);
-                    return true;
-                }
-            });
-            CustomSyncKey.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    preference.setSummary(newValue.toString());
-                    Context context = preference.getContext();
-                    PlusSyncService.clearandRestartSyncService(context);
-                    return true;
-                }
-            });
 
-
-
-            Log.d(TAG, collectionType.name());
-            if (collectionType != DexCollectionType.DexcomShare) {
-                collectionCategory.removePreference(shareKey);
-                collectionCategory.removePreference(scanShare);
-                otherCategory.removePreference(interpretRaw);
-                alertsCategory.addPreference(calibrationAlertsScreen);
-            } else {
-                otherCategory.removePreference(predictiveBG);
-                alertsCategory.removePreference(calibrationAlertsScreen);
-                this.prefs.edit().putBoolean("calibration_notifications", false).apply();
-            }
-
-            if (collectionType != DexCollectionType.Medtrum) {
-                try {
-                    collectionCategory.removePreference(findPreference("medtrum_use_native"));
-                    collectionCategory.removePreference(findPreference("medtrum_a_hex"));
-                } catch (Exception e) {
-                    //
-                }
-            }
-
-            if (collectionType != DexCollectionType.NSFollow) {
-                try {
-                    collectionCategory.removePreference(nsFollowUrl);
-                    collectionCategory.removePreference(nsFollowDownload);
-                    collectionCategory.removePreference(nsFollowLag);
-                } catch (Exception e) {
-                    //
-                }
-            }
-
-            if (getBestCollectorHardwareName().equals("G7")) { // Remove battery options, from G5/G6/Dex1/G7 Debug Settings, if we are using G7 or One+
-                try {
-                    PreferenceScreen screen = (PreferenceScreen) findPreference("xdrip_plus_g5_extra_settings");
-                    Preference pref = getPreferenceManager().findPreference("dex_battery_category");
-                    screen.removePreference(pref);
-                } catch (Exception e) {
-                    UserError.Log.wtf(TAG, "Failed to remove G7 battery options");
-                }
-            }
 
             //Remove CL prefs for NON CLFollower
             if (collectionType != DexCollectionType.CLFollow) {
@@ -1893,63 +1328,6 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                 }
             }
 
-            try {
-                findPreference("nfc_scan_homescreen").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                    @Override
-                    public boolean onPreferenceChange(Preference preference, Object newValue) {
-                        NFCReaderX.handleHomeScreenScanPreference(xdrip.getAppContext(), (boolean) newValue && (NFCReaderX.useNFC()));
-                        return true;
-                    }
-                });
-            } catch (NullPointerException e) {
-                Log.d(TAG, "Nullpointer looking for nfc_scan_homescreen");
-            }
-            try {
-                findPreference("use_nfc_scan").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                    @Override
-                    public boolean onPreferenceChange(final Preference preference, final Object newValue) {
-                        final AlertDialog.Builder builder = new AlertDialog.Builder(preference.getContext());
-                        if ((boolean) newValue) {
-
-                            final boolean paranoidAboutNFC = false;
-                            if (paranoidAboutNFC) {
-                                // TODO changed Jul 2022 as this feature is well established to work and have been no reports of problems. Remove this block after Dec 2022 if no problems reported.
-                                builder.setTitle("Stop! Are you sure?");
-                                builder.setMessage("This can sometimes crash / break a sensor!\nWith some phones there can be problems, try on expiring sensor first for safety. You have been warned.");
-
-                                builder.setPositiveButton("I AM SURE", new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        dialog.dismiss();
-                                        ((SwitchPreference) preference).setChecked(true);
-                                        preference.getEditor().putBoolean("use_nfc_scan", true).apply();
-                                        NFCReaderX.handleHomeScreenScanPreference(xdrip.getAppContext(), (boolean) newValue && prefs.getBoolean("nfc_scan_homescreen", false));
-                                    }
-                                });
-                                builder.setNegativeButton("NOPE", new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        dialog.dismiss();
-                                    }
-                                });
-                                final AlertDialog alert = builder.create();
-                                alert.show();
-
-                            } else {
-                                ((SwitchPreference) preference).setChecked(true);
-                                preference.getEditor().putBoolean("use_nfc_scan", true).apply();
-                                NFCReaderX.handleHomeScreenScanPreference(xdrip.getAppContext(), (boolean) newValue && prefs.getBoolean("nfc_scan_homescreen", false));
-                                return true;
-                            }
-
-                            return false;
-                        } else {
-                            NFCReaderX.handleHomeScreenScanPreference(xdrip.getAppContext(), (boolean) newValue && prefs.getBoolean("nfc_scan_homescreen", false));
-                        }
-                        return true;
-                    }
-                });
-            } catch (NullPointerException e) {
-                Log.d(TAG, "Nullpointer looking for nfc_scan");
-            }
 
             try {
                 findPreference("external_blukon_algorithm").setOnPreferenceChangeListener((preference, newValue) -> {
@@ -1982,81 +1360,14 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
 
             //if (engineering_mode) {
                 // populate the list
-                PluggableCalibration.setListPreferenceData(currentCalibrationPlugin);
 
-                currentCalibrationPlugin.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                    @Override
-                    public boolean onPreferenceChange(Preference preference, Object newValue) {
-                        PluggableCalibration.invalidateCache(); // current
-                        PluggableCalibration.invalidateCache(newValue.toString()); // next
-                        PluggableCalibration.invalidatePluginCache(); // reset the object cache
-                        return true;
-                    }
-                });
             //}
 
-            if (!DexCollectionType.hasLibre(collectionType)) {
-                collectionCategory.removePreference(nfcSettings);
-            } else {
-                // has libre
-                if (!engineering_mode)
-                    try {
-                        nfcScreen.removePreference(findPreference("nfc_test_diagnostic"));
-                    } catch (NullPointerException e) {
-                        //
-                    }
-                set_nfc_expiry_change_listeners();
-                update_nfc_expiry_preferences(null);
-            }
-
-            if (!DexCollectionService.getBestLimitterHardwareName().equals("BlueReader")) {
-                collectionCategory.removePreference(bluereadersettings);
-            } else {
-                findPreference("blueReader_turn_off_value").setTitle(getString(R.string.blueReader_turnoffvalue) + " (" + prefs.getInt("blueReader_turn_off_value", 5) + ")");
-
-                findPreference("blueReader_turn_off_value").setOnPreferenceChangeListener((preference, newValue) ->
-                        {
-                            prefs.edit().putInt("blueReader_turn_off_value", (Integer) newValue).commit();
-                            preference.setTitle(getString(R.string.blueReader_turnoffvalue) + " (" + newValue + ")");
-                            return true;
-                        }
-                );
-
-            }
 
 
-            try {
 
-                try {
-                    if (DexCollectionType.getDexCollectionType() != DexCollectionType.LibreReceiver) {
-                        collectionCategory.removePreference(libre2settings);
-                    }
-                } catch (NullPointerException e) {
-                    Log.wtf(TAG, "Nullpointer Libre2Settings: ", e);
-                }
 
-                try {
-                    if (!DexCollectionType.hasWifi()) {
-                        final String receiversIpAddresses = this.prefs.getString("wifi_recievers_addresses", "").trim();
-                        // only hide if non wifi wixel mode and value not previously set to cope with
-                        // dynamic mode changes. jamorham
-                        if (receiversIpAddresses.equals("")) {
-                            collectionCategory.removePreference(wifiRecievers);
-                        }
-                    }
-                } catch (NullPointerException e) {
-                    Log.wtf(TAG, "Nullpointer wifireceivers ", e);
-                }
 
-                if ((collectionType != DexCollectionType.DexbridgeWixel)
-                        && (collectionType != DexCollectionType.WifiDexBridgeWixel)) {
-                    try {
-                        collectionCategory.removePreference(transmitterId);
-                        // collectionCategory.removePreference(closeGatt);
-                    } catch (NullPointerException e) {
-                        Log.wtf(TAG, "Nullpointer removing txid ", e);
-                    }
-                }
 
                 if (Build.VERSION.SDK_INT < 21) {
                     try {
@@ -2090,61 +1401,9 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                // }
 
                 // remove master ip input if we are the master
-                if (Home.get_master()) {
-                    final PreferenceScreen desert_sync_screen = (PreferenceScreen) findPreference("xdrip_plus_desert_sync_settings");
-                    try {
-                        desert_sync_screen.removePreference(findPreference("desert_sync_master_ip"));
-
-                    } catch (Exception e) {
-                        //
-                    }
-                }
 
 
-                final PreferenceScreen g5_settings_screen = (PreferenceScreen) findPreference("xdrip_plus_g5_extra_settings");
-                if (collectionType == DexCollectionType.DexcomG5) {
-                    try {
-                        collectionCategory.addPreference(transmitterId);
 
-                        collectionCategory.addPreference(g5_settings_screen);
-                        //collectionCategory.addPreference(g5nonraw);
-                        //collectionCategory.addPreference(scanConstantly);
-                        //collectionCategory.addPreference(reAuth);
-                        //collectionCategory.addPreference(reBond);
-                        //collectionCategory.addPreference(runOnMain);
-                    } catch (NullPointerException e) {
-                        Log.wtf(TAG, "Null pointer adding G5 prefs ", e);
-                    }
-                } else {
-                    try {
-                        // collectionCategory.removePreference(transmitterId);
-
-                        collectionCategory.removePreference(g5_settings_screen);
-                       // collectionCategory.removePreference(scanConstantly);
-                       // collectionCategory.removePreference(g5nonraw);
-                       // collectionCategory.removePreference(reAuth);
-                       // collectionCategory.removePreference(reBond);
-                       // collectionCategory.removePreference(runOnMain);
-                    } catch (NullPointerException e) {
-                        Log.wtf(TAG, "Null pointer removing G5 prefs ", e);
-                    }
-                }
-
-                if (!engineering_mode) {
-                    try {
-                        if (!Experience.gotData()) getPreferenceScreen().removePreference(motionScreen);
-                        calibrationSettingsScreen.removePreference(old_school_calibration_mode);
-                    } catch (NullPointerException e) {
-                        Log.wtf(TAG, "Nullpointer with engineering mode s ", e);
-                    }
-                }
-                if ((!engineering_mode) || (!this.prefs.getBoolean("enable_bugfender", false))) {
-                    loggingScreen.removePreference(bfappid);
-                }
-
-            } catch (NullPointerException e) {
-                Log.wtf(TAG, "Got null pointer exception removing pref: ", e);
-            }
 
             if (engineering_mode || this.prefs.getString("update_channel", "").matches("alpha|nightly")) {
                 ListPreference update_channel = (ListPreference) findPreference("update_channel");
@@ -2156,300 +1415,17 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
 
             if (this.prefs.getString("units", "mgdl").compareTo("mmol") != 0) {
                 df.setMaximumFractionDigits(0);
-                pebbleSpecialValue.setDefaultValue("99");
-                if (pebbleSpecialValue.getText().compareTo("5.5") == 0) {
-                    pebbleSpecialValue.setText(df.format(Double.valueOf(pebbleSpecialValue.getText()) * Constants.MMOLL_TO_MGDL));
-                }
             } else {
                 df.setMaximumFractionDigits(1);
-                pebbleSpecialValue.setDefaultValue("5.5");
-                if (pebbleSpecialValue.getText().compareTo("99") == 0) {
-                    pebbleSpecialValue.setText(df.format(Double.valueOf(pebbleSpecialValue.getText()) / Constants.MMOLL_TO_MGDL));
-                }
             }
 
-            try {
-                findPreference("calibration_notifications").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                    @Override
-                    public boolean onPreferenceChange(Preference preference, Object newValue) {
-                        // clear any pending alerts
-                        final UserNotification userNotification = UserNotification.lastCalibrationAlert();
-                        if (userNotification != null) {
-                            userNotification.delete();
-                        }
-                        return true;
-                    }
-                });
-            } catch (Exception e) {
-                //
-            }
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                try {
-                    findPreference("health_connect_enable").setOnPreferenceChangeListener((preference, newValue) -> {
-                        if ((Boolean) newValue) {
-                            Inevitable.task("check-health-connect", 300, () -> HealthGamut.init(getActivity()));
-                        }
-                        return true;
-                    });
-                } catch (Exception e) {
-                    //
-                }
-
-                try {
-                    findPreference("health_connect_manage").setOnPreferenceClickListener((preference) -> {
-                        HealthGamut.init(getActivity()).openPermissionManager();
-                        return true;
-                    });
-                } catch (Exception e) {
-                    //
-                }
-            }
 
 
             bindPreferenceSummaryToValue(collectionMethod);
-            bindPreferenceSummaryToValue(shareKey);
-
-            final NamedSliderProcessor processor = new BgToSpeech();
-            bindPreferenceSummaryAppendToIntegerValueFromLogSlider(findPreference("speak_readings_change_time"), processor, "time", false);
-            bindPreferenceSummaryAppendToIntegerValueFromLogSlider(findPreference("speak_readings_change_threshold"), processor, "threshold", true);
-
-
-            final NamedSliderProcessor tidepoolProcessor = new UploadChunk();
-            bindPreferenceTitleAppendToIntegerValueFromLogSlider(findPreference("tidepool_window_latency"), tidepoolProcessor, "latency", false);
-
-
-            wifiRecievers.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    preference.setSummary(newValue.toString());
-                    ParakeetHelper.notifyOnNextCheckin(true);
-                    return true;
-                }
-            });
 
             bindPreferenceTitleAppendToStringValue(findPreference("retention_days_bg_reading"));
 
-            bindPreferenceTitleAppendToStringValue(findPreference("pendiq_pin"));
 
-            try {
-                bindPreferenceTitleAppendToStringValue(findPreference("inpen_prime_units"));
-                bindPreferenceTitleAppendToStringValue(findPreference("inpen_prime_minutes"));
-            } catch (Exception e) {
-                //
-            }
-
-            try {
-                bindPreferenceTitleAppendToStringValue(findPreference("opennov_prime_units"));
-                bindPreferenceTitleAppendToStringValue(findPreference("opennov_prime_minutes"));
-            } catch (Exception e) {
-                //
-            }
-
-            // Pebble Trend -- START
-
-            int currentPebbleSync = PebbleUtil.getCurrentPebbleSyncType();
-
-            if (currentPebbleSync == 1) {
-                watchCategory.removePreference(pebbleSpecialValue);
-                watchCategory.removePreference(pebbleSpecialText);
-            }
-
-            if ((currentPebbleSync != 3) && (currentPebbleSync != 4) && (currentPebbleSync != 5)) {
-                watchCategory.removePreference(pebbleTrend);
-                watchCategory.removePreference(pebbleFilteredLine);
-                watchCategory.removePreference(pebbleTinyDots);
-                watchCategory.removePreference(pebbleHighLine);
-                watchCategory.removePreference(pebbleLowLine);
-                watchCategory.removePreference(pebbleTrendPeriod);
-                watchCategory.removePreference(pebbleTrendPeriod);
-                watchCategory.removePreference(pebbleDelta);
-                watchCategory.removePreference(pebbleDeltaUnits);
-                watchCategory.removePreference(pebbleShowArrows);
-                watchCategory.removePreference(pebbleVibrateNoSignal);
-            }
-
-            // master switch for pebble
-            pebbleSync1.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    final Context context = preference.getContext();
-                    if ((Boolean) newValue) {
-
-
-                        pebbleType = PebbleUtil.getCurrentPebbleSyncType(PreferenceManager.getDefaultSharedPreferences(context).getString("broadcast_to_pebble_type", "1"));
-
-                        // install watchface
-                        installPebbleWatchface(pebbleType, preference);
-                    }
-                    // start/stop service
-                    enablePebble(pebbleType, (Boolean) newValue, context);
-                    return true;
-                }
-            });
-
-
-            // Pebble Trend (just major change)
-            pebbleSync2.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    final Context context = preference.getContext();
-
-                    int oldPebbleType = PebbleUtil.getCurrentPebbleSyncType();
-                    int pebbleType = PebbleUtil.getCurrentPebbleSyncType(newValue);
-
-                    // install watchface
-                    installPebbleWatchface(pebbleType, preference);
-
-                    // start/stop service
-                    enablePebble(pebbleType, getBooleanPreferenceViaContextWithoutException(context,"broadcast_to_pebble",false), context);
-
-                    // configuration options
-                    if (oldPebbleType != pebbleType) {
-
-                        // REMOVE ALL
-                        if (oldPebbleType == 2) {
-                            watchCategory.removePreference(pebbleSpecialValue);
-                            watchCategory.removePreference(pebbleSpecialText);
-                        } else {
-                            watchCategory.removePreference(pebbleTrend);
-                            watchCategory.removePreference(pebbleFilteredLine);
-                            watchCategory.removePreference(pebbleTinyDots);
-                            watchCategory.removePreference(pebbleHighLine);
-                            watchCategory.removePreference(pebbleLowLine);
-                            watchCategory.removePreference(pebbleTrendPeriod);
-                            watchCategory.removePreference(pebbleDelta);
-                            watchCategory.removePreference(pebbleDeltaUnits);
-                            watchCategory.removePreference(pebbleShowArrows);
-                            watchCategory.removePreference(pebbleSpecialValue);
-                            watchCategory.removePreference(pebbleSpecialText);
-                            watchCategory.removePreference(pebbleVibrateNoSignal);
-                            watchCategory.removePreference(pebbleVibrateNoBluetooth);
-                        }
-
-                        // Add New one
-                        if ((pebbleType == 3) || (pebbleType == 4) || (pebbleType == 5)) {
-                            watchCategory.addPreference(pebbleTrend);
-                            watchCategory.addPreference(pebbleFilteredLine);
-                            watchCategory.addPreference(pebbleTinyDots);
-                            watchCategory.addPreference(pebbleHighLine);
-                            watchCategory.addPreference(pebbleLowLine);
-                            watchCategory.addPreference(pebbleTrendPeriod);
-                            watchCategory.addPreference(pebbleDelta);
-                            watchCategory.addPreference(pebbleDeltaUnits);
-                            watchCategory.addPreference(pebbleShowArrows);
-                            watchCategory.addPreference(pebbleVibrateNoSignal);
-                            watchCategory.addPreference(pebbleVibrateNoBluetooth);
-                        }
-
-                        if (oldPebbleType != 1) {
-                            watchCategory.addPreference(pebbleSpecialValue);
-                            watchCategory.addPreference(pebbleSpecialText);
-                        }
-
-                    }
-
-                    return true;
-                }
-            });
-
-            // TODO reduce code duplication more
-            pebbleTrend.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    restartPebble();
-                    return true;
-                }
-            });
-
-            pebbleFilteredLine.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    restartPebble();
-                    return true;
-                }
-            });
-
-
-            pebbleHighLine.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    restartPebble();;
-                    return true;
-                }
-            });
-
-            pebbleLowLine.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    restartPebble();
-                    return true;
-                }
-            });
-
-            pebbleTrendPeriod.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    restartPebble();
-                    return true;
-                }
-            });
-            pebbleDelta.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    restartPebble();
-                    return true;
-                }
-            });
-            pebbleDeltaUnits.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    restartPebble();
-                    return true;
-                }
-            });
-            pebbleShowArrows.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    restartPebble();
-                    return true;
-                }
-            });
-
-            pebbleTinyDots.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    restartPebble();
-                    return true;
-                }
-            });
-
-            pebbleVibrateNoBluetooth.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    restartPebble();
-                    return true;
-                }
-            });
-
-            // TODO this attaches to the wrong named instance of use_pebble_health - until restructured so that there is only one instance
-            findPreference("use_pebble_health").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    restartPebble();
-                    return true;
-                }
-            });
-
-            findPreference("pebble_show_bwp").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    restartPebble();
-                    return true;
-                }
-            });
-
-            // Pebble Trend -- END
 
             bindWidgetUpdater();
 
@@ -2461,38 +1437,6 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                 }
             });
 
-            bindPreferenceSummaryToValue(transmitterId); // duplicated below but this sets initial value
-            transmitterId.getEditText().setFilters(new InputFilter[]{new InputFilter.AllCaps()}); // TODO filter O ?
-            transmitterId.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    val activity = getActivity();
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Dialog.askIfNeeded(activity, (String)newValue);
-                            try {
-                                Thread.sleep(1000);
-                            } catch (InterruptedException e) {
-                                //
-                            }
-                            Log.d(TAG, "Trying to restart collector due to tx id change");
-                            Ob1G5StateMachine.emptyQueue();
-                            try {
-                                DexSyncKeeper.clear((String) newValue);
-                            } catch (Exception e) {
-                                //
-                            }
-                            Ob1G5CollectionService.clearPersist();
-                            CollectionServiceStarter.restartCollectionService(xdrip.getAppContext());
-                        }
-                    }).start();
-                    sBindPreferenceSummaryToValueListener.onPreferenceChange(preference, newValue);
-
-                    return true;
-                }
-            });
-
             // when changing collection method
                     collectionMethod.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
@@ -2500,34 +1444,6 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
 
                     DexCollectionType collectionType = DexCollectionType.getType((String) newValue);
 
-                    if (collectionType != DexCollectionType.DexcomShare) { // NOT USING SHARE
-                        collectionCategory.removePreference(shareKey);
-                        collectionCategory.removePreference(scanShare);
-                        otherCategory.removePreference(interpretRaw);
-                        otherCategory.addPreference(predictiveBG);
-                        alertsCategory.addPreference(calibrationAlertsScreen);
-                    } else {
-                        collectionCategory.addPreference(shareKey);
-                        collectionCategory.addPreference(scanShare);
-                        otherCategory.addPreference(interpretRaw);
-                        otherCategory.removePreference(predictiveBG);
-                        alertsCategory.removePreference(calibrationAlertsScreen);
-                        AllPrefsFragment.this.prefs.edit().putBoolean("calibration_notifications", false).apply();
-                    }
-
-                    if (DexCollectionType.hasLibre(collectionType)) {
-                        collectionCategory.addPreference(nfcSettings);
-                        NFCReaderX.handleHomeScreenScanPreference(xdrip.getAppContext(), prefs.getBoolean("nfc_scan_homescreen", false) && prefs.getBoolean("use_nfc_scan", false));
-                        if (!engineering_mode)
-                            try {
-                                nfcScreen.removePreference(findPreference("nfc_test_diagnostic"));
-                            } catch (NullPointerException e) {
-                                //
-                            }
-                    } else {
-                        collectionCategory.removePreference(nfcSettings);
-                        NFCReaderX.handleHomeScreenScanPreference(xdrip.getAppContext(), false); // always disable
-                    }
 
 
                 /*    if ((collectionType != DexCollectionType.BluetoothWixel
@@ -2546,38 +1462,6 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                     }*/
 
                     // jamorham always show wifi receivers option if populated as we may switch modes dynamically
-                    if (!DexCollectionType.hasWifi()) {
-                        String receiversIpAddresses;
-                        receiversIpAddresses = AllPrefsFragment.this.prefs.getString("wifi_recievers_addresses", "");
-                        if (receiversIpAddresses == null || receiversIpAddresses.trim().equals("")) {
-                            collectionCategory.removePreference(wifiRecievers);
-                        } else {
-                            collectionCategory.addPreference(wifiRecievers);
-                        }
-                    } else {
-                        collectionCategory.addPreference(wifiRecievers);
-                    }
-
-                    if ((collectionType != DexCollectionType.DexbridgeWixel)
-                            && (collectionType != DexCollectionType.WifiDexBridgeWixel)) {
-                        collectionCategory.removePreference(transmitterId);
-                        //collectionCategory.removePreference(closeGatt);
-                        //TODO Bridge battery display support
-                    } else {
-                        collectionCategory.addPreference(transmitterId);
-                     //   collectionCategory.addPreference(closeGatt);
-                    }
-
-                    if (collectionType == DexCollectionType.DexcomG5) {
-                        collectionCategory.addPreference(transmitterId);
-                        // TODO add debug menu
-                    }
-
-                    if (collectionType == DexCollectionType.NSFollow) {
-                        collectionCategory.addPreference(nsFollowUrl);
-                        collectionCategory.addPreference(nsFollowDownload);
-                        collectionCategory.addPreference(nsFollowLag);
-                    }
 
 
                     String stringValue = newValue.toString();
@@ -2607,23 +1491,7 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                         preference.setSummary(stringValue);
                     }
 
-                    if (preference.getKey().equals("dex_collection_method")) {
-                        //CollectionServiceStarter.restartCollectionService(preference.getContext(), (String) newValue);
 
-                        if (newValue.equals("Follower")) {
-                            // reset battery whenever changing collector type
-                            AllPrefsFragment.this.prefs.edit().putInt("bridge_battery",0).apply();
-                            AllPrefsFragment.this.prefs.edit().putInt("parakeet_battery",0).apply();
-                            if (AllPrefsFragment.this.prefs.getBoolean("plus_follow_master",false))
-                            {
-                                AllPrefsFragment.this.prefs.edit().putBoolean("plus_follow_master", false).apply();
-                                JoH.static_toast(preference.getContext(),"Turning off xDrip+ Sync Master for Followers!",Toast.LENGTH_LONG);
-                            }
-                            GcmActivity.requestBGsync();
-                        }
-                    //} else {
-                    //    CollectionServiceStarter.restartCollectionService(preference.getContext());
-                    }
                     CollectionServiceStarter.restartCollectionServiceBackground();
 
                     // This generically refreshes the fragment which may well nullify some of the ui logic above as it does a complete rebuild
@@ -2704,89 +1572,6 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
 
         }
 
-        private void updateMiBandScreen(){
-            MiBand.MiBandType type = MiBand.getMibandType();
-            PreferenceScreen settings = (PreferenceScreen) findPreference(MiBandEntry.PREF_MIBAND_SETTINGS);
-            PreferenceScreen prefs = (PreferenceScreen) findPreference(MiBandEntry.PREF_MIBAND_PREFERENCES);
-            try {
-                settings.removePreference(miband2_screen);
-                settings.removePreference(miband3_4_screen);
-                settings.removePreference(miband_nightmode_category);
-                prefs.removePreference(miband_graph_category);
-                prefs.removePreference(miband_send_readings_as_notification);
-                prefs.removePreference(miband_authkey);
-
-                if (type == MiBand.MiBandType.MI_BAND4) {
-                    settings.addPreference(miband3_4_screen);
-                    settings.addPreference(miband_nightmode_category);
-                    prefs.addPreference(miband_graph_category);
-                    prefs.addPreference(miband_send_readings_as_notification);
-                    prefs.addPreference(miband_authkey);
-                } else if (type == MiBand.MiBandType.MI_BAND2) {
-                    settings.addPreference(miband2_screen);
-                }
-                else if (type == MiBand.MiBandType.MI_BAND3 || type == MiBand.MiBandType.MI_BAND3_1){
-                    settings.addPreference(miband3_4_screen);
-                    settings.addPreference(miband_nightmode_category);
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Cannot find preference item: " + e);
-            }
-        }
-
-        private void updateMibandPreferencesData(){
-            EditTextPreference prefMac = (EditTextPreference) findPreference(MiBandEntry.PREF_MIBAND_MAC);
-            if (prefMac != null ) {
-                prefMac.setText(MiBand.getMac());
-                sBindPreferenceTitleAppendToMacValueListener.onPreferenceChange(prefMac,
-                        PreferenceManager
-                                .getDefaultSharedPreferences(prefMac.getContext())
-                                .getString(prefMac.getKey(), ""));
-            }
-            EditTextPreference prefAuthKey = (EditTextPreference) findPreference(MiBandEntry.PREF_MIBAND_AUTH_KEY);
-            if (prefAuthKey != null )prefAuthKey.setText(MiBand.getAuthKey());
-        }
-
-        // all this boiler plate for a dynamic interface seems excessive and boring, I would love to know a helper library to simplify this
-        private void set_nfc_expiry_change_listeners() {
-            nfc_expiry_days.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    // have to pre-save it
-                    preference.getEditor().putString("nfc_expiry_days", (String) newValue).apply();
-                    update_nfc_expiry_preferences(null);
-                    return true;
-                }
-            });
-            final Preference nfc_show_age = findPreference("nfc_show_age");
-            nfc_show_age.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    update_nfc_expiry_preferences((Boolean) newValue);
-                    return true;
-                }
-            });
-        }
-
-        private void update_nfc_expiry_preferences(Boolean show_age) {
-            try {
-                ;
-                final PreferenceScreen nfcScreen = (PreferenceScreen) findPreference("xdrip_plus_nfc_settings");
-                final String nfc_expiry_days_string = AllPrefsFragment.this.prefs.getString("nfc_expiry_days", "14.5");
-
-                final CheckBoxPreference nfc_show_age = (CheckBoxPreference) findPreference("nfc_show_age");
-                nfc_show_age.setSummaryOff("Show the sensor expiry time based on " + nfc_expiry_days_string + " days");
-                if (show_age == null) show_age = nfc_show_age.isChecked();
-                if (show_age) {
-                    nfcScreen.removePreference(nfc_expiry_days);
-                } else {
-                    nfc_expiry_days.setOrder(3);
-                    nfcScreen.addPreference(nfc_expiry_days);
-                }
-            } catch (NullPointerException e) {
-                //
-            }
-        }
 
         private void bindWidgetUpdater() {
             findPreference("widget_range_lines").setOnPreferenceChangeListener(new WidgetListener());
@@ -2825,160 +1610,8 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
             }
         }
 
-        private static void recursive_notify_all_preference_screens(PreferenceGroup preferenceGroup) {
-            if (preferenceGroup instanceof PreferenceScreen) {
-                ((BaseAdapter) ((PreferenceScreen) preferenceGroup).getRootAdapter()).notifyDataSetChanged();
-            } else {
-                for (int index = 0; index < preferenceGroup.getPreferenceCount(); index++) {
-                    final Preference pref = preferenceGroup.getPreference(index);
-                    if (pref instanceof PreferenceGroup) {
-                        recursive_notify_all_preference_screens((PreferenceGroup) pref);
-                    }
-                }
-            }
-        }
-
-        private void updateMiBandBG(Context context) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(context);
-            builder.setTitle(xdrip.getAppContext().getResources().getString(R.string.miband_bg_dialog_title));
-            builder.setPositiveButton(xdrip.getAppContext().getResources().getString(R.string.yes), new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int which) {
-                    dialog.dismiss();
-                    MiBandEntry.forceShowLatestBG();
-                }
-            });
-
-            builder.setNegativeButton(xdrip.getAppContext().getResources().getString(R.string.no), new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    dialog.dismiss();
-                }
-            });
-
-            AlertDialog alert = builder.create();
-            alert.show();
-        }
-
-        private void installPebbleWatchface(final int pebbleType, Preference preference) {
-
-            final Context context = preference.getContext();
-
-            if (pebbleType == 1)
-                return;
-
-            AlertDialog.Builder builder = new AlertDialog.Builder(context);
-
-            builder.setTitle("Pebble Install");
-
-            switch (pebbleType)
-                {
-                    case 2:
-                        builder.setMessage("Install Standard Pebble Watchface?");
-                        break;
-                    case 3:
-                        builder.setMessage("Install Pebble Trend Watchface?");
-                        break;
-                    case 4:
-                        builder.setMessage("Install Pebble Classic Trend Watchface?");
-                        break;
-                    case 5:
-                        builder.setMessage("Install Pebble Clay Trend Watchface?");
-                        break;
-                }
-
-
-            builder.setPositiveButton(gs(R.string.yes), new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int which) {
-                    dialog.dismiss();
-
-                    switch (pebbleType) {
-                        case 2:
-                            context.startActivity(new Intent(context, InstallPebbleWatchFace.class));
-                            break;
-                        case 3:
-                            context.startActivity(new Intent(context, InstallPebbleTrendWatchFace.class));
-                            break;
-                        case 4:
-                            context.startActivity(new Intent(context, InstallPebbleClassicTrendWatchface.class));
-                            break;
-                        case 5:
-                            context.startActivity(new Intent(context, InstallPebbleTrendClayWatchFace.class));
-                            break;
-                    }
-
-                    JoH.runOnUiThreadDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            AlertDialog.Builder builder = new AlertDialog.Builder(context);
-                            builder.setTitle("Snooze Control Install");
-                            builder.setMessage("Install Pebble Snooze Button App?");
-                            // inner
-                            builder.setPositiveButton(gs(R.string.yes), new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.dismiss();
-                                    context.startActivity(new Intent(context, InstallPebbleSnoozeControlApp.class));
-                                }
-                            });
-                            builder.setNegativeButton(gs(R.string.no), new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.dismiss();
-                                }
-                            });
-                            AlertDialog alert = builder.create();
-                            alert.show();
-                        }},3000);
-                // outer
-                }});
-
-            builder.setNegativeButton(gs(R.string.no), new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    dialog.dismiss();
-                }
-            });
-
-            AlertDialog alert = builder.create();
-            alert.show();
-        }
-
-        private static int pebbleType = 1;
-        private void enablePebble(int newValueInt, boolean enabled, Context context) {
-            Log.d(TAG,"enablePebble called with: "+newValueInt+" "+enabled);
-            if (pebbleType == 1) {
-                if (enabled && (newValueInt != 1)) {
-                    context.stopService(new Intent(context, PebbleWatchSync.class));
-                    context.startService(new Intent(context, PebbleWatchSync.class));
-                    Log.d(TAG,"Starting pebble service type: "+newValueInt);
-                }
-            } else {
-                if (!enabled || (newValueInt == 1)) {
-                    context.stopService(new Intent(context, PebbleWatchSync.class));
-                    Log.d(TAG, "Stopping pebble service type: " + newValueInt);
-                }
-
-
-            }
-
-            pebbleType = enabled ? newValueInt : 1;
-            PebbleWatchSync.setPebbleType(pebbleType);
-
-        }
-
-
         private void setupBarcodeConfigScanner() {
             findPreference("auto_configure").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-                @Override
-                public boolean onPreferenceClick(Preference preference) {
-                    new AndroidBarcode(getActivity()).scan();
-                    return true;
-                }
-            });
-        }
-
-
-        private void setupBarcodeShareScanner() {
-            findPreference("scan_share2_barcode").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
                     new AndroidBarcode(getActivity()).scan();
@@ -3039,57 +1672,6 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
             }
         }
 
-        private void bindTTSListener() {
-            findPreference("bg_to_speech").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    if ((Boolean) newValue) {
-                        prefs.edit().putBoolean("bg_to_speech", true).commit(); // early write before we exit method
-                        final AlertDialog.Builder alertDialog = new AlertDialog.Builder(getActivity());
-                        alertDialog.setTitle(R.string.install_text_to_speech_data_question);
-                        alertDialog.setMessage(getString(R.string.install_text_to_speech_data_question) + "\n" + getString(R.string.after_installation_of_languages_you_might_have_to));
-                        alertDialog.setCancelable(true);
-                        alertDialog.setPositiveButton(R.string.ok, (dialog, which) -> SpeechUtil.installTTSData(getActivity()));
-                        alertDialog.setNegativeButton(R.string.no, null);
-                        final AlertDialog alert = alertDialog.create();
-                        alert.show();
-                        try {
-                            BgToSpeech.testSpeech();
-                        } catch (Exception e) {
-                            Log.e(TAG, "Got exception with TTS: " + e);
-                        }
-                    } else {
-                        BgToSpeech.tearDownTTS();
-                    }
-                    return true;
-                }
-            });
-
-            findPreference("speech_speed").setOnPreferenceChangeListener((preference, newValue) ->
-                    {
-                        prefs.edit().putInt("speech_speed", (Integer) newValue).commit();
-                        try {
-                            BgToSpeech.testSpeech();
-                        } catch (Exception e) {
-                            Log.e(TAG, "Got exception with TTS: " + e);
-                        }
-                        return true;
-                    }
-            );
-            findPreference("speech_pitch").setOnPreferenceChangeListener((preference, newValue) ->
-                    {
-                        prefs.edit().putInt("speech_pitch", (Integer) newValue).commit();
-                        try {
-                            BgToSpeech.testSpeech();
-                        } catch (Exception e) {
-                            Log.e(TAG, "Got exception with TTS: " + e);
-                        }
-                        return true;
-                    }
-            );
-        }
-
-
         // Will update the widget if any setting relevant to the widget gets changed.
         private static class WidgetListener implements Preference.OnPreferenceChangeListener {
             @Override
@@ -3122,44 +1704,32 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
             static_units = newValue.toString();
             if (newValue.toString().equals("mgdl")) {
                 if (highVal < 36) {
-                    ProfileEditor.convertData(Constants.MMOLL_TO_MGDL);
                     preferences.edit().putString("highValue", Long.toString(Math.round(highVal * Constants.MMOLL_TO_MGDL))).apply();
                     preferences.edit().putString("profile_insulin_sensitivity_default", Long.toString(Math.round(default_insulin_sensitivity * Constants.MMOLL_TO_MGDL))).apply();
                     preferences.edit().putString("plus_target_range", Long.toString(Math.round(default_target_glucose * Constants.MMOLL_TO_MGDL))).apply();
-                    Profile.invalidateProfile();
                 }
                 if (persistent_high_Val < 36) {
-                    ProfileEditor.convertData(Constants.MMOLL_TO_MGDL);
                     preferences.edit().putString("persistent_high_threshold", Long.toString(Math.round(persistent_high_Val * Constants.MMOLL_TO_MGDL))).apply();
-                    Profile.invalidateProfile();
                 }
                 if (lowVal < 36) {
-                    ProfileEditor.convertData(Constants.MMOLL_TO_MGDL);
                     preferences.edit().putString("lowValue", Long.toString(Math.round(lowVal * Constants.MMOLL_TO_MGDL))).apply();
                     preferences.edit().putString("profile_insulin_sensitivity_default", Long.toString(Math.round(default_insulin_sensitivity * Constants.MMOLL_TO_MGDL))).apply();
                     preferences.edit().putString("plus_target_range", Long.toString(Math.round(default_target_glucose * Constants.MMOLL_TO_MGDL))).apply();
-                    Profile.invalidateProfile();
                 }
 
             } else {
                 if (highVal > 35) {
-                    ProfileEditor.convertData(Constants.MGDL_TO_MMOLL);
                     preferences.edit().putString("highValue", JoH.qs(highVal * Constants.MGDL_TO_MMOLL, 1)).apply();
                     preferences.edit().putString("profile_insulin_sensitivity_default", JoH.qs(default_insulin_sensitivity * Constants.MGDL_TO_MMOLL, 2)).apply();
                     preferences.edit().putString("plus_target_range", JoH.qs(default_target_glucose * Constants.MGDL_TO_MMOLL,1)).apply();
-                    Profile.invalidateProfile();
                 }
                 if (persistent_high_Val > 35) {
-                    ProfileEditor.convertData(Constants.MGDL_TO_MMOLL);
                     preferences.edit().putString("persistent_high_threshold", JoH.qs(persistent_high_Val * Constants.MGDL_TO_MMOLL, 1)).apply();
-                    Profile.invalidateProfile();
                 }
                 if (lowVal > 35) {
-                    ProfileEditor.convertData(Constants.MGDL_TO_MMOLL);
                     preferences.edit().putString("lowValue", JoH.qs(lowVal * Constants.MGDL_TO_MMOLL, 1)).apply();
                     preferences.edit().putString("profile_insulin_sensitivity_default", JoH.qs(default_insulin_sensitivity * Constants.MGDL_TO_MMOLL, 2)).apply();
                     preferences.edit().putString("plus_target_range", JoH.qs(default_target_glucose * Constants.MGDL_TO_MMOLL,1)).apply();
-                    Profile.invalidateProfile();
                 }
             }
             if (preference != null) preference.setSummary(newValue.toString());
@@ -3168,13 +1738,7 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                 allPrefsFragment.setSummary("lowValue");
                 allPrefsFragment.setSummary("persistent_high_threshold");
             }
-            if (profile_insulin_sensitivity_default != null) {
-                Log.d(TAG, "refreshing profile insulin sensitivity default display");
-                profile_insulin_sensitivity_default.setTitle(format_insulin_sensitivity(profile_insulin_sensitivity_default.getTitle().toString(), ProfileEditor.minMaxSens(ProfileEditor.loadData(false))));
 
-//                            do_format_insulin_sensitivity(profile_insulin_sensitivity_default, AllPrefsFragment.this.prefs, false, null);
-            }
-            Profile.reloadPreferences(preferences);
 
         } catch (Exception e) {
             Log.e(TAG, "Got excepting processing high/low value preferences: " + e.toString());

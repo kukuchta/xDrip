@@ -5,11 +5,8 @@ import androidx.annotation.NonNull;
 import com.eveningoutpost.dexdrip.models.Accuracy;
 import com.eveningoutpost.dexdrip.models.BgReading;
 import com.eveningoutpost.dexdrip.models.BloodTest;
-import com.eveningoutpost.dexdrip.models.Calibration;
 import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.models.UserError;
-import com.eveningoutpost.dexdrip.calibrations.CalibrationAbstract;
-import com.eveningoutpost.dexdrip.calibrations.PluggableCalibration;
 import com.eveningoutpost.dexdrip.stats.StatsResult;
 import com.eveningoutpost.dexdrip.wearintegration.ExternalStatusService;
 
@@ -17,8 +14,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import static com.eveningoutpost.dexdrip.utilitymodels.Constants.DAY_IN_MS;
-import static com.eveningoutpost.dexdrip.calibrations.PluggableCalibration.getCalibrationPlugin;
-import static com.eveningoutpost.dexdrip.calibrations.PluggableCalibration.getCalibrationPluginFromPreferences;
 
 // jamorham
 
@@ -50,24 +45,6 @@ public class StatusLine {
     private static String extraStatusLineReal() {
 
         final StringBuilder sb = new StringBuilder();
-        Calibration lastCalibration;
-
-        if (Pref.getBoolean("status_line_calibration_long", false) && ((lastCalibration = Calibration.lastValid()) != null)) {
-            append(sb, "slope = ");
-            sb.append(String.format("%.2f", lastCalibration.slope));
-            sb.append(' ');
-            sb.append("inter = ");
-            sb.append(String.format("%.2f", lastCalibration.intercept));
-        }
-
-        if (Pref.getBoolean("status_line_calibration_short", false) && ((lastCalibration = Calibration.lastValid()) != null)) {
-            append(sb, "s:");
-            sb.append(String.format("%.2f", lastCalibration.slope));
-            sb.append(' ');
-            sb.append("i:");
-            sb.append(String.format("%.2f", lastCalibration.intercept));
-        }
-
 
         if (Pref.getBoolean("status_line_avg", false)
                 || Pref.getBoolean("status_line_a1c_dcct", false)
@@ -125,16 +102,6 @@ public class StatusLine {
                     statsResult.canShowRealtimeCapture()) {
                 append(sb, statsResult.getRealtimeCapturePercentage(false));
             }
-            if (Pref.getBoolean("status_line_accuracy", false)) {
-                final long accuracy_period = DAY_IN_MS * 3;
-                final String accuracy_report = Accuracy.evaluateAccuracy(accuracy_period);
-                if ((accuracy_report != null) && (accuracy_report.length() > 0)) {
-                    append(sb, accuracy_report);
-                } else {
-                    final String accuracy = BloodTest.evaluateAccuracy(accuracy_period);
-                    append(sb, ((accuracy != null) ? " " + accuracy : ""));
-                }
-            }
 
         } // if using stats result
 
@@ -146,39 +113,6 @@ public class StatusLine {
 
         if (Pref.getBooleanDefaultFalse("status_line_external_status")) {
             append(sb, ExternalStatusService.getLastStatusLine());
-        }
-
-        if (Pref.getBoolean("extra_status_calibration_plugin", false)) {
-            final CalibrationAbstract plugin = getCalibrationPluginFromPreferences(); // make sure do this only once
-            if (plugin != null) {
-                final CalibrationAbstract.CalibrationData pcalibration = plugin.getCalibrationData();
-                if (sb.length() > 0) sb.append("\n"); // not tested on the widget yet
-                if (pcalibration != null)
-                    sb.append("(" + plugin.getAlgorithmName() + ") s:" + JoH.qs(pcalibration.slope, 2) + " i:" + JoH.qs(pcalibration.intercept, 2));
-                BgReading bgReading = BgReading.last();
-                if (bgReading != null) {
-                    final boolean doMgdl = Pref.getString("units", "mgdl").equals("mgdl");
-                    sb.append(" \u21D2 " + BgGraphBuilder.unitized_string(plugin.getGlucoseFromSensorValue(bgReading.age_adjusted_raw_value), doMgdl) + " " + BgGraphBuilder.unit(doMgdl));
-                }
-            }
-
-            // If we are using the plugin as the primary then show xdrip original as well
-            if (Pref.getBooleanDefaultFalse("display_glucose_from_plugin") || Pref.getBooleanDefaultFalse("use_pluggable_alg_as_primary")) {
-                final CalibrationAbstract plugin_xdrip = getCalibrationPlugin(PluggableCalibration.Type.xDripOriginal); // make sure do this only once
-                if (plugin_xdrip != null) {
-                    final CalibrationAbstract.CalibrationData pcalibration = plugin_xdrip.getCalibrationData();
-                    if (sb.length() > 0)
-                        sb.append("\n"); // not tested on the widget yet
-                    if (pcalibration != null)
-                        sb.append("(" + plugin_xdrip.getAlgorithmName() + ") s:" + JoH.qs(pcalibration.slope, 2) + " i:" + JoH.qs(pcalibration.intercept, 2));
-                    BgReading bgReading = BgReading.last();
-                    if (bgReading != null) {
-                        final boolean doMgdl = Pref.getString("units", "mgdl").equals("mgdl");
-                        sb.append(" \u21D2 " + BgGraphBuilder.unitized_string(plugin_xdrip.getGlucoseFromSensorValue(bgReading.age_adjusted_raw_value), doMgdl) + " " + BgGraphBuilder.unit(doMgdl));
-                    }
-                }
-            }
-
         }
 
         if (Pref.getBoolean("status_line_time", false)) {

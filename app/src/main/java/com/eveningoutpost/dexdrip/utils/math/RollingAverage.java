@@ -13,10 +13,9 @@ import lombok.Getter;
 
 public class RollingAverage {
 
-    @Getter
     private final int size;
-    @Getter
-    private final double peak;
+
+    public final double peak;
     private final int peak_rounded;
     private final double[] values;
 

@@ -1,12 +1,11 @@
 package com.eveningoutpost.dexdrip.models;
 
-/**
+/*
  * Created by jamorham on 31/12/15.
  */
 
 import android.content.Context;
 import android.provider.BaseColumns;
-import android.util.Pair;
 
 import androidx.annotation.Nullable;
 
@@ -16,67 +15,44 @@ import com.activeandroid.annotation.Table;
 import com.activeandroid.query.Delete;
 import com.activeandroid.query.Select;
 import com.activeandroid.util.SQLiteUtils;
-import com.eveningoutpost.dexdrip.GcmActivity;
 import com.eveningoutpost.dexdrip.Home;
 import com.eveningoutpost.dexdrip.models.UserError.Log;
 import com.eveningoutpost.dexdrip.R;
-import com.eveningoutpost.dexdrip.services.SyncService;
-import com.eveningoutpost.dexdrip.services.UiBasedCollector;
 import com.eveningoutpost.dexdrip.utilitymodels.Constants;
-import com.eveningoutpost.dexdrip.utilitymodels.Pref;
 import com.eveningoutpost.dexdrip.utilitymodels.UndoRedo;
-import com.eveningoutpost.dexdrip.utilitymodels.UploaderQueue;
-import com.eveningoutpost.dexdrip.insulin.Insulin;
-import com.eveningoutpost.dexdrip.insulin.InsulinManager;
-import com.eveningoutpost.dexdrip.insulin.MultipleInsulins;
-import com.eveningoutpost.dexdrip.utils.jobs.BackgroundQueue;
-import com.eveningoutpost.dexdrip.watch.thinjam.BlueJayEntry;
 import com.eveningoutpost.dexdrip.xdrip;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 import com.google.gson.internal.bind.DateTypeAdapter;
-import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.DecimalFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import lombok.val;
-
-import static com.eveningoutpost.dexdrip.models.Iob.convertLegacyDoseToBolusInjectionList;
 import static com.eveningoutpost.dexdrip.models.JoH.msSince;
 import static com.eveningoutpost.dexdrip.utilitymodels.Constants.HOUR_IN_MS;
 import static com.eveningoutpost.dexdrip.utilitymodels.Constants.MINUTE_IN_MS;
-import static java.lang.StrictMath.abs;
 import static com.eveningoutpost.dexdrip.models.JoH.emptyString;
-
-// TODO Switchable Carb models
-// TODO Linear array timeline optimization
 
 @Table(name = "Treatments", id = BaseColumns._ID)
 public class Treatments extends Model {
-    private static final String TAG = "jamorham " + Treatments.class.getSimpleName();
+    private static final String TAG = Treatments.class.getSimpleName();
 
     public static final String SENSOR_START_EVENT_TYPE = "Sensor Start";
     public static final String SENSOR_STOP_EVENT_TYPE = "Sensor Stop";
     private static final String DEFAULT_EVENT_TYPE = "<none>";
-
+    public static final String DELIVERY_TYPE_NONE = "None";
+    public static final String DELIVERY_TYPE_BOLUS = "Bolus";
+    public static final String DELIVERY_TYPE_AUTOCORRECTION = "Autocorrection";
+    public static final String DELIVERY_TYPE_AUTO_BASAL_DELIVERY = "AutoBasal";
     public final static String XDRIP_TAG = "xdrip";
-
-    //public static double activityMultipler = 8.4; // somewhere between 8.2 and 8.8
-    private static Treatments lastCarbs;
     private static boolean patched = false;
 
     @Expose
@@ -98,8 +74,14 @@ public class Treatments extends Model {
     @Column(name = "carbs")
     public double carbs;
     @Expose
-    @Column(name = "insulin")
-    public double insulin;
+    @Column(name = "deliveryType")
+    public String deliveryType;
+    @Expose
+    @Column(name = "insulinFastAmount")
+    public double insulinFastAmount;
+    @Expose
+    @Column(name = "insulinExtendedAmount")
+    public double insulinExtendedAmount;
     @Expose
     @Column(name = "insulinJSON")
     public String insulinJSON;
@@ -107,124 +89,45 @@ public class Treatments extends Model {
     @Column(name = "created_at")
     public String created_at;
 
-    // don't access this directly use getInsulinInjections()
-    public List<InsulinInjection> insulinInjections = null;
-
-    private boolean hasInsulinInjections() {
-        final List<InsulinInjection> injections = getInsulinInjections();
-        return ((injections != null) && (injections.size() > 0));
-    }
-
-    public boolean isBasalOnly() {
-        if (!hasInsulinInjections()) return false;
-        boolean foundBasal = false;
-        final List<InsulinInjection> injections = getInsulinInjections();
-        for (InsulinInjection injection : injections) {
-            Log.d(TAG,"isBasalOnly: "+injection.isBasal()+" "+injection.getInsulin());
-            if (!injection.isBasal()) {
-                return false;
-            } else {
-                foundBasal = true;
-            }
-        }
-        return foundBasal;
-    }
-
-    private String getInsulinInjectionsShortString() {
-        final StringBuilder sb = new StringBuilder();
-        for (InsulinInjection injection : insulinInjections) {
-            sb.append(injection.getProfile().getName());
-            sb.append(" ");
-            sb.append(injection.getUnits() + "U ");
-        }
-        return sb.toString();
-    }
-
-    private void setInsulinInjections(List<InsulinInjection> i)
-    {
-        // TODO possiblity here to preserve null if Multiple Injections is not enabled
-        if (i == null) {
-            i = new ArrayList<>();
-        }
-        insulinInjections = i;
-        Gson gson = new GsonBuilder()
-                .excludeFieldsWithoutExposeAnnotation()
-               // .registerTypeAdapter(Date.class, new DateTypeAdapter())
-                .serializeSpecialFloatingPointValues()
-                .create();
-        insulinJSON = gson.toJson(i);
-    }
-
-    // lazily populate and return InsulinInjection array from json
-    List<InsulinInjection> getInsulinInjections() {
-       // Log.d(TAG,"get injections: "+insulinJSON);
-        if (insulinInjections == null) {
-            if (insulinJSON != null) {
-                try {
-
-                    insulinInjections = new Gson().fromJson(insulinJSON, new TypeToken<ArrayList<InsulinInjection>>() {
-                    }.getType());
-
-                    StringBuilder x = new StringBuilder();
-                    for (InsulinInjection y : insulinInjections) {
-                        x.append(y.getProfile().getName() + " " + y.getUnits()+" ");
-                    }
-
-
-                } catch (Exception e) {
-                    if (JoH.ratelimit("ij-json-error", 60)) {
-                        UserError.Log.wtf(TAG, "Error converting insulinJson: " + e + " " + insulinJSON);
-                    }
-                    notes = "CORRUPT DATA";
-                    // state of insulinInjections is basically undefined here as we cannot recover from corrupt data
-                    // we could neutralise the treatment data in other ways perhaps.
-                }
-            } else {
-                // return empty if not set // TODO do we want to cache this or not to avoid memory creation?
-                return new ArrayList<>();
-            }
-        }
-        return insulinInjections;
-    }
-
-
-
-    // take a simple insulin value and produce a list by name of insulin - for general quick conversion
-    public static List<InsulinInjection> convertLegacyDoseToInjectionListByName(final String insulinName, final double insulinSum) {
-        Log.d(TAG,"convertingLegacyDoseByName: "+insulinName+" "+insulinSum);
-        final Insulin insulin = InsulinManager.getProfile(insulinName);
-        if (insulin == null) return null; // TODO should we actually throw an exception here as this should never happen and the result would be invalid
-        final ArrayList<InsulinInjection> injections = new ArrayList<>();
-        injections.add(new InsulinInjection(insulin, insulinSum));
-        return injections;
-    }
-
-
-    public void setInsulinJSON(String json) {
-        if ((json == null) || json.isEmpty())
-            json = "[]";
-        try {
-            insulinInjections = new Gson().fromJson(json, new TypeToken<ArrayList<InsulinInjection>>() {
-            }.getType());
-            insulinJSON = json; // set json only if we didn't get exception processing it
-        } catch (Exception e) {
-            UserError.Log.e(TAG, "Got exception in setInsulinJson: " + e + " for " + json);
-        }
+    public double getTotalInsulinAmount(){
+        return insulinFastAmount + insulinExtendedAmount;
     }
 
     public Treatments()
     {
         eventType = DEFAULT_EVENT_TYPE;
         carbs = 0;
-        insulin = 0;
+        deliveryType = DELIVERY_TYPE_NONE;
+        insulinFastAmount = 0;
+        insulinExtendedAmount = 0;
         //setInsulinInjections(null);
     }
 
-    public static boolean insulinExists(double insulin, long timestamp) {
+    public static boolean bolusExists(double insulinFastAmount, double insulinExtendedAmount, long timestamp) {
         fixUpTable();
         List<Treatments> treatments = new Select()
                 .from(Treatments.class)
-                .where("timestamp = ? and insulin = ? and carbs = ?", timestamp, insulin, 0)
+                .where("timestamp = ? and deliveryType = ? and insulinFastAmount = ? and insulinExtendedAmount = ?", timestamp, DELIVERY_TYPE_BOLUS, insulinFastAmount, insulinExtendedAmount)
+                .orderBy("timestamp desc")
+                .execute();
+        return !treatments.isEmpty();
+    }
+
+    public static boolean autocorrectionExists(double insulinFastAmount, long timestamp) {
+        fixUpTable();
+        List<Treatments> treatments = new Select()
+                .from(Treatments.class)
+                .where("timestamp = ? and deliveryType = ? and insulinFastAmount = ? and insulinExtendedAmount = ?", timestamp, DELIVERY_TYPE_AUTOCORRECTION, insulinFastAmount, 0)
+                .orderBy("timestamp desc")
+                .execute();
+        return !treatments.isEmpty();
+    }
+
+    public static boolean autoBasalDeliveryExists(double insulinFastAmount, long timestamp) {
+        fixUpTable();
+        List<Treatments> treatments = new Select()
+                .from(Treatments.class)
+                .where("timestamp = ? and deliveryType = ? and insulinFastAmount = ? and insulinExtendedAmount = ?", timestamp, DELIVERY_TYPE_AUTO_BASAL_DELIVERY, insulinFastAmount, 0)
                 .orderBy("timestamp desc")
                 .execute();
         return !treatments.isEmpty();
@@ -234,18 +137,48 @@ public class Treatments extends Model {
         fixUpTable();
         List<Treatments> treatments = new Select()
                 .from(Treatments.class)
-                .where("timestamp = ? and insulin = ? and carbs = ?", timestamp, 0, carbs)
+                .where("timestamp = ? and carbs = ?", timestamp, carbs)
                 .orderBy("timestamp desc")
                 .execute();
         return !treatments.isEmpty();
     }
 
-    public static synchronized Treatments createInsulin(double insulin, long timestamp) {
+    public static synchronized Treatments createBolus(double insulinFastAmount, double insulinExtendedAmount, long timestamp) {
         fixUpTable();
         final Treatments treatment = new Treatments();
         treatment.timestamp = timestamp;
         treatment.uuid = UUID.randomUUID().toString();
-        treatment.insulin = insulin;
+        treatment.deliveryType = DELIVERY_TYPE_BOLUS;
+        treatment.insulinFastAmount = insulinFastAmount;
+        treatment.insulinExtendedAmount = insulinExtendedAmount;
+        treatment.carbs = 0;
+        treatment.created_at = DateUtil.toISOString(timestamp);
+        treatment.save();
+        return treatment;
+    }
+
+    public static synchronized Treatments createAutocorrection(double insulinFastAmount, long timestamp) {
+        fixUpTable();
+        final Treatments treatment = new Treatments();
+        treatment.timestamp = timestamp;
+        treatment.uuid = UUID.randomUUID().toString();
+        treatment.deliveryType = DELIVERY_TYPE_AUTOCORRECTION;
+        treatment.insulinFastAmount = insulinFastAmount;
+        treatment.insulinExtendedAmount = 0;
+        treatment.carbs = 0;
+        treatment.created_at = DateUtil.toISOString(timestamp);
+        treatment.save();
+        return treatment;
+    }
+
+    public static synchronized Treatments createAutoBasalDelivery(double insulinFastAmount, long timestamp) {
+        fixUpTable();
+        final Treatments treatment = new Treatments();
+        treatment.timestamp = timestamp;
+        treatment.uuid = UUID.randomUUID().toString();
+        treatment.deliveryType = DELIVERY_TYPE_AUTO_BASAL_DELIVERY;
+        treatment.insulinFastAmount = insulinFastAmount;
+        treatment.insulinExtendedAmount = 0;
         treatment.carbs = 0;
         treatment.created_at = DateUtil.toISOString(timestamp);
         treatment.save();
@@ -257,32 +190,19 @@ public class Treatments extends Model {
         final Treatments treatment = new Treatments();
         treatment.timestamp = timestamp;
         treatment.uuid = UUID.randomUUID().toString();
-        treatment.insulin = 0;
+        treatment.insulinFastAmount = 0;
+        treatment.insulinExtendedAmount = 0;
         treatment.carbs = carbs;
         treatment.created_at = DateUtil.toISOString(timestamp);
         treatment.save();
         return treatment;
     }
 
-    public static synchronized Treatments create(final double carbs, final double insulin, long timestamp) {
-        return create(carbs, insulin, timestamp, null);
+    public static synchronized Treatments create(final double carbs, final double insulinSum, long timestamp) {
+        return create(carbs, insulinSum, timestamp, null);
     }
 
-    public static synchronized Treatments create(final double carbs, final double insulinSum, final long timestamp, final String suggested_uuid) {
-
-        if (MultipleInsulins.isEnabled()) {
-            return create(carbs, insulinSum, Iob.convertLegacyDoseToBolusInjectionList(insulinSum), timestamp, suggested_uuid);
-        } else {
-            return create(carbs, insulinSum, null, timestamp, suggested_uuid);
-        }
-
-    }
-
-    public static synchronized Treatments create(final double carbs, final double insulinSum, final List<InsulinInjection> insulin, long timestamp) {
-        return create(carbs, insulinSum, insulin, timestamp, null);
-    }
-
-    public static synchronized Treatments create(final double carbs, final double insulinSum, final List<InsulinInjection> insulin, long timestamp, String suggested_uuid) {
+    public static synchronized Treatments create(final double carbs, final double insulinSum, long timestamp, String suggested_uuid) {
         final long future_seconds = (timestamp - JoH.tsl()) / 1000;
         // if treatment more than 1 hour in the future
         if (future_seconds > (60 * 60)) {
@@ -296,10 +216,10 @@ public class Treatments extends Model {
                     + carbs + " g " + context.getString(R.string.carbs) + " / "
                     + insulinSum + " " + context.getString(R.string.units), (int) future_seconds, 34026);
         }
-        return create(carbs, insulinSum, insulin, timestamp, -1, suggested_uuid);
+        return create(carbs, insulinSum, timestamp, -1, suggested_uuid);
     }
 
-    public static synchronized Treatments create(final double carbs, final double insulinSum, final List<InsulinInjection> insulin, long timestamp, double position, String suggested_uuid) {
+    public static synchronized Treatments create(final double carbs, final double insulinSum, long timestamp, double position, String suggested_uuid) {
         // TODO sanity check values
         Log.d(TAG, "Creating treatment: " +
                 "Insulin: " + insulinSum + " / " +
@@ -323,16 +243,12 @@ public class Treatments extends Model {
         }
 
         treatment.carbs = carbs;
-        treatment.insulin = insulinSum;
-        treatment.setInsulinInjections(insulin);
+        treatment.insulinFastAmount = insulinSum;
         treatment.timestamp = timestamp;
         treatment.created_at = DateUtil.toISOString(timestamp);
         treatment.uuid = suggested_uuid != null ? suggested_uuid : UUID.randomUUID().toString();
         treatment.save();
-        // GcmActivity.pushTreatmentAsync(Treatment);
-        //  NSClientChat.pushTreatmentAsync(Treatment);
 
-        pushTreatmentSync(treatment);
         UndoRedo.addUndoTreatment(treatment.uuid);
         return treatment;
     }
@@ -397,8 +313,6 @@ public class Treatments extends Model {
         }
 
         treatment.save();
-
-        pushTreatmentSync(treatment, is_new, suggested_uuid);
         if (is_new) UndoRedo.addUndoTreatment(treatment.uuid);
 
         return treatment;
@@ -406,13 +320,35 @@ public class Treatments extends Model {
 
     static void createForTest(long timestamp, double insulin) {
         fixUpTable();
-        val treatment = new Treatments();
+        Treatments treatment = new Treatments();
         treatment.notes = "test";
         treatment.timestamp = timestamp;
         treatment.created_at = DateUtil.toISOString(timestamp);
         treatment.uuid = UUID.randomUUID().toString();
-        treatment.insulin = insulin;
+        treatment.insulinFastAmount = insulin;
         treatment.save();
+    }
+
+    public static double getMaxAutocorrectionsAmount(final long startTime, final long endTime) {
+        fixUpTable();
+        Treatments maxAutocorrection = new Select()
+                .from(Treatments.class)
+                .where("timestamp >= ? and timestamp <= ? and deliveryType = ?", startTime, endTime, Treatments.DELIVERY_TYPE_AUTOCORRECTION)
+                .orderBy("insulinFastAmount desc")
+                .executeSingle();
+
+        return maxAutocorrection != null ? maxAutocorrection.insulinFastAmount : 0.0;
+    }
+
+    public static double getMaxAutoBasalsAmount(final long startTime, final long endTime) {
+        fixUpTable();
+        Treatments maxAutocorrection = new Select()
+                .from(Treatments.class)
+                .where("timestamp >= ? and timestamp <= ? and deliveryType = ?", startTime, endTime, Treatments.DELIVERY_TYPE_AUTO_BASAL_DELIVERY)
+                .orderBy("insulinFastAmount desc")
+                .executeSingle();
+
+        return maxAutocorrection != null ? maxAutocorrection.insulinFastAmount : 0.0;
     }
 
     /**
@@ -436,7 +372,6 @@ public class Treatments extends Model {
             treatment.notes = notes;
         }
         treatment.save();
-        pushTreatmentSync(treatment);
         return treatment;
     }
 
@@ -461,63 +396,9 @@ public class Treatments extends Model {
             treatment.notes = notes;
         }
         treatment.save();
-        pushTreatmentSync(treatment);
         return treatment;
     }
 
-    public static void sensorStartIfNeeded() {
-
-        // Create treatment entry in the database if the sensor was started by another
-        // device (e.g. receiver) and not xDrip. If the sensor was started by
-        // xDrip, then there will be a Sensor Start treatment already in the db.
-        val lastSensorStart = Treatments.lastEventTypeFromXdrip(Treatments.SENSOR_START_EVENT_TYPE);
-
-        // If there isn't an existing sensor start in the xDrip db, or the most recently tracked
-        // sensor start was more than 15 minutes ago, then we assume the sensor was actually
-        // started from a non-xDrip device and so we track it.
-        if (lastSensorStart == null || JoH.msSince(lastSensorStart.timestamp) >= 15 * Constants.MINUTE_IN_MS) {
-            UserError.Log.i(TAG, "Creating treatment for Sensor Start initiated by another device");
-            Treatments.sensorStart(null, "Started by transmitter");
-        } else {
-            UserError.Log.i(TAG, "Not creating treatment for Sensor Start because one was created too recently: " + JoH.msSince(lastSensorStart.timestamp) + "ms ago");
-        }
-    }
-
-    private static void pushTreatmentSync(Treatments treatment) {
-        pushTreatmentSync(treatment, true, null); // new entry by default
-    }
-
-    private static void pushTreatmentSync(final Treatments treatment, boolean is_new, String suggested_uuid) {
-
-        BackgroundQueue.postDelayed(() -> {
-            if (Home.get_master_or_follower()) {
-                GcmActivity.pushTreatmentAsync(treatment);
-            }
-
-            if (!(Pref.getBoolean("cloud_storage_api_enable", false) || Pref.getBoolean("cloud_storage_mongodb_enable", false))) {
-                NSClientChat.pushTreatmentAsync(treatment);
-            } else {
-                Log.d(TAG, "Skipping NSClient treatment broadcast as nightscout direct sync is enabled");
-            }
-
-            if (suggested_uuid == null) {
-                // only sync to nightscout if source of change was not from nightscout
-                if (UploaderQueue.newEntry(is_new ? "insert" : "update", treatment) != null) {
-                    SyncService.startSyncService(3000); // sync in 3 seconds
-                }
-            }
-        },1000);
-
-    }
-
-    public static void pushTreatmentSyncToWatch(Treatments treatment, boolean is_new) {
-        Log.d(TAG, "pushTreatmentSyncToWatch Add treatment to UploaderQueue.");
-        if (Pref.getBooleanDefaultFalse("wear_sync")) {
-            if (UploaderQueue.newEntryForWatch(is_new ? "insert" : "update", treatment) != null) {
-                SyncService.startSyncService(3000); // sync in 3 seconds
-            }
-        }
-    }
 
     // This shouldn't be needed but it seems it is
     private static void fixUpTable() {
@@ -530,7 +411,9 @@ public class Treatments extends Model {
                 "ALTER TABLE Treatments ADD COLUMN enteredBy TEXT;",
                 "ALTER TABLE Treatments ADD COLUMN notes TEXT;",
                 "ALTER TABLE Treatments ADD COLUMN created_at TEXT;",
-                "ALTER TABLE Treatments ADD COLUMN insulin REAL;",
+                "ALTER TABLE Treatments ADD COLUMN deliveryType TEXT;",
+                "ALTER TABLE Treatments ADD COLUMN insulinFastAmount REAL;",
+                "ALTER TABLE Treatments ADD COLUMN insulinExtendedAmount REAL;",
                 "ALTER TABLE Treatments ADD COLUMN insulinJSON TEXT;",
                 "ALTER TABLE Treatments ADD COLUMN carbs REAL;",
                 "CREATE INDEX index_Treatments_timestamp on Treatments(timestamp);",
@@ -634,9 +517,6 @@ public class Treatments extends Model {
     }
 
     public static void delete_all(boolean from_interactive) {
-        if (from_interactive) {
-            GcmActivity.push_delete_all_treatments();
-        }
         new Delete()
                 .from(Treatments.class)
                 .execute();
@@ -669,12 +549,6 @@ public class Treatments extends Model {
         Treatments thistreat = byuuid(uuid);
         if (thistreat != null) {
 
-            UploaderQueue.newEntry("delete", thistreat);
-            if (from_interactive) {
-                GcmActivity.push_delete_treatment(thistreat);
-                SyncService.startSyncService(3000); // sync in 3 seconds
-            }
-
             thistreat.delete();
             Home.staticRefreshBGCharts();
         }
@@ -683,13 +557,6 @@ public class Treatments extends Model {
     public static Treatments delete_last(boolean from_interactive) {
         Treatments thistreat = last();
         if (thistreat != null) {
-
-            if (from_interactive) {
-                GcmActivity.push_delete_treatment(thistreat);
-                //GoogleDriveInterface gdrive = new GoogleDriveInterface();
-                //gdrive.deleteTreatmentAtRemote(thistreat.uuid);
-            }
-            UploaderQueue.newEntry("delete", thistreat);
             thistreat.delete();
         }
         return null;
@@ -721,7 +588,7 @@ public class Treatments extends Model {
         Log.d(TAG, "converting treatment from json: " + json);
         final Treatments mytreatment = fromJSON(json);
         if (mytreatment != null) {
-            if ((mytreatment.carbs == 0) && (mytreatment.insulin == 0)
+            if ((mytreatment.carbs == 0) && (mytreatment.getTotalInsulinAmount() == 0)
                     && (mytreatment.notes != null) && (mytreatment.notes.startsWith("AndroidAPS started"))) {
                 Log.d(TAG, "Skipping AndroidAPS started message");
                 return false;
@@ -750,9 +617,10 @@ public class Treatments extends Model {
             if (dupe_treatment != null) {
                 Log.i(TAG, "Duplicate treatment for: " + mytreatment.timestamp);
 
-                if ((dupe_treatment.insulin == 0) && (mytreatment.insulin > 0)) {
-                    dupe_treatment.setInsulinJSON(mytreatment.insulinJSON);
-                    dupe_treatment.insulin = mytreatment.insulin;
+                if ((dupe_treatment.getTotalInsulinAmount() == 0) && (mytreatment.getTotalInsulinAmount() > 0)) {
+                    dupe_treatment.deliveryType = mytreatment.deliveryType;
+                    dupe_treatment.insulinFastAmount = mytreatment.insulinFastAmount;
+                    dupe_treatment.insulinExtendedAmount = mytreatment.insulinExtendedAmount;
                     dupe_treatment.save();
                     Home.staticRefreshBGChartsOnIdle();
                 }
@@ -773,8 +641,6 @@ public class Treatments extends Model {
                         // should not end up needing to append notes and be from_interactive via undo as these
                         // would be mutually exclusive operations so we don't need to handle that here.
                         Home.staticRefreshBGChartsOnIdle();
-                        // TODO review if this is correct place for new notes only
-                        evaluateNotesForNotification(mytreatment);
                     }
                 }
 
@@ -797,22 +663,10 @@ public class Treatments extends Model {
 
             fixUpTable();
             long x = mytreatment.save();
-            Log.d(TAG, "Saving treatment result: " + x);
-            if (from_interactive) {
-                pushTreatmentSync(mytreatment);
-            }
-            // TODO review if this is correct place for new notes only
-            evaluateNotesForNotification(mytreatment);
             Home.staticRefreshBGChartsOnIdle();
             return true;
         } else {
             return false;
-        }
-    }
-
-    private static void evaluateNotesForNotification(final Treatments mytreatment) {
-        if (!emptyString(mytreatment.notes) && mytreatment.notes.startsWith("-")) {
-            BlueJayEntry.sendNotifyIfEnabled(mytreatment.notes);
         }
     }
 
@@ -837,6 +691,26 @@ public class Treatments extends Model {
         return new Select()
                 .from(Treatments.class)
                 .where("timestamp >= ? and timestamp <= ?", startTime, endTime)
+                .orderBy("timestamp asc")
+                .limit(number)
+                .execute();
+    }
+
+    public static List<Treatments> latestAutoBasalsForGraph(final int number, final long startTime, final long endTime) {
+        fixUpTable();
+        return new Select()
+                .from(Treatments.class)
+                .where("timestamp >= ? and timestamp <= ? and deliveryType = ?", startTime, endTime, Treatments.DELIVERY_TYPE_AUTO_BASAL_DELIVERY)
+                .orderBy("timestamp asc")
+                .limit(number)
+                .execute();
+    }
+
+    public static List<Treatments> latestAutocorrectionsForGraph(final int number, final long startTime, final long endTime) {
+        fixUpTable();
+        return new Select()
+                .from(Treatments.class)
+                .where("timestamp >= ? and timestamp <= ? and deliveryType = ?", startTime, endTime, Treatments.DELIVERY_TYPE_AUTOCORRECTION)
                 .orderBy("timestamp asc")
                 .limit(number)
                 .execute();
@@ -907,12 +781,7 @@ public class Treatments extends Model {
         if (!eventType.equals(DEFAULT_EVENT_TYPE)) {
             return eventType;
         } else {
-            if (hasInsulinInjections()) {
-                return getInsulinInjectionsShortString()
-                        + (noteHasContent() ? (" " + notes) : "");
-            } else {
-                return noteHasContent() ? notes : "Treatment";
-            }
+            return noteHasContent() ? notes : "Treatment";
         }
     }
 
@@ -920,7 +789,9 @@ public class Treatments extends Model {
         JSONObject jsonObject = new JSONObject();
         try {
             jsonObject.put("uuid", uuid);
-            jsonObject.put("insulin", insulin);
+            jsonObject.put("deliveryType", deliveryType);
+            jsonObject.put("insulinFastAmount", insulinFastAmount);
+            jsonObject.put("insulinExtendedAmount", insulinExtendedAmount);
             jsonObject.put("insulinJSON", insulinJSON);
             jsonObject.put("carbs", carbs);
             jsonObject.put("timestamp", timestamp);
@@ -938,8 +809,8 @@ public class Treatments extends Model {
     private static final double MAX_OPENAPS_SMB_UNITS = 0.4;
 
     public boolean likelySMB() {
-        return (carbs == 0 && insulin > 0
-                && ((insulin <= MAX_SMB_UNITS && (notes == null || notes.length() == 0)) || (enteredBy != null && enteredBy.startsWith("openaps:") && insulin <= MAX_OPENAPS_SMB_UNITS)));
+        return (carbs == 0 && insulinFastAmount > 0 && insulinExtendedAmount == 0
+                && ((insulinFastAmount <= MAX_SMB_UNITS && (notes == null || notes.isEmpty())) || (enteredBy != null && enteredBy.startsWith("openaps:") && insulinFastAmount <= MAX_OPENAPS_SMB_UNITS)));
     }
 
     public boolean wasCreatedRecently() {
@@ -947,11 +818,11 @@ public class Treatments extends Model {
     }
 
     public boolean noteOnly() {
-        return carbs == 0 && insulin == 0 && noteHasContent();
+        return carbs == 0 && getTotalInsulinAmount() == 0 && noteHasContent();
     }
 
     public boolean hasContent() {
-        return insulin != 0 || carbs != 0 || noteHasContent() || !isEventTypeDefault();
+        return getTotalInsulinAmount() != 0 || carbs != 0 || noteHasContent() || !isEventTypeDefault();
     }
 
     public boolean noteHasContent() {

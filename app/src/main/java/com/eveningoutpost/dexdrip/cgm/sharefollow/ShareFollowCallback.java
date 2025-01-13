@@ -26,7 +26,7 @@ public class ShareFollowCallback<T> extends BaseCallback<T> {
 
     @Override
     public void onResponse(Call<T> call, Response<T> response) {
-        session.setLastResponseCode(response.code());
+        session.lastResponseCode = response.code();
         if (response.isSuccessful() && response.body() != null) {
             if (this.name.equalsIgnoreCase("auth")) {
                 session.extractAccountId(response.body());
@@ -41,7 +41,7 @@ public class ShareFollowCallback<T> extends BaseCallback<T> {
 
     @Override
     public void onFailure(Call<T> call, Throwable t) {
-        session.setLastResponseCode(0);
+        session.lastResponseCode = 0;
         super.onFailure(call, t);
     }
 }

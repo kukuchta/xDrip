@@ -90,7 +90,7 @@ public class WebServiceTreatments extends BaseWebService {
                 item.put("enteredBy", treatment.enteredBy);
                 item.put("notes", treatment.notes);
                 item.put("carbs", treatment.carbs);
-                item.put("insulin", treatment.insulin);
+                item.put("insulin", treatment.getTotalInsulinAmount());
 
                 reply.put(item);
             }

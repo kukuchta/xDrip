@@ -9,23 +9,11 @@ import com.activeandroid.annotation.Table;
 import com.activeandroid.query.Delete;
 import com.activeandroid.query.Select;
 import com.activeandroid.util.SQLiteUtils;
-import com.eveningoutpost.dexdrip.AddCalibration;
-import com.eveningoutpost.dexdrip.cgm.carelinkfollow.message.Marker;
-import com.eveningoutpost.dexdrip.glucosemeter.GlucoseReadingRx;
 import com.eveningoutpost.dexdrip.Home;
-import com.eveningoutpost.dexdrip.services.SyncService;
-import com.eveningoutpost.dexdrip.utilitymodels.BgGraphBuilder;
 import com.eveningoutpost.dexdrip.utilitymodels.Constants;
-import com.eveningoutpost.dexdrip.utilitymodels.PersistentStore;
 import com.eveningoutpost.dexdrip.utilitymodels.Pref;
-import com.eveningoutpost.dexdrip.utilitymodels.UploaderQueue;
-import com.eveningoutpost.dexdrip.calibrations.CalibrationAbstract;
-import com.eveningoutpost.dexdrip.calibrations.NativeCalibrationPipe;
-import com.eveningoutpost.dexdrip.calibrations.PluggableCalibration;
 import com.eveningoutpost.dexdrip.messages.BloodTestMessage;
 import com.eveningoutpost.dexdrip.messages.BloodTestMultiMessage;
-import com.eveningoutpost.dexdrip.xdrip;
-import com.google.common.math.DoubleMath;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
@@ -79,9 +67,6 @@ public class BloodTest extends Model {
     @Expose
     @Column(name = "uuid", unique = true, onUniqueConflicts = Column.ConflictAction.IGNORE)
     public String uuid;
-
-
-    public GlucoseReadingRx glucoseReadingRx;
 
     // patches and saves
     public Long saveit() {
@@ -172,17 +157,6 @@ public class BloodTest extends Model {
             bt.state = STATE_VALID;
             bt.source = source;
             bt.saveit();
-            if (UploaderQueue.newEntry("insert", bt) != null) {
-                SyncService.startSyncService(3000); // sync in 3 seconds
-            }
-
-            if (Pref.getBooleanDefaultFalse("bluetooth_meter_for_calibrations_auto")) {
-                if ((JoH.msSince(bt.timestamp) < Constants.MINUTE_IN_MS * 5) && (JoH.msSince(bt.timestamp) > 0)) {
-                    UserError.Log.d(TAG, "Blood test value recent enough to send to G5");
-                    //Ob1G5StateMachine.addCalibration((int) bt.mgdl, timestamp_ms);
-                    NativeCalibrationPipe.addCalibration((int) bt.mgdl, timestamp_ms);
-                }
-            }
 
             return bt;
         } else {
@@ -211,15 +185,6 @@ public class BloodTest extends Model {
         return create((long) (new Date().getTime() - timeoffset), bg, source, suggested_uuid);
     }
 
-    public static void pushBloodTestSyncToWatch(BloodTest bt, boolean is_new) {
-        Log.d(TAG, "pushTreatmentSyncToWatch Add treatment to UploaderQueue.");
-        if (Pref.getBooleanDefaultFalse("wear_sync")) {
-            if (UploaderQueue.newEntryForWatch(is_new ? "insert" : "update", bt) != null) {
-                SyncService.startSyncService(3000); // sync in 3 seconds
-            }
-        }
-    }
-
     public static BloodTest last() {
         final List<BloodTest> btl = last(1);
         if ((btl != null) && (btl.size() > 0)) {
@@ -242,62 +207,12 @@ public class BloodTest extends Model {
         }
     }
 
-    public static List<BloodTest> lastMatching(int num, String match) {
-        try {
-            return new Select()
-                    .from(BloodTest.class)
-                    .where("source like ?", match)
-                    .orderBy("timestamp desc")
-                    .limit(num)
-                    .execute();
-        } catch (android.database.sqlite.SQLiteException e) {
-            fixUpTable();
-            return null;
-        }
-    }
-
-    public static BloodTest lastValid() {
-        final List<BloodTest> btl = lastValid(1);
-        if ((btl != null) && (btl.size() > 0)) {
-            return btl.get(0);
-        } else {
-            return null;
-        }
-    }
-
-    public static List<BloodTest> lastValid(int num) {
-        try {
-            return new Select()
-                    .from(BloodTest.class)
-                    .where("state & ? != 0", BloodTest.STATE_VALID)
-                    .orderBy("timestamp desc")
-                    .limit(num)
-                    .execute();
-        } catch (android.database.sqlite.SQLiteException e) {
-            fixUpTable();
-            return null;
-        }
-    }
-
-
     public static BloodTest byUUID(String uuid) {
         if (uuid == null) return null;
         try {
             return new Select()
                     .from(BloodTest.class)
                     .where("uuid = ?", uuid)
-                    .executeSingle();
-        } catch (android.database.sqlite.SQLiteException e) {
-            fixUpTable();
-            return null;
-        }
-    }
-
-    public static BloodTest byid(long id) {
-        try {
-            return new Select()
-                    .from(BloodTest.class)
-                    .where("_ID = ?", id)
                     .executeSingle();
         } catch (android.database.sqlite.SQLiteException e) {
             fixUpTable();
@@ -338,13 +253,6 @@ public class BloodTest extends Model {
             bt.source = Wire.get(btm.source, BloodTestMessage.DEFAULT_SOURCE);
             bt.uuid = btm.uuid;
             bt.saveit(); // de-dupe by uuid
-            if (is_new) { // cannot handle updates yet
-                if (UploaderQueue.newEntry(is_new ? "insert" : "update", bt) != null) {
-                    if (JoH.quietratelimit("start-sync-service", 5)) {
-                        SyncService.startSyncService(3000); // sync in 3 seconds
-                    }
-                }
-            }
         } else {
             UserError.Log.wtf(TAG, "processFromMessage uuid is null or invalid");
         }
@@ -414,141 +322,6 @@ public class BloodTest extends Model {
             fixUpTable();
             return new ArrayList<>();
         }
-    }
-
-    synchronized static void opportunisticCalibration() {
-        if (Pref.getBooleanDefaultFalse("bluetooth_meter_for_calibrations_auto")) {
-            final BloodTest bt = lastValid();
-            if (bt == null) {
-                Log.d(TAG, "opportunistic: No blood tests");
-                return;
-            }
-            if (JoH.msSince(bt.timestamp) > (Constants.HOUR_IN_MS * 8)) {
-                Log.d(TAG, "opportunistic: Blood test older than 8 hours ago");
-                return;
-            }
-
-            if ((bt.uuid == null) || (bt.uuid.length() < 8)) {
-                Log.d(TAG, "opportunisitic: invalid uuid");
-                return;
-            }
-
-            if ((bt.uuid != null) && (bt.uuid.length() > 1) && PersistentStore.getString(LAST_BT_AUTO_CALIB_UUID).equals(bt.uuid)) {
-                Log.d(TAG, "opportunistic: Already processed uuid: " + bt.uuid);
-                return;
-            }
-
-            final Calibration calibration = Calibration.lastValid();
-            if (calibration == null) {
-                Log.d(TAG, "opportunistic: No calibrations");
-                // TODO do we try to initial calibrate using this?
-                return;
-            }
-
-            if (JoH.msSince(calibration.timestamp) < Constants.HOUR_IN_MS) {
-                Log.d(TAG, "opportunistic: Last calibration less than 1 hour ago");
-                return;
-            }
-
-            if (bt.timestamp <= calibration.timestamp) {
-                Log.d(TAG, "opportunistic: Blood test isn't more recent than last calibration");
-                return;
-            }
-
-            // get closest bgreading - must be within dexcom period and locked to sensor
-            final BgReading bgReading = BgReading.getForPreciseTimestamp(bt.timestamp + (AddCalibration.estimatedInterstitialLagSeconds * 1000), BgGraphBuilder.DEXCOM_PERIOD);
-            if (bgReading == null) {
-                Log.d(TAG, "opportunistic: No matching bg reading");
-                return;
-            }
-
-            if (bt.timestamp > highest_timestamp) {
-                Accuracy.create(bt, bgReading, "xDrip Original");
-                final CalibrationAbstract plugin = PluggableCalibration.getCalibrationPluginFromPreferences();
-                final CalibrationAbstract.CalibrationData cd = (plugin != null) ? plugin.getCalibrationData(bgReading.timestamp) : null;
-                if (plugin != null) {
-                    BgReading pluginBgReading = plugin.getBgReadingFromBgReading(bgReading, cd);
-                    Accuracy.create(bt, pluginBgReading, plugin.getAlgorithmName());
-                }
-                highest_timestamp = bt.timestamp;
-            }
-
-            if (!CalibrationRequest.isSlopeFlatEnough(bgReading)) {
-                Log.d(TAG, "opportunistic: Slope is not flat enough at: " + JoH.dateTimeText(bgReading.timestamp));
-                return;
-            }
-
-            // TODO store evaluation failure for this record in cache for future optimization
-
-            // TODO Check we have prior reading as well perhaps
-            JoH.clearCache();
-            UserError.Log.ueh(TAG, "Opportunistic calibration for Blood Test at " + JoH.dateTimeText(bt.timestamp) + " of " + BgGraphBuilder.unitized_string_with_units_static(bt.mgdl) + " matching sensor slope at: " + JoH.dateTimeText(bgReading.timestamp) + " from source " + bt.source);
-            final long time_since = JoH.msSince(bt.timestamp);
-
-
-            Log.d(TAG, "opportunistic: attempting auto calibration");
-            PersistentStore.setString(LAST_BT_AUTO_CALIB_UUID, bt.uuid);
-            Home.startHomeWithExtra(xdrip.getAppContext(),
-                    Home.BLUETOOTH_METER_CALIBRATION,
-                    BgGraphBuilder.unitized_string_static(bt.mgdl),
-                    Long.toString(time_since),
-                    "auto");
-        }
-    }
-
-    public static String evaluateAccuracy(long period) {
-
-        // CACHE??
-
-        final List<BloodTest> bloodTests = latestForGraph(1000, JoH.tsl() - period, JoH.tsl() - AddCalibration.estimatedInterstitialLagSeconds);
-        final List<Double> difference = new ArrayList<>();
-        final List<Double> plugin_difference = new ArrayList<>();
-        if ((bloodTests == null) || (bloodTests.size() == 0)) return null;
-
-        final boolean show_plugin = true;
-        final CalibrationAbstract plugin = (show_plugin) ? PluggableCalibration.getCalibrationPluginFromPreferences() : null;
-
-
-        for (BloodTest bt : bloodTests) {
-            final BgReading bgReading = BgReading.getForPreciseTimestamp(bt.timestamp + (AddCalibration.estimatedInterstitialLagSeconds * 1000), BgGraphBuilder.DEXCOM_PERIOD);
-
-            if (bgReading != null) {
-                final Calibration calibration = bgReading.calibration;
-                if (calibration == null) {
-                    Log.d(TAG, "Calibration for bgReading is null! @ " + JoH.dateTimeText(bgReading.timestamp));
-                    continue;
-                }
-                final double diff = Math.abs(bgReading.calculated_value - bt.mgdl);
-                difference.add(diff);
-                if (d) {
-                    Log.d(TAG, "Evaluate Accuracy: difference: " + JoH.qs(diff));
-                }
-                final CalibrationAbstract.CalibrationData cd = (plugin != null) ? plugin.getCalibrationData(bgReading.timestamp) : null;
-                if ((plugin != null) && (cd != null)) {
-                    final double plugin_diff = Math.abs(bt.mgdl - plugin.getGlucoseFromBgReading(bgReading, cd));
-                    plugin_difference.add(plugin_diff);
-                    if (d)
-                        Log.d(TAG, "Evaluate Plugin Accuracy: " + BgGraphBuilder.unitized_string_with_units_static(bt.mgdl) + " @ " + JoH.dateTimeText(bt.timestamp) + "  difference: " + JoH.qs(plugin_diff) + "/" + JoH.qs(plugin_diff * Constants.MGDL_TO_MMOLL, 2) + " calibration: " + JoH.qs(cd.slope, 2) + " " + JoH.qs(cd.intercept, 2));
-                }
-            }
-        }
-
-        if (difference.size() == 0) return null;
-        double avg = DoubleMath.mean(difference);
-        Log.d(TAG, "Average accuracy: " + accuracyAsString(avg) + "  (" + JoH.qs(avg, 5) + ")");
-
-        if (plugin_difference.size() > 0) {
-            double plugin_avg = DoubleMath.mean(plugin_difference);
-            Log.d(TAG, "Plugin Average accuracy: " + accuracyAsString(plugin_avg) + "  (" + JoH.qs(plugin_avg, 5) + ")");
-            return accuracyAsString(plugin_avg) + " / " + accuracyAsString(avg);
-        }
-        return accuracyAsString(avg);
-    }
-
-    public static String accuracyAsString(double avg) {
-        final boolean domgdl = Pref.getString("units", "mgdl").equals("mgdl");
-        // +- symbol
-        return "\u00B1" + (!domgdl ? JoH.qs(avg * Constants.MGDL_TO_MMOLL, 2) + " mmol" : JoH.qs(avg, 1) + " mgdl");
     }
 
     public static List<BloodTest> cleanup(int retention_days) {

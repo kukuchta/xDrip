@@ -2,7 +2,6 @@ package com.eveningoutpost.dexdrip.utilitymodels;
 
 import android.util.Log;
 
-import com.eveningoutpost.dexdrip.GcmActivity;
 import com.eveningoutpost.dexdrip.Home;
 import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.models.UserError;
@@ -111,19 +110,6 @@ public class PumpStatus {
             setBattery(json.getDouble("battery"));
         } catch (Exception e) {
             Log.e(TAG, "Got exception processing json msg: " + e + " " + msg);
-        }
-    }
-
-    public static synchronized void syncUpdate() {
-        if (Home.get_master()) {
-            final String current_json = toJson();
-            if (current_json.equals(last_json)) {
-                Log.d(TAG, "No sync as data is identical");
-            } else {
-                Log.d(TAG, "Sending update: " + current_json);
-                GcmActivity.sendPumpStatus(current_json);
-                last_json = current_json;
-            }
         }
     }
 }
