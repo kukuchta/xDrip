@@ -42,6 +42,7 @@ public class CareLinkDataProcessor {
     private static final boolean D = false;
 
     private static final String SOURCE_CARELINK_FOLLOW = "CareLink Follow";
+    private static final String BG_BELOW_LIMIT = "SG_BELOW_40_MGDL";
 
 
     static synchronized void processData(final RecentData recentData, final boolean live) {

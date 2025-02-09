@@ -1281,6 +1281,15 @@ public class BgGraphBuilder {
                     lowValues.add(new HPointValue((double) (bgReading.timestamp / FUZZER), (float) unitized(bgReading.calculated_value)));
                 } else if (bgReading.calculated_value > 13) {
                     lowValues.add(new HPointValue((double) (bgReading.timestamp / FUZZER), (float) unitized(40)));
+                } else if (bgReading.calculated_value > 0) {
+                    PointValueExtended pv = new PointValueExtended((double) (bgReading.timestamp / FUZZER), (float) unitized(50));
+                    pv.note = "Below " + unitized(50.0);
+                    if (this.doMgdl) {
+                        pv.note += " mg/dl";
+                    } else {
+                        pv.note += " mmol/l";
+                    }
+                    lowValues.add(pv);
                 }
 
                 if (illustrate_backfilled_data && bgReading.calculated_value > 13 && bgReading.calculated_value < 400 && bgReading.isBackfilled()) {
