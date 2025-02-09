@@ -71,7 +71,7 @@ import okhttp3.Response;
 
 public class CareLinkAuthenticator {
 
-    private static final String TAG = "CareLinkAuthenticator";
+    private static final String TAG = "CareLinkFollow";
 
     protected static final String CAREPARTNER_APP_DISCO_URL = "https://clcloud.minimed.eu/connect/carepartner/v11/discover/android/3.2";
     protected static final String CARELINK_CONNECT_SERVER_EU = "carelink.minimed.eu";

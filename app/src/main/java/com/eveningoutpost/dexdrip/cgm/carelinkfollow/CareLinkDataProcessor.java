@@ -36,7 +36,7 @@ import static com.eveningoutpost.dexdrip.models.Treatments.pushTreatmentSyncToWa
 public class CareLinkDataProcessor {
 
 
-    private static final String TAG = "CareLinkFollowDP";
+    private static final String TAG = "CareLinkFollow";
     private static final boolean D = false;
 
     private static final String SOURCE_CARELINK_FOLLOW = "CareLink Follow";
