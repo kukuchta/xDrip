@@ -2158,6 +2158,19 @@ public class BgReading extends Model implements ShareUploadableBg {
         return (long) 0;
     }
 
+    public static double getMaxCalculatedValue(int number, long startTime, long endTime) {
+        BgReading maxReading = new Select()
+                .from(BgReading.class)
+                .where("timestamp >= ? and timestamp <= ?", Math.max(startTime, 0), endTime)
+                .where("calculated_value != 0")
+                .where("raw_data != 0")
+                .orderBy("calculated_value desc")
+                .limit(number)
+                .executeSingle();
+
+        return maxReading != null ? maxReading.calculated_value : 0.0;
+    }
+
     public double usedRaw() {
         Calibration calibration = Calibration.lastValid();
         if (calibration != null && calibration.check_in) {

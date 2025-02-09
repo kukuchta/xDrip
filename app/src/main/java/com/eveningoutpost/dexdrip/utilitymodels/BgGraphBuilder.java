@@ -30,6 +30,7 @@ import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.models.Libre2RawValue;
 import com.eveningoutpost.dexdrip.models.Prediction;
 import com.eveningoutpost.dexdrip.models.Profile;
+import com.eveningoutpost.dexdrip.models.PumpBasal;
 import com.eveningoutpost.dexdrip.models.StepCounter;
 import com.eveningoutpost.dexdrip.models.Treatments;
 import com.eveningoutpost.dexdrip.models.UserError;
@@ -139,6 +140,7 @@ public class BgGraphBuilder {
     private boolean simulation_enabled = false;
     private static double avg1value = 0;
     private static double avg2value = 0;
+    private static double maxValue = 0;
     private static int avg1counter = 0;
     private static double avg1startfuzzed = 0;
     private static int avg2counter = 0;
@@ -250,6 +252,8 @@ public class BgGraphBuilder {
             defaultMinY = unitized(Pref.getStringToInt("default_ymin", 40)); // Use the user-defined ymin
             defaultMaxY = unitized(Pref.getStringToInt("default_ymax", 250)); // Use the user-defined ymax
         }
+        maxValue = unitized(BgReading.getMaxCalculatedValue(numValues, start, end));
+        defaultMaxY = Math.max(maxValue, defaultMaxY) + unitized(50);
         pointSize = isXLargeTablet(context) ? 5 : 3;
         axisTextSize = isXLargeTablet(context) ? 20 : Axis.DEFAULT_TEXT_SIZE_SP;
         previewAxisTextSize = isXLargeTablet(context) ? 12 : 5;
@@ -392,6 +396,97 @@ public class BgGraphBuilder {
                 line.setColor(getCol(X.color_basal_tbr));
                 basalLines.add(line);
             }
+        }
+
+        return basalLines;
+    }
+
+    private List<Line> pumpBasalLines() {
+        final List<Line> basalLines = new ArrayList<>();
+
+        final double minAutocorrectHeight = 25;
+        final double maxAutocorrectHeight = 40;
+        final double autocorrectHeightSpan = maxAutocorrectHeight - minAutocorrectHeight;
+        final List<Treatments> autocorrectList = Treatments.latestAutocorrectionsForGraph(2000, loaded_start, loaded_end);
+        final double maxAutocorrectAmount = Treatments.getMaxAutocorrectionAmount(loaded_start, loaded_end);
+
+        if (!autocorrectList.isEmpty()) {
+            final List<PointValue> points = new ArrayList<>(autocorrectList.size() * 4);
+            final List<PointValue> captions = new ArrayList<>(autocorrectList.size());
+            for (Treatments item : autocorrectList) {
+                final float yValue = (float)unitized(item.insulin / maxAutocorrectAmount * autocorrectHeightSpan + minAutocorrectHeight);
+                points.add(new HPointValue((double) (item.timestamp - 50000) / FUZZER, 0));
+                points.add(new HPointValue((double) (item.timestamp - 50000 + 10) / FUZZER, yValue));
+                points.add(new HPointValue((double) (item.timestamp + 50000 - 10) / FUZZER, yValue));
+                points.add(new HPointValue((double) (item.timestamp + 50000) / FUZZER, 0));
+                PointValueExtended caption = new PointValueExtended((double) (item.timestamp / FUZZER + 0.8), defaultMaxY + unitized(8) - yValue);
+                caption.real_timestamp = item.timestamp;
+                caption.note = (JoH.qs(item.insulin, 3) + "u").replace(".0u", "u");
+                captions.add(caption);
+            }
+
+            final Line autocorrectLine = new Line(points);
+            autocorrectLine.setColor(Color.parseColor("#FF01B3DA"));
+            autocorrectLine.setReverseYAxis(true);
+            autocorrectLine.setStrokeWidth(1);
+            autocorrectLine.setHasPoints(false);
+            autocorrectLine.setFilled(true);
+            autocorrectLine.setFillFlipped(true);
+            autocorrectLine.setBackgroundUnclipped(true);
+            autocorrectLine.setAreaTransparency(150);
+            basalLines.add(autocorrectLine);
+
+            final Line autocorrectCaptionLine = new Line(captions);
+            autocorrectCaptionLine.setHasPoints(true);
+            autocorrectCaptionLine.setHasLines(false);
+            autocorrectCaptionLine.setPointRadius(5);
+            autocorrectCaptionLine.setColor(Color.TRANSPARENT);
+            autocorrectCaptionLine.setPointColor(Color.TRANSPARENT);
+            basalLines.add(autocorrectCaptionLine);
+        }
+
+        final double minAutoBasalHeight = 0;
+        final double maxAutoBasalHeight = 20;
+        final double autoBasalHeightSpan = maxAutoBasalHeight - minAutoBasalHeight;
+        final List<PumpBasal> autoBasalList = PumpBasal.latestAutoBasalDeliveryForGraph(2000, loaded_start, loaded_end);
+        final double maxAutoBasalAmount = PumpBasal.getMaxAutoBasalDelivery(loaded_start, loaded_end);
+
+        if (!autoBasalList.isEmpty()) {
+            final List<PointValue> points = new ArrayList<>(autoBasalList.size() * 4);
+            final List<PointValue> captions = new ArrayList<>(autoBasalList.size());
+            points.add(new HPointValue((double) start_time, 0));
+            for (PumpBasal item : autoBasalList) {
+                final float yValue = (float)unitized(item.autoBasalDelivery / maxAutoBasalAmount * autoBasalHeightSpan + minAutoBasalHeight);
+
+                points.add(new HPointValue((double) (item.timestamp - 150000) / FUZZER, 0));
+                points.add(new HPointValue((double) (item.timestamp - 150000 + 10) / FUZZER, yValue));
+                points.add(new HPointValue((double) (item.timestamp + 150000 - 10) / FUZZER, yValue));
+                points.add(new HPointValue((double) (item.timestamp + 150000) / FUZZER, 0));
+                PointValueExtended caption = new PointValueExtended((double) (item.timestamp / FUZZER + 0.5), defaultMaxY + unitized(8) - yValue);
+                caption.real_timestamp = item.timestamp;
+                caption.note = (JoH.qs(item.autoBasalDelivery, 3) + "u").replace(".0u", "u");
+                captions.add(caption);
+            }
+            points.add(new HPointValue((double) end_time, 0));
+
+            final Line autoBasalLine = new Line(points);
+            autoBasalLine.setColor(Color.parseColor("#FFD510D3"));
+            autoBasalLine.setReverseYAxis(true);
+            autoBasalLine.setStrokeWidth(1);
+            autoBasalLine.setHasPoints(false);
+            autoBasalLine.setFilled(true);
+            autoBasalLine.setFillFlipped(true);
+            autoBasalLine.setBackgroundUnclipped(true);
+            autoBasalLine.setAreaTransparency(150);
+            basalLines.add(autoBasalLine);
+
+            final Line autoBasalCaptionLine = new Line(captions);
+            autoBasalCaptionLine.setHasPoints(true);
+            autoBasalCaptionLine.setHasLines(false);
+            autoBasalCaptionLine.setPointRadius(5);
+            autoBasalCaptionLine.setColor(Color.TRANSPARENT);
+            autoBasalCaptionLine.setPointColor(Color.TRANSPARENT);
+            basalLines.add(autoBasalCaptionLine);
         }
 
         return basalLines;
@@ -660,6 +755,7 @@ public class BgGraphBuilder {
                 if (Pref.getBoolean("motion_tracking_enabled", false) && Pref.getBoolean("plot_motion", false)) {
                     lines.addAll(motionLine());
                 }
+                lines.addAll(pumpBasalLines());
                 lines.addAll(basalLines());
                 lines.addAll(heartLines());
                 lines.addAll(stepsLines());
@@ -1541,7 +1637,7 @@ public class BgGraphBuilder {
                     int consecutiveCloseIcons = 0;
                     for (Treatments treatment : treatments) {
 
-                        if (!treatment.hasContent()) continue;
+                        if (!treatment.hasContent() || treatment.isAutocorrection()) continue;
 
                         if (showSMB && treatment.likelySMB()) {
                             final Pair<Float, Float> yPositions = GraphTools.bestYPosition(bgReadings, treatment.timestamp, doMgdl, false, highMark, 10 + (100d * treatment.insulin));

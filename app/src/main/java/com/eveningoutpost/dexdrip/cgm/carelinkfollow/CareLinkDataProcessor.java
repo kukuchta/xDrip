@@ -4,6 +4,7 @@ import com.eveningoutpost.dexdrip.Home;
 import com.eveningoutpost.dexdrip.models.BgReading;
 import com.eveningoutpost.dexdrip.models.BloodTest;
 import com.eveningoutpost.dexdrip.models.DateUtil;
+import com.eveningoutpost.dexdrip.models.PumpBasal;
 import com.eveningoutpost.dexdrip.models.Sensor;
 import com.eveningoutpost.dexdrip.models.Treatments;
 import com.eveningoutpost.dexdrip.models.UserError;
@@ -50,7 +51,7 @@ public class CareLinkDataProcessor {
         List<SensorGlucose> filteredSgList;
         List<Marker> filteredMarkerList;
 
-        UserError.Log.d(TAG, "Start processsing data...");
+        UserError.Log.d(TAG, "Start processing data...");
 
         //SKIP ALL IF EMPTY!!!
         if (recentData == null) {
@@ -62,7 +63,7 @@ public class CareLinkDataProcessor {
 
         //SKIP DATA processing if NO PUMP CONNECTION (time shift seems to be different in this case, needs further analysis)
         if (recentData.isNGP() && !recentData.pumpCommunicationState) {
-            UserError.Log.d(TAG, "Not connected to pump => time can be wrong, leave processing!");
+            UserError.Log.d(TAG, "Pump disconnected!");
             return;
         }
 
@@ -81,65 +82,67 @@ public class CareLinkDataProcessor {
                 }
             }
 
-            if (filteredSgList.size() > 0) {
+            if (!filteredSgList.isEmpty()) {
 
                 final Sensor sensor = Sensor.createDefaultIfMissing();
                 sensor.save();
 
                 // place in order of oldest first
-                Collections.sort(filteredSgList, (o1, o2) -> o1.getDate().compareTo(o2.getDate()));
+                filteredSgList.sort((o1, o2) -> o1.getDate().compareTo(o2.getDate()));
 
                 for (final SensorGlucose sg : filteredSgList) {
 
-                    //Not EPOCH 0 (warmup?)
-                    if (sg.getDate().getTime() > 1) {
+                    long timestamp = sg.getDate().getTime();
 
-                        //Not in the future
-                        if (sg.getDate().getTime() < new Date().getTime() + 300_000) {
+                    //Epoch = 0
+                    if (timestamp <= 1) {
+                        UserError.Log.d(TAG, "Error parsing SG datetime: " + sg.datetime);
+                        continue;
+                    }
 
-                            //Not 0 SG (not calibrated?)
-                            if (sg.sg > 0) {
+                    //In the future
+                    if (timestamp >= new Date().getTime() + 300_000) {
+                        UserError.Log.d(TAG, "SG DateTime is more than 5 min in the future: " + sg.datetime);
+                        continue;
+                    }
 
-                                //newer than last BG
-                                if (sg.getDate().getTime() > lastBgTimestamp) {
+                    //Sg = 0
+                    if (sg.sg <= 0 && !sg.sensorState.equals(BG_BELOW_LIMIT)) {
+                        UserError.Log.d(TAG, "SG is 0 (no data from sensor)");
+                        continue;
+                    }
 
-                                    if (sg.getDate().getTime() > 0) {
+                    //Older than last BG
+                    if (timestamp <= lastBgTimestamp) {
+                        continue;
+                    }
 
-                                        //New entry
-                                        if (BgReading.getForPreciseTimestamp(sg.getDate().getTime(), 10_000) == null) {
-                                            UserError.Log.d(TAG, "NEW NEW NEW New entry: " + sg.toS());
+                    if (BgReading.getForPreciseTimestamp(timestamp, 10_000) != null) {
+                        continue;
+                    }
 
-                                            if (live) {
-                                                final BgReading bg = new BgReading();
-                                                bg.timestamp = sg.getDate().getTime();
-                                                bg.calculated_value = (double) sg.sg;
-                                                bg.raw_data = SPECIAL_FOLLOWER_PLACEHOLDER;
-                                                bg.filtered_data = (double) sg.sg;
-                                                bg.noise = "";
-                                                bg.uuid = UUID.randomUUID().toString();
-                                                bg.calculated_value_slope = 0;
-                                                bg.sensor = sensor;
-                                                bg.sensor_uuid = sensor.uuid;
-                                                bg.source_info = SOURCE_CARELINK_FOLLOW;
-                                                bg.save();
-                                                bg.find_slope();
-                                                Inevitable.task("entry-proc-post-pr", 500, () -> bg.postProcess(false));
-                                            }
-                                        }
-                                    } else {
-                                        UserError.Log.e(TAG, "Could not parse a timestamp from: " + sg.toS());
-                                    }
-                                }
-
-                            } else {
-                                UserError.Log.d(TAG, "SG is 0 (calibration missed?)");
-                            }
-
+                    //Found new entry
+                    UserError.Log.d(TAG, "New SG entry: " + sg.toS());
+                    if (live) {
+                        final BgReading bg = new BgReading();
+                        bg.timestamp = timestamp;
+                        bg.raw_data = SPECIAL_FOLLOWER_PLACEHOLDER;
+                        if (sg.sg != 0) {
+                            bg.calculated_value = (double) sg.sg;
+                            bg.filtered_data = (double) sg.sg;
                         } else {
-                            UserError.Log.d(TAG, "SG DateTime is 0 (warmup phase?)");
+                            bg.calculated_value = (double) 1.0;
+                            bg.filtered_data = (double) 1.0;
                         }
-                    } else {
-                        UserError.Log.d(TAG, "SG DateTime in future: " + sg.datetime);
+                        bg.noise = "";
+                        bg.uuid = UUID.randomUUID().toString();
+                        bg.calculated_value_slope = 0;
+                        bg.sensor = sensor;
+                        bg.sensor_uuid = sensor.uuid;
+                        bg.source_info = SOURCE_CARELINK_FOLLOW;
+                        bg.save();
+                        bg.find_slope();
+                        Inevitable.task("entry-proc-post-pr", 500, () -> bg.postProcess(false));
                     }
                 }
             }
@@ -170,13 +173,14 @@ public class CareLinkDataProcessor {
                         if (marker.getBloodGlucose() != null && !marker.getBloodGlucose().equals(0)) {
                             //new blood test
                             if (BloodTest.getForPreciseTimestamp(marker.getDate().getTime(), 10000) == null) {
+                                UserError.Log.d(TAG, "New finger BG");
                                 BloodTest.create(marker.getDate().getTime(), marker.getBloodGlucose(), SOURCE_CARELINK_FOLLOW);
                             }
                         }
 
                         //INSULIN, MEAL => Treatment
-                    } else if ((marker.type.equals(Marker.MARKER_TYPE_INSULIN) && Pref.getBooleanDefaultFalse("clfollow_download_boluses"))
-                            || (marker.type.equals(Marker.MARKER_TYPE_MEAL) && Pref.getBooleanDefaultFalse("clfollow_download_meals"))) {
+                    } else if ((marker.type.equals(Marker.TYPE_INSULIN) && Pref.getBooleanDefaultFalse("clfollow_download_boluses"))
+                            || (marker.type.equals(Marker.TYPE_MEAL) && Pref.getBooleanDefaultFalse("clfollow_download_meals"))) {
 
                         //insulin, meal only for pumps (not value in case of GC)
                         if (recentData.isNGP()) {
@@ -187,15 +191,15 @@ public class CareLinkDataProcessor {
 
                             //Extract treament infos (carbs, insulin)
                             //Insulin
-                            if (marker.type.equals(Marker.MARKER_TYPE_INSULIN)) {
+                            if (marker.type.equals(Marker.TYPE_INSULIN)) {
                                 carbs = 0;
                                 if (marker.getInsulinAmount() != null) {
                                     insulin = marker.getInsulinAmount();
-                                }
+                                } // TODO Check if completed flag is true
                                 //SKIP if insulin = 0
                                 if (insulin == 0) continue;
                                 //Carbs
-                            } else if (marker.type.equals(Marker.MARKER_TYPE_MEAL)) {
+                            } else if (marker.type.equals(Marker.TYPE_MEAL)) {
                                 if (marker.getCarbAmount() != null) {
                                     carbs = marker.getCarbAmount();
                                 }
@@ -206,7 +210,8 @@ public class CareLinkDataProcessor {
 
                             //new Treatment
                             if (newTreatment(carbs, insulin, marker.getDate().getTime())) {
-                                t = Treatments.create(carbs, insulin, marker.getDate().getTime());
+                                UserError.Log.d(TAG, "New treatment");
+                                t = Treatments.create(carbs, insulin, marker.getBolusType(), marker.getDate().getTime());
                                 if (t != null) {
                                     t.enteredBy = SOURCE_CARELINK_FOLLOW;
                                     t.save();
@@ -216,6 +221,14 @@ public class CareLinkDataProcessor {
                             }
                         }
 
+                    } else if (marker.isAutoBasalDelivery()){
+                        Float bolusAmount = marker.getBolusAmount();
+                        long timestamp = marker.getDate().getTime();
+                        if (bolusAmount != null && timestamp != 0) {
+                            if (!PumpBasal.autoBasalDeliveryExists(bolusAmount, timestamp)) {
+                                PumpBasal.createAutoBasalDelivery(bolusAmount, timestamp);
+                            }
+                        }
                     }
 
                 }
@@ -306,6 +319,7 @@ public class CareLinkDataProcessor {
         if (date != null && noteText != null) {
             //New note
             if (newNote(noteText, date.getTime())) {
+                UserError.Log.d(TAG, "New notification");
                 //create_note in Treatment is not good, because of automatic link to other treatments in 5 mins range
                 Treatments note = new Treatments();
                 note.notes = noteText;

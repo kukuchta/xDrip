@@ -10,19 +10,28 @@ import java.util.Date;
  */
 public class Marker {
 
-    public static final String MARKER_TYPE_MEAL = "MEAL";
-    public static final String MARKER_TYPE_CALIBRATION = "CALIBRATION";
-    public static final String MARKER_TYPE_BG_READING = "BG_READING";
-    public static final String MARKER_TYPE_BG = "BG";
-    public static final String MARKER_TYPE_INSULIN = "INSULIN";
-    public static final String MARKER_TYPE_AUTO_BASAL = "AUTO_BASAL_DELIVERY";
-    public static final String MARKER_TYPE_AUTO_MODE_STATUS = "AUTO_MODE_STATUS";
+    public static final String TYPE_MEAL = "MEAL";
+    public static final String TYPE_CALIBRATION = "CALIBRATION";
+    public static final String TYPE_BG_READING = "BG_READING";
+    public static final String TYPE_BG = "BG";
+    public static final String TYPE_INSULIN = "INSULIN";
+    public static final String TYPE_AUTO_BASAL_DELIVERY = "AUTO_BASAL_DELIVERY";
+    public static final String TYPE_AUTO_MODE_STATUS = "AUTO_MODE_STATUS";
+    public static final String ACTIVATION_TYPE_AUTOCORRECTION = "AUTOCORRECTION";
+    public static final String ACTIVATION_TYPE_BOLUS = "RECOMMENDED";
 
     public boolean isBloodGlucose() {
         if (type == null)
             return false;
         else
-            return (type.equals(MARKER_TYPE_BG_READING) || type.equals(MARKER_TYPE_CALIBRATION) || type.equals(MARKER_TYPE_BG));
+            return (type.equals(TYPE_BG_READING) || type.equals(TYPE_CALIBRATION) || type.equals(TYPE_BG));
+    }
+
+    public boolean isAutoBasalDelivery() {
+        if (type == null)
+            return false;
+        else
+            return (type.equals(TYPE_AUTO_BASAL_DELIVERY));
     }
 
     public String type;
@@ -61,8 +70,17 @@ public class Marker {
     public Float getInsulinAmount(){
         if(deliveredExtendedAmount != null && deliveredFastAmount != null)
             return deliveredExtendedAmount + deliveredFastAmount;
-        else if(data.dataValues != null && data.dataValues.deliveredFastAmount != null)
+        else if(data != null && data.dataValues != null && data.dataValues.deliveredFastAmount != null) { // TODO: get also the extended amount
             return data.dataValues.deliveredFastAmount;
+        }
+        else {
+            return null;
+        }
+    }
+
+    public String getBolusType(){
+        if(data != null && data.dataValues != null && data.dataValues.activationType != null)
+            return data.dataValues.activationType;
         else
             return null;
     }
@@ -70,7 +88,7 @@ public class Marker {
     public Double getCarbAmount(){
         if(amount != null)
             return amount;
-        else if(data.dataValues.amount != null)
+        else if(data != null && data.dataValues != null && data.dataValues.amount != null)
             return data.dataValues.amount;
         else
             return null;
@@ -80,10 +98,19 @@ public class Marker {
     {
         if(value != null)
             return value;
-        else if(data.dataValues.unitValue != null)
+        else if(data != null && data.dataValues != null && data.dataValues.unitValue != null)
             return data.dataValues.unitValue;
         else
             return null;
     }
 
+    public Float getBolusAmount()
+    {
+        if(bolusAmount != null)
+            return bolusAmount;
+        else if(data != null && data.dataValues != null && data.dataValues.bolusAmount != null)
+            return data.dataValues.bolusAmount;
+        else
+            return null;
+    }
 }

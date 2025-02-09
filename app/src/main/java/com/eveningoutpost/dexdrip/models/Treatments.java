@@ -18,6 +18,7 @@ import com.activeandroid.query.Select;
 import com.activeandroid.util.SQLiteUtils;
 import com.eveningoutpost.dexdrip.GcmActivity;
 import com.eveningoutpost.dexdrip.Home;
+import com.eveningoutpost.dexdrip.cgm.carelinkfollow.message.Marker;
 import com.eveningoutpost.dexdrip.models.UserError.Log;
 import com.eveningoutpost.dexdrip.R;
 import com.eveningoutpost.dexdrip.services.SyncService;
@@ -100,6 +101,9 @@ public class Treatments extends Model {
     @Expose
     @Column(name = "insulin")
     public double insulin;
+    @Expose
+    @Column(name = "bolusType")
+    public String bolusType;
     @Expose
     @Column(name = "insulinJSON")
     public String insulinJSON;
@@ -230,6 +234,16 @@ public class Treatments extends Model {
         //setInsulinInjections(null);
     }
 
+    public static synchronized Treatments create(final double carbs, final double insulinSum, final String bolusType, long timestamp) {
+        List<InsulinInjection> insulin;
+        if (MultipleInsulins.isEnabled()) {
+            insulin = convertLegacyDoseToBolusInjectionList(insulinSum);
+        } else {
+            insulin = null;
+        }
+        return create(carbs, insulinSum, insulin, bolusType, timestamp, null);
+    }
+
     public static synchronized Treatments create(final double carbs, final double insulin, long timestamp) {
         return create(carbs, insulin, timestamp, null);
     }
@@ -249,6 +263,10 @@ public class Treatments extends Model {
     }
 
     public static synchronized Treatments create(final double carbs, final double insulinSum, final List<InsulinInjection> insulin, long timestamp, String suggested_uuid) {
+        return create(carbs, insulinSum, insulin, null, timestamp, suggested_uuid);
+    }
+
+    public static synchronized Treatments create(final double carbs, final double insulinSum, final List<InsulinInjection> insulin, final String bolusType, long timestamp, String suggested_uuid) {
         final long future_seconds = (timestamp - JoH.tsl()) / 1000;
         // if treatment more than 1 hour in the future
         if (future_seconds > (60 * 60)) {
@@ -262,10 +280,10 @@ public class Treatments extends Model {
                     + carbs + " g " + context.getString(R.string.carbs) + " / "
                     + insulinSum + " " + context.getString(R.string.units), (int) future_seconds, 34026);
         }
-        return create(carbs, insulinSum, insulin, timestamp, -1, suggested_uuid);
+        return create(carbs, insulinSum, insulin, bolusType, timestamp, -1, suggested_uuid);
     }
 
-    public static synchronized Treatments create(final double carbs, final double insulinSum, final List<InsulinInjection> insulin, long timestamp, double position, String suggested_uuid) {
+    public static synchronized Treatments create(final double carbs, final double insulinSum, final List<InsulinInjection> insulin, final String bolusType,  long timestamp, double position, String suggested_uuid) {
         // TODO sanity check values
         Log.d(TAG, "Creating treatment: " +
                 "Insulin: " + insulinSum + " / " +
@@ -286,6 +304,12 @@ public class Treatments extends Model {
             treatment.enteredBy = XDRIP_TAG + " pos:" + JoH.qs(position, 2);
         } else {
             treatment.enteredBy = XDRIP_TAG;
+        }
+
+        if (bolusType != null) {
+            treatment.bolusType = bolusType;
+        } else {
+            treatment.bolusType = ""; // TODO check if null will be ok
         }
 
         treatment.carbs = carbs;
@@ -497,6 +521,7 @@ public class Treatments extends Model {
                 "ALTER TABLE Treatments ADD COLUMN notes TEXT;",
                 "ALTER TABLE Treatments ADD COLUMN created_at TEXT;",
                 "ALTER TABLE Treatments ADD COLUMN insulin REAL;",
+                "ALTER TABLE Treatments ADD COLUMN bolusType TEXT;",
                 "ALTER TABLE Treatments ADD COLUMN insulinJSON TEXT;",
                 "ALTER TABLE Treatments ADD COLUMN carbs REAL;",
                 "CREATE INDEX index_Treatments_timestamp on Treatments(timestamp);",
@@ -806,6 +831,27 @@ public class Treatments extends Model {
                 .orderBy("timestamp asc")
                 .limit(number)
                 .execute();
+    }
+
+    public static List<Treatments> latestAutocorrectionsForGraph(final int number, final long startTime, final long endTime) {
+        fixUpTable();
+        return new Select()
+                .from(Treatments.class)
+                .where("timestamp >= ? and timestamp <= ? and bolusType = ?", startTime, endTime, Marker.ACTIVATION_TYPE_AUTOCORRECTION)
+                .orderBy("timestamp asc")
+                .limit(number)
+                .execute();
+    }
+
+    public static double getMaxAutocorrectionAmount(final long startTime, final long endTime) {
+        fixUpTable();
+        Treatments maxAutocorrection = new Select()
+                .from(Treatments.class)
+                .where("timestamp >= ? and timestamp <= ? and bolusType = ?", startTime, endTime, Marker.ACTIVATION_TYPE_AUTOCORRECTION)
+                .orderBy("insulin desc")
+                .executeSingle();
+
+        return maxAutocorrection != null ? maxAutocorrection.insulin : 0.0;
     }
 
     public static long getTimeStampWithOffset(double offset) {
@@ -1362,6 +1408,10 @@ public class Treatments extends Model {
     public boolean likelySMB() {
         return (carbs == 0 && insulin > 0
                 && ((insulin <= MAX_SMB_UNITS && (notes == null || notes.length() == 0)) || (enteredBy != null && enteredBy.startsWith("openaps:") && insulin <= MAX_OPENAPS_SMB_UNITS)));
+    }
+
+    public boolean isAutocorrection() {
+        return (bolusType != null && !bolusType.isEmpty() && bolusType.equals(Marker.ACTIVATION_TYPE_AUTOCORRECTION));
     }
 
     public boolean wasCreatedRecently() {
