@@ -1,8 +1,10 @@
-# Nightscout xDrip+
-> Enhanced personal research version of xDrip
+# xDrip+ 780G
+Fork of Nightscout xDrip+ created for better integration with CareLink cloud data and Minimed 780G pump. Contains all features from original Nightscout xDrip+ project and additionally:
+* Added auto basal and autocorrection graph lines (like in CareLink Connect app)
+* Added dual follower (Dexcom Follow + CareLink Follow) functionality for a case when you want to have all the pump notifications, blood measurements, meals and treatments visible from CareLink server, but you use Dexcom CGM instead of Guardian/Simplera. 
+* Added http client restarts before each data refresh (solved some stability issues in my home wifi network)
 
- <img align="right" src="Documentation/images/download-xdrip-plus-qr-code.png">
- Info page and APK download: https://jamorham.github.io/#xdrip-plus
+ Original info page: https://jamorham.github.io/#xdrip-plus
 
 <img align="right" src="https://travis-ci.org/jamorham/xDrip-plus.svg?branch=master"><a align="right" title="Crowdin" target="_blank" href="https://crowdin.com/project/xdrip"><img align="right" src="https://badges.crowdin.net/xdrip/localized.svg"></a>
 
