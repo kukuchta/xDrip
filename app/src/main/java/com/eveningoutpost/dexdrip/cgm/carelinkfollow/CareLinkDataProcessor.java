@@ -17,6 +17,7 @@ import com.eveningoutpost.dexdrip.cgm.carelinkfollow.message.Marker;
 import com.eveningoutpost.dexdrip.cgm.carelinkfollow.message.RecentData;
 import com.eveningoutpost.dexdrip.cgm.carelinkfollow.message.SensorGlucose;
 import com.eveningoutpost.dexdrip.cgm.carelinkfollow.message.TextMap;
+import com.eveningoutpost.dexdrip.utils.DexCollectionType;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,6 +27,7 @@ import java.util.UUID;
 
 import static com.eveningoutpost.dexdrip.models.BgReading.SPECIAL_FOLLOWER_PLACEHOLDER;
 import static com.eveningoutpost.dexdrip.models.Treatments.pushTreatmentSyncToWatch;
+import static com.eveningoutpost.dexdrip.utils.DexCollectionType.CLFollow;
 
 
 /**
@@ -64,7 +66,7 @@ public class CareLinkDataProcessor {
         }
 
         //SENSOR GLUCOSE (if available)
-        if (recentData.sgs != null) {
+        if (DexCollectionType.getDexCollectionType() == CLFollow && recentData.sgs != null) {
 
             final BgReading lastBg = BgReading.lastNoSenssor();
             final long lastBgTimestamp = lastBg != null ? lastBg.timestamp : 0;

@@ -26,6 +26,8 @@ import java.util.List;
 import static com.eveningoutpost.dexdrip.models.JoH.emptyString;
 import static com.eveningoutpost.dexdrip.models.JoH.msSince;
 import static com.eveningoutpost.dexdrip.utilitymodels.BgGraphBuilder.DEXCOM_PERIOD;
+import static com.eveningoutpost.dexdrip.utils.DexCollectionType.CLFollow;
+import static com.eveningoutpost.dexdrip.utils.DexCollectionType.SHAndCLFollow;
 
 /**
  * CareLink Follow Service
@@ -97,7 +99,7 @@ public class CareLinkFollowService extends ForegroundService {
     }
 
     private static boolean shouldServiceRun() {
-        return DexCollectionType.getDexCollectionType() == DexCollectionType.CLFollow;
+        return DexCollectionType.getDexCollectionType() == CLFollow || DexCollectionType.getDexCollectionType() == SHAndCLFollow;
     }
 
     private static long getGraceMillis() {

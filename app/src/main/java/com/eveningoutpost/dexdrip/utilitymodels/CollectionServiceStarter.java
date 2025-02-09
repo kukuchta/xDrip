@@ -26,6 +26,7 @@ import com.eveningoutpost.dexdrip.xdrip;
 
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.Medtrum;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.NSFollow;
+import static com.eveningoutpost.dexdrip.utils.DexCollectionType.SHAndCLFollow;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.SHFollow;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.WebFollow;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.CLFollow;
@@ -102,7 +103,14 @@ public class CollectionServiceStarter {
                     }
                     if (startPending) {
                         Log.d(TAG, "processPending: Issuing a start");
-                        starter.start();
+
+                        String collection_method = Pref.getString("dex_collection_method", "BluetoothWixel");
+                        if (collection_method.equals("SHAndCLFollow")){
+                            starter.start(xdrip.getAppContext(), "SHFollower");
+                            starter.start(xdrip.getAppContext(), "CLFollower");
+                        } else {
+                            starter.start(xdrip.getAppContext(), collection_method);
+                        }
                         startPending = false;
                     }
                 } else {
@@ -335,12 +343,16 @@ public class CollectionServiceStarter {
             startFollowerThread();
         } else {
             // TODO newer item startups should be consolidated in to a DexCollectionType has set to avoid duplicating logic
-            if (DexCollectionType.hasBluetooth() || DexCollectionType.getDexCollectionType() == NSFollow
+            if (DexCollectionType.hasBluetooth()
+                    || DexCollectionType.getDexCollectionType() == NSFollow
                     || DexCollectionType.getDexCollectionType() == SHFollow
                     || DexCollectionType.getDexCollectionType() == WebFollow
                     || DexCollectionType.getDexCollectionType() == CLFollow) { // TODO make this a set lookup
                 Log.d(TAG, "Starting service based on collector lookup");
                 startServiceCompat(new Intent(context, DexCollectionType.getCollectorServiceClass()));
+            } else if (DexCollectionType.getDexCollectionType() == SHAndCLFollow) {
+                startServiceCompat(new Intent(context, DexCollectionType.getCollectorServiceClass(SHFollow)));
+                startServiceCompat(new Intent(context, DexCollectionType.getCollectorServiceClass(CLFollow)));
             }
         }
 

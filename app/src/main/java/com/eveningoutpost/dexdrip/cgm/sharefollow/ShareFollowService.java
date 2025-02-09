@@ -30,6 +30,7 @@ import static com.eveningoutpost.dexdrip.utilitymodels.BgGraphBuilder.DEXCOM_PER
 import static com.eveningoutpost.dexdrip.cgm.sharefollow.ShareConstants.MAX_RECORDS_TO_ASK_FOR;
 import static com.eveningoutpost.dexdrip.cgm.sharefollow.ShareConstants.NON_US_SHARE_BASE_URL;
 import static com.eveningoutpost.dexdrip.cgm.sharefollow.ShareConstants.US_SHARE_BASE_URL;
+import static com.eveningoutpost.dexdrip.utils.DexCollectionType.SHAndCLFollow;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.SHFollow;
 import static com.eveningoutpost.dexdrip.xdrip.gs;
 
@@ -128,7 +129,7 @@ public class ShareFollowService extends ForegroundService {
     }
 
     private static boolean shouldServiceRun() {
-        return DexCollectionType.getDexCollectionType() == SHFollow;
+        return DexCollectionType.getDexCollectionType() == SHFollow || DexCollectionType.getDexCollectionType() == SHAndCLFollow;
     }
 
     // remember needs proguard exclusion due to access by reflection
