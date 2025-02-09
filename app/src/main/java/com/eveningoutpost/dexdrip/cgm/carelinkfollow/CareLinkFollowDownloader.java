@@ -22,7 +22,7 @@ import static com.eveningoutpost.dexdrip.models.JoH.emptyString;
  */
 public class CareLinkFollowDownloader {
 
-    private static final String TAG = "CareLinkFollowDL";
+    private static final String TAG = "CareLinkFollow";
     private static final boolean D = false;
 
     private String carelinkUsername;
@@ -69,13 +69,8 @@ public class CareLinkFollowDownloader {
         msg(xdrip.gs(R.string.carelink_download_start));
         if (checkCredentials(true, true, true)) {
             try {
-                if (getCareLinkClient() != null) {
-                    extendWakeLock(30_000);
-                    backgroundProcessConnectData();
-                } else {
-                    UserError.Log.d(TAG, "Cannot get data as CareLinkClient is null");
-                    msg(xdrip.gs(R.string.carelink_download_failed));
-                }
+                extendWakeLock(30_000);
+                backgroundProcessConnectData();
             } catch (Exception e) {
                 UserError.Log.e(TAG, "Got exception in getData() " + e);
                 releaseWakeLock();
@@ -139,7 +134,6 @@ public class CareLinkFollowDownloader {
         RecentData recentData = null;
         CareLinkClient carelinkClient = null;
 
-
         //Get client
         carelinkClient = getCareLinkClient();
         //Get RecentData from CareLink client
@@ -147,9 +141,9 @@ public class CareLinkFollowDownloader {
             //Get data
             try {
                 if (JoH.emptyString(this.carelinkPatient))
-                    recentData = getCareLinkClient().getRecentData();
+                    recentData = carelinkClient.getRecentData();
                 else
-                    recentData = getCareLinkClient().getRecentData(this.carelinkPatient);
+                    recentData = carelinkClient.getRecentData(this.carelinkPatient);
                 lastResponseCode = carelinkClient.getLastResponseCode();
             } catch (Exception e) {
                 UserError.Log.e(TAG, "Exception in CareLink data download: " + e);
@@ -178,7 +172,7 @@ public class CareLinkFollowDownloader {
                     //login error
                 } else {
                     UserError.Log.e(TAG, "CareLink download error! Response code: " + carelinkClient.getLastResponseCode());
-                    UserError.Log.e(TAG, "Error message: " + getCareLinkClient().getLastErrorMessage());
+                    UserError.Log.e(TAG, "Error message: " + carelinkClient.getLastErrorMessage());
                     msg("Download data failed!");
                 }
             }
@@ -188,15 +182,14 @@ public class CareLinkFollowDownloader {
 
 
     private CareLinkClient getCareLinkClient() {
-        if (careLinkClient == null) {
-            try {
-                UserError.Log.d(TAG, "Creating CareLinkClient");
-                if (CareLinkCredentialStore.getInstance().getAuthStatus() == CareLinkCredentialStore.AUTHENTICATED)
-                    careLinkClient = new CareLinkClient(CareLinkCredentialStore.getInstance());
-            } catch (Exception e) {
-                UserError.Log.e(TAG, "Error creating CareLinkClient", e);
-            }
+        try {
+            UserError.Log.d(TAG, "Creating CareLinkClient");
+            if (CareLinkCredentialStore.getInstance().getAuthStatus() == CareLinkCredentialStore.AUTHENTICATED)
+                careLinkClient = new CareLinkClient(CareLinkCredentialStore.getInstance());
+        } catch (Exception e) {
+            UserError.Log.e(TAG, "Error creating CareLinkClient", e);
         }
+
         return careLinkClient;
     }
 
