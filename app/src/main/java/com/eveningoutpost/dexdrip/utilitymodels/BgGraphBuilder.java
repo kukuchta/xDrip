@@ -1375,9 +1375,9 @@ public class BgGraphBuilder {
                     inRangeValues.add(ppx);
                 } else if (bgReading.calculated_value >= 40) {
                     lowValues.add(new HPointValue((double) (bgReading.timestamp / FUZZER), (float) unitized(bgReading.calculated_value)));
-                } else if (bgReading.calculated_value > 13) {
+                } else if (bgReading.calculated_value > 13 && DexCollectionType.getDexCollectionType() != DexCollectionType.CLFollow) {
                     lowValues.add(new HPointValue((double) (bgReading.timestamp / FUZZER), (float) unitized(40)));
-                } else if (bgReading.calculated_value > 0) {
+                } else if (bgReading.calculated_value > 13 && DexCollectionType.getDexCollectionType() == DexCollectionType.CLFollow) {
                     PointValueExtended pv = new PointValueExtended((double) (bgReading.timestamp / FUZZER), (float) unitized(50));
                     pv.note = "Below " + unitized(50.0);
                     if (this.doMgdl) {
