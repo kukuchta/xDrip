@@ -3,6 +3,7 @@ package com.eveningoutpost.dexdrip.utilitymodels;
 // jamorham
 
 import com.eveningoutpost.dexdrip.models.BgReading;
+import com.eveningoutpost.dexdrip.utils.DexCollectionType;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -63,7 +64,17 @@ public class Unitized {
         final DecimalFormat df = new DecimalFormat("#");
         if (value >= 400) {
             return "HIGH";
-        } else if (value >= 40) {
+        } else if (value >= 50) {
+            if (doMgdl) {
+                df.setMaximumFractionDigits(0);
+                return df.format(value);
+            } else {
+                df.setMaximumFractionDigits(1);
+                //next line ensures mmol/l value is XX.x always.  Required by PebbleWatchSync, and probably not a bad idea.
+                df.setMinimumFractionDigits(1);
+                return df.format(mmolConvert(value));
+            }
+        } else if (value >= 40 && DexCollectionType.getDexCollectionType() != DexCollectionType.CLFollow) {
             if (doMgdl) {
                 df.setMaximumFractionDigits(0);
                 return df.format(value);

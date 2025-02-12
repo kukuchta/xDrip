@@ -1373,7 +1373,9 @@ public class BgGraphBuilder {
                 } else if (unitized(bgReading.calculated_value) >= lowMark) {
                     val ppx = new HPointValue((double) (bgReading.timestamp / FUZZER), (float) unitized(bgReading.calculated_value));
                     inRangeValues.add(ppx);
-                } else if (bgReading.calculated_value >= 40) {
+                } else if (bgReading.calculated_value >= 50) {
+                    lowValues.add(new HPointValue((double) (bgReading.timestamp / FUZZER), (float) unitized(bgReading.calculated_value)));
+                } else if (bgReading.calculated_value >= 40 && DexCollectionType.getDexCollectionType() != DexCollectionType.CLFollow) {
                     lowValues.add(new HPointValue((double) (bgReading.timestamp / FUZZER), (float) unitized(bgReading.calculated_value)));
                 } else if (bgReading.calculated_value > 13 && DexCollectionType.getDexCollectionType() != DexCollectionType.CLFollow) {
                     lowValues.add(new HPointValue((double) (bgReading.timestamp / FUZZER), (float) unitized(40)));

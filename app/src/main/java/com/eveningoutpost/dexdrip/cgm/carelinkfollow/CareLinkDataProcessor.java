@@ -131,8 +131,8 @@ public class CareLinkDataProcessor {
                             bg.calculated_value = (double) sg.sg;
                             bg.filtered_data = (double) sg.sg;
                         } else {
-                            bg.calculated_value = (double) 1.0;
-                            bg.filtered_data = (double) 1.0;
+                            bg.calculated_value = (double) 49;
+                            bg.filtered_data = (double) 49;
                         }
                         bg.noise = "";
                         bg.uuid = UUID.randomUUID().toString();
