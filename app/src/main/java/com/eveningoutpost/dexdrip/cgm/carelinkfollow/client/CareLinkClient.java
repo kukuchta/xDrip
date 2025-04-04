@@ -893,6 +893,15 @@ public class CareLinkClient {
                     }
                 }
 
+                //Active insulin
+                if (recentData.activeInsulin != null && recentData.activeInsulin.datetime != null) {
+                    recentData.activeInsulin.datetime = shiftDateByHours(recentData.activeInsulin.datetime, diffInHour);
+                }
+
+                //Last SG
+                if (recentData.lastSG != null && recentData.lastSG.timestamp != null) {
+                    recentData.lastSG.timestamp = shiftDateByHours(recentData.lastSG.timestamp, diffInHour);
+                }
             }
 
         }

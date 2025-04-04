@@ -242,6 +242,15 @@ public class CareLinkDataProcessor {
             if (recentData.activeInsulin != null)
                 PumpStatus.setBolusIoB(recentData.activeInsulin.amount);
             PumpStatus.syncUpdate();
+
+            if (recentData.basal != null && recentData.lastSG != null)
+            {
+                double manualModeBasal = recentData.basal.basalRate;
+                double singleBasalDose = manualModeBasal / 12.0;
+                if (!PumpBasal.autoBasalDeliveryExists(singleBasalDose, recentData.lastSG.timestamp.getTime())) {
+                    PumpBasal.createAutoBasalDelivery(singleBasalDose, recentData.lastSG.timestamp.getTime());
+                }
+            }
         }
 		
         // LAST ALARM -> NOTE (only for GC)
