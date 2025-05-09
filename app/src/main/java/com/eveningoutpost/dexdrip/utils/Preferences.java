@@ -2050,8 +2050,7 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                     Log.wtf(TAG, "Nullpointer wifireceivers ", e);
                 }
 
-                if ((collectionType != DexCollectionType.DexbridgeWixel)
-                        && (collectionType != DexCollectionType.WifiDexBridgeWixel)) {
+                if (collectionType != DexCollectionType.WifiDexBridgeWixel) {
                     try {
                         collectionCategory.removePreference(transmitterId);
                         // collectionCategory.removePreference(closeGatt);
@@ -2534,7 +2533,6 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
 
                 /*    if ((collectionType != DexCollectionType.DexcomShare
                             && collectionType != DexCollectionType.WifiWixel
-                            && collectionType != DexCollectionType.DexbridgeWixel
                             && collectionType != DexCollectionType.DexcomG5
                             && collectionType != DexCollectionType.WifiBlueToothWixel
                             && collectionType != DexCollectionType.WifiDexBridgeWixel
@@ -2558,8 +2556,7 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                         collectionCategory.addPreference(wifiRecievers);
                     }
 
-                    if ((collectionType != DexCollectionType.DexbridgeWixel)
-                            && (collectionType != DexCollectionType.WifiDexBridgeWixel)) {
+                    if (collectionType != DexCollectionType.WifiDexBridgeWixel) {
                         collectionCategory.removePreference(transmitterId);
                         //collectionCategory.removePreference(closeGatt);
                         //TODO Bridge battery display support

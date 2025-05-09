@@ -18,11 +18,8 @@ public class SensorSanityTest extends RobolectricTestWithConfig {
         assertWithMessage("Unrestricted passes").that(SensorSanity.isRawValueSane(1, DexCollectionType.Disabled)).isTrue();
 
         assertWithMessage("G5 typical OK").that(SensorSanity.isRawValueSane(100, DexCollectionType.DexcomG5)).isTrue();
-        assertWithMessage("G4 typical OK").that(SensorSanity.isRawValueSane(100, DexCollectionType.DexbridgeWixel)).isTrue();
-
 
         assertWithMessage("G5 low FAIL").that(SensorSanity.isRawValueSane(1, DexCollectionType.DexcomG5)).isFalse();
-        assertWithMessage("G4 low FAIL").that(SensorSanity.isRawValueSane(1, DexCollectionType.DexbridgeWixel)).isFalse();
 
     }
 
@@ -32,11 +29,8 @@ public class SensorSanityTest extends RobolectricTestWithConfig {
         assertWithMessage("Unrestricted passes").that(SensorSanity.isRawValueSane(10000, DexCollectionType.Disabled)).isTrue();
 
         assertWithMessage("G5 typical OK").that(SensorSanity.isRawValueSane(300, DexCollectionType.DexcomG5)).isTrue();
-        assertWithMessage("G4 typical OK").that(SensorSanity.isRawValueSane(300, DexCollectionType.DexbridgeWixel)).isTrue();
-
 
         assertWithMessage("G5 high FAIL").that(SensorSanity.isRawValueSane(1001, DexCollectionType.DexcomG5)).isFalse();
-        assertWithMessage("G4 high FAIL").that(SensorSanity.isRawValueSane(1001, DexCollectionType.DexbridgeWixel)).isFalse();
 
     }
 

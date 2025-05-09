@@ -405,8 +405,6 @@ public class BluetoothScan extends ListActivityWithMenu {
                 } else returnToHome();
 
             } else if (device.getName().toLowerCase().contains("bridge")) {
-                if (!CollectionServiceStarter.isDexBridgeOrWifiandDexBridge())
-                    prefs.edit().putString("dex_collection_method", "DexbridgeWixel").apply();
                 if (prefs.getString("dex_txid", "00000").compareTo("00000") == 0 || prefs.getString("dex_txid", "00000").length() < 5) {
                     requestTransmitterId(prefs);
                 } else returnToHome();

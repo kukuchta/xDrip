@@ -141,16 +141,7 @@ public class CollectionServiceStarter {
 
     // are we in any mode which supports dexbridge
     public static boolean isDexBridgeOrWifiandDexBridge() {
-        return isWifiandDexBridge() || isDexbridgeWixel(xdrip.getAppContext());
-    }
-
-    private static boolean isDexbridgeWixel(Context context) {
-        String collection_method = Pref.getString("dex_collection_method", "None");
-        return collection_method.equals("DexbridgeWixel");
-    }
-
-    private static boolean isDexbridgeWixel(String collection_method) {
-        return collection_method.equals("DexbridgeWixel");
+        return isWifiandDexBridge();
     }
 
     public static boolean isBTShare(Context context) {
@@ -220,24 +211,7 @@ public class CollectionServiceStarter {
         xdrip.checkAppContext(context);
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
 
-        if (isDexbridgeWixel(collection_method)) {
-            Log.d("DexDrip", "Starting bt wixel collector");
-            stopWifWixelThread();
-            stopBtShareService();
-            stopFollowerThread();
-            stopG5Service();
-
-            if (prefs.getBoolean("wear_sync", false)) {//KS
-                boolean enable_wearG5 = prefs.getBoolean("enable_wearG5", false);
-                boolean force_wearG5 = prefs.getBoolean("force_wearG5", false);
-                startServiceCompat(WatchUpdaterService.class);
-                if (!enable_wearG5 || (enable_wearG5 && !force_wearG5)) { //don't start if Wear G5 Collector Service is active
-                    startBtWixelService();
-                }
-            } else {
-                startBtWixelService();
-            }
-        } else if (isWifiWixel(collection_method) || isWifiLibre(collection_method)) {
+        if (isWifiWixel(collection_method) || isWifiLibre(collection_method)) {
             Log.d("DexDrip", "Starting wifi wixel collector");
             stopBtWixelService();
             stopFollowerThread();

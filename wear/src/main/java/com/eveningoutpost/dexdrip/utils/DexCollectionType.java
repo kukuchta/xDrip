@@ -24,7 +24,6 @@ public enum DexCollectionType {
 
     None("None"),
     DexcomShare("DexcomShare"),
-    DexbridgeWixel("DexbridgeWixel"),
     LibreWifi("LibreWifi"),
     WifiBlueToothWixel("WifiBlueToothWixel"),
     WifiWixel("WifiWixel"),
@@ -66,15 +65,15 @@ public enum DexCollectionType {
             mapToInternalName.put(dct.internalName, dct);
         }
 
-        Collections.addAll(usesBluetooth, DexcomShare, DexbridgeWixel, WifiBlueToothWixel, DexcomG5, WifiDexBridgeWixel, Medtrum);
+        Collections.addAll(usesBluetooth, DexcomShare, WifiBlueToothWixel, DexcomG5, WifiDexBridgeWixel, Medtrum);
         Collections.addAll(usesBtWixel, WifiBlueToothWixel); // Name is misleading here, should probably be using dexcollectionservice
         Collections.addAll(usesWifi, WifiBlueToothWixel, WifiWixel, WifiDexBridgeWixel, Mock, LibreWifi);
-        Collections.addAll(usesXbridge, DexbridgeWixel, WifiDexBridgeWixel);
-        Collections.addAll(usesFiltered, DexbridgeWixel, WifiDexBridgeWixel, DexcomG5, WifiWixel, Follower, Mock); // Bluetooth and Wifi+Bluetooth need dynamic mode
+        Collections.addAll(usesXbridge, WifiDexBridgeWixel);
+        Collections.addAll(usesFiltered, WifiDexBridgeWixel, DexcomG5, WifiWixel, Follower, Mock); // Bluetooth and Wifi+Bluetooth need dynamic mode
         Collections.addAll(usesLibre, LibreAlarm, LibreWifi, LibreReceiver);
-        Collections.addAll(usesBattery, DexbridgeWixel, WifiBlueToothWixel, WifiDexBridgeWixel, Follower, LibreAlarm, LibreWifi); // parakeet separate
-        Collections.addAll(usesDexcomRaw, DexbridgeWixel, WifiWixel, WifiBlueToothWixel, DexcomG5, WifiDexBridgeWixel, Mock);
-        Collections.addAll(usesTransmitterBattery, WifiWixel, DexbridgeWixel, WifiBlueToothWixel, WifiDexBridgeWixel); // G4 transmitter battery
+        Collections.addAll(usesBattery, WifiBlueToothWixel, WifiDexBridgeWixel, Follower, LibreAlarm, LibreWifi); // parakeet separate
+        Collections.addAll(usesDexcomRaw, WifiWixel, WifiBlueToothWixel, DexcomG5, WifiDexBridgeWixel, Mock);
+        Collections.addAll(usesTransmitterBattery, WifiWixel, WifiBlueToothWixel, WifiDexBridgeWixel); // G4 transmitter battery
     }
 
 

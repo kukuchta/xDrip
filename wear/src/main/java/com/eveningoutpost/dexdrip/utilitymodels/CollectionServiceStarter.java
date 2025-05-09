@@ -58,20 +58,7 @@ public class CollectionServiceStarter {
     // are we in any mode which supports dexbridge
     public static boolean isDexBridgeOrWifiandDexBridge()
     {
-        return isWifiandDexBridge() || isDexbridgeWixel(xdrip.getAppContext());
-    }
-
-    public static boolean isDexbridgeWixel(Context context) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        String collection_method = prefs.getString("dex_collection_method", "None");
-        if (collection_method.compareTo("DexbridgeWixel") == 0) {
-            return true;
-        }
-        return false;
-    }
-
-    public static boolean isDexbridgeWixel(String collection_method) {
-        return collection_method.equals("DexbridgeWixel");
+        return isWifiandDexBridge();
     }
 
     public static boolean isBTShare(Context context) {
@@ -127,15 +114,7 @@ public class CollectionServiceStarter {
         xdrip.checkAppContext(context);
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
 
-        if (isDexbridgeWixel(collection_method)) {
-            Log.d("DexDrip", "Starting bt wixel collector");
-            //KS stopWifWixelThread();
-            stopBtShareService();
-            //KS stopFollowerThread();
-            stopG5ShareService();
-
-            startBtWixelService();
-        } else if (isWifiWixel(collection_method)) {
+        if (isWifiWixel(collection_method)) {
             Log.d("DexDrip", "Starting wifi wixel collector");
             stopBtWixelService();
             //KS stopFollowerThread();

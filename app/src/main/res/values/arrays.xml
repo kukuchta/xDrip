@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="DexCollectionMethods">
-        <item>xBridge Wixel</item>
         <item>Wifi Wixel / Parakeet</item>
         <item>Wifi Wixel + BT Wixel</item>
         <item>Wifi Wixel + xBridge Wixel</item>
@@ -23,7 +22,6 @@
     </string-array>
 
     <string-array name="DexCollectionMethodValues">
-        <item>DexbridgeWixel</item>
         <item>WifiWixel</item>
         <item>WifiBlueToothWixel</item>
         <item>WifiDexbridgeWixel</item>

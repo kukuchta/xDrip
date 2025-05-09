@@ -55,15 +55,6 @@ public class DexCollectionHelper {
                         });
                 break;
 
-            case DexbridgeWixel:
-                textSettingDialog(activity,
-                        "dex_txid", activity.getString(R.string.dexcom_transmitter_id),
-                        activity.getString(R.string.enter_your_transmitter_id_exactly),
-                        InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS | InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD,
-                        DexCollectionHelper::bluetoothScanIfNeeded);
-                break;
-
-
             case NSFollow:
                 textSettingDialog(activity,
                         "nsfollow_url", "Nightscout Follow URL",
