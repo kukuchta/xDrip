@@ -2439,7 +2439,6 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
         // port this lot to DexCollectionType to avoid multiple lookups of the same preference
         boolean isDexbridgeWixel = CollectionServiceStarter.isDexBridgeOrWifiandDexBridge();
         boolean isWifiBluetoothWixel = CollectionServiceStarter.isWifiandBTWixel(getApplicationContext());
-        boolean isWifiandBTLibre = CollectionServiceStarter.isWifiandBTLibre(getApplicationContext());
 
         isBTShare = CollectionServiceStarter.isBTShare(getApplicationContext());
         isG5Share = CollectionServiceStarter.isBTG5(getApplicationContext());
@@ -2452,10 +2451,10 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
         if (isG5Share) {
             updateCurrentBgInfoCommon(collector, notificationText);
         }
-        if (isDexbridgeWixel || isWifiBluetoothWixel || isWifiandBTLibre) {
+        if (isDexbridgeWixel || isWifiBluetoothWixel) {
             updateCurrentBgInfoForBtBasedWixel(collector, notificationText);
         }
-        if (isWifiWixel || isWifiBluetoothWixel || isWifiandBTLibre || isWifiLibre || collector.equals(DexCollectionType.Mock)) {
+        if (isWifiWixel || isWifiBluetoothWixel || isWifiLibre || collector.equals(DexCollectionType.Mock)) {
             updateCurrentBgInfoForWifiWixel(collector, notificationText);
         } else if (is_follower || collector.isPassive()) {
             displayCurrentInfo();
