@@ -111,7 +111,7 @@ public class DisplayQRCode extends BaseAppCompatActivity {
     public synchronized void connectionSettings(View view) {
         prefsMap.clear();
         prefsMap.put("wifi_recievers_addresses", prefs.getString("wifi_recievers_addresses", ""));
-        prefsMap.put("dex_collection_method", prefs.getString("dex_collection_method", "BluetoothWixel"));
+        prefsMap.put("dex_collection_method", prefs.getString("dex_collection_method", "None"));
         prefsMap.put("highValue", prefs.getString("highValue", "170"));
         prefsMap.put("lowValue", prefs.getString("lowValue", "70"));
         prefsMap.put("units", prefs.getString("units", "mgdl"));

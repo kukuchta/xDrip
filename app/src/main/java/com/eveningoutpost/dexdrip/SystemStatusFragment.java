@@ -250,7 +250,7 @@ public class SystemStatusFragment extends Fragment {
 
     private void setTransmitterStatus() {
 
-        if (prefs.getString("dex_collection_method", "BluetoothWixel").equals("DexcomShare")) {
+        if (prefs.getString("dex_collection_method", "None").equals("DexcomShare")) {
             transmitter_status_view.setText("See Share Receiver");
             return;
         }
@@ -310,7 +310,7 @@ public class SystemStatusFragment extends Fragment {
     }
 
     private void setCollectionMethod() {
-        collection_method.setText(prefs.getString("dex_collection_method", "BluetoothWixel").replace("Dexbridge", "xBridge"));
+        collection_method.setText(prefs.getString("dex_collection_method", "None").replace("Dexbridge", "xBridge"));
     }
 
     public void setCurrentDevice() {
@@ -320,7 +320,7 @@ public class SystemStatusFragment extends Fragment {
             current_device.setText("None Set");
         }
 
-        String collection_method = prefs.getString("dex_collection_method", "BluetoothWixel");
+        String collection_method = prefs.getString("dex_collection_method", "None");
         if (collection_method.compareTo("DexcomG5") == 0) {
             Transmitter defaultTransmitter = new Transmitter(prefs.getString("dex_txid", "ABCDEF"));
             if (Build.VERSION.SDK_INT >= 18) {
@@ -385,7 +385,7 @@ public class SystemStatusFragment extends Fragment {
             connection_status.setText(safeGetContext().getString(R.string.not_connected));
         }
 
-        String collection_method = prefs.getString("dex_collection_method", "BluetoothWixel");
+        String collection_method = prefs.getString("dex_collection_method", "None");
         if (collection_method.compareTo("DexcomG5") == 0) {
             Transmitter defaultTransmitter = new Transmitter(prefs.getString("dex_txid", "ABCDEF"));
             if (Build.VERSION.SDK_INT >= 18) mBluetoothAdapter = mBluetoothManager.getAdapter();
@@ -522,7 +522,7 @@ public class SystemStatusFragment extends Fragment {
                     }
                 }
 
-                String collection_method = prefs.getString("dex_collection_method", "BluetoothWixel");
+                String collection_method = prefs.getString("dex_collection_method", "None");
                 if (collection_method.compareTo("DexcomG5") == 0) {
                     Transmitter defaultTransmitter = new Transmitter(prefs.getString("dex_txid", "ABCDEF"));
                     mBluetoothAdapter = mBluetoothManager.getAdapter();

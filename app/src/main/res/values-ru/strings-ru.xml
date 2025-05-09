@@ -1507,7 +1507,7 @@
     <string name="classic_simple">Классический простой</string>
     <string name="libre">Libre</string>
     <string name="what_type_of_libre_bridge_device_do_you_use">Какой Libre бридж вы используете?</string>
-    <string name="bluetooth_bridge_device_blucon_limitter_bluereader_tomato_etc">Устройство Bluetooth Bridge: Blucon, Bubble, LimiTTer, Bluereader, Tomato и т.д.</string>
+    <string name="bluetooth_bridge_device_blucon_limitter_bluereader_tomato_etc">Устройство Bluetooth Bridge: Blucon, Bubble, Bluereader, Tomato и т.д.</string>
     <string name="libre_patched">Libre2 адаптированный</string>
     <string name="librealarm_app_using_sony_smartwatch">Приложение LibreAlarm: использование Sony Smartwatch</string>
     <string name="__data_source_disabled">\n ИСТОЧНИК ДАННЫХ ОТКЛЮЧЕН</string>

@@ -642,7 +642,7 @@ public class NightscoutUploader {
     }
 
     private String getDeviceString(BgReading record) {
-        String withMethod = "xDrip-" + prefs.getString("dex_collection_method", "BluetoothWixel");
+        String withMethod = "xDrip-" + prefs.getString("dex_collection_method", "None");
         if (Pref.getBooleanDefaultFalse("nightscout_device_append_source_info") &&
                 record.source_info != null &&
                 record.source_info.length() > 0) {
@@ -708,7 +708,7 @@ public class NightscoutUploader {
         JSONObject json = new JSONObject();
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.US);
         format.setTimeZone(TimeZone.getDefault());
-        json.put("device", "xDrip-" + prefs.getString("dex_collection_method", "BluetoothWixel"));
+        json.put("device", "xDrip-" + prefs.getString("dex_collection_method", "None"));
         json.put("type", "mbg");
         json.put("date", record.timestamp);
         json.put("dateString", format.format(record.timestamp));
@@ -746,7 +746,7 @@ public class NightscoutUploader {
         JSONObject json = new JSONObject();
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.US);
         format.setTimeZone(TimeZone.getDefault());
-        json.put("device", "xDrip-" + prefs.getString("dex_collection_method", "BluetoothWixel"));
+        json.put("device", "xDrip-" + prefs.getString("dex_collection_method", "None"));
         json.put("type", "cal");
         json.put("date", record.timestamp);
         json.put("dateString", format.format(record.timestamp));
@@ -1217,7 +1217,7 @@ public class NightscoutUploader {
                     for (BgReading record : glucoseDataSets) {
                         // make db object
                         BasicDBObject testData = new BasicDBObject();
-                        testData.put("device", "xDrip-" + prefs.getString("dex_collection_method", "BluetoothWixel"));
+                        testData.put("device", "xDrip-" + prefs.getString("dex_collection_method", "None"));
                         if (record != null) {//KS
                             testData.put("date", record.timestamp);
                             testData.put("dateString", format.format(record.timestamp));
@@ -1237,7 +1237,7 @@ public class NightscoutUploader {
                     for (Calibration meterRecord : meterRecords) {
                         // make db object
                         BasicDBObject testData = new BasicDBObject();
-                        testData.put("device", "xDrip-" + prefs.getString("dex_collection_method", "BluetoothWixel"));
+                        testData.put("device", "xDrip-" + prefs.getString("dex_collection_method", "None"));
                         testData.put("type", "mbg");
                         testData.put("date", meterRecord.timestamp);
                         testData.put("dateString", format.format(meterRecord.timestamp));
@@ -1251,7 +1251,7 @@ public class NightscoutUploader {
                         if (calRecord.slope == 0d) break;
                         // make db object
                         BasicDBObject testData = new BasicDBObject();
-                        testData.put("device", "xDrip-" + prefs.getString("dex_collection_method", "BluetoothWixel"));
+                        testData.put("device", "xDrip-" + prefs.getString("dex_collection_method", "None"));
                         testData.put("date", calRecord.timestamp);
                         testData.put("dateString", format.format(calRecord.timestamp));
                         if (calRecord.check_in) {

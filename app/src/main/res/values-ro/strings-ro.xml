@@ -1455,7 +1455,7 @@
     <string name="classic_simple">Clasic simplu</string>
     <string name="libre">Libre</string>
     <string name="what_type_of_libre_bridge_device_do_you_use">Ce tip de aparat bridge pentru Libre foloseşti?</string>
-    <string name="bluetooth_bridge_device_blucon_limitter_bluereader_tomato_etc">Bluetooth aparat Bridge: Blucon, Bubble, LimiTTer, Bluereader, Tomato etc</string>
+    <string name="bluetooth_bridge_device_blucon_limitter_bluereader_tomato_etc">Bluetooth aparat Bridge: Blucon, Bubble, Bluereader, Tomato etc</string>
     <string name="libre_patched">Libre2 Patched</string>
     <string name="librealarm_app_using_sony_smartwatch">Aplicația LibreAlarm: folosind ceasul Sony</string>
     <string name="__data_source_disabled">\n SURSĂ DE DATE DEZACTIVATĂ</string>

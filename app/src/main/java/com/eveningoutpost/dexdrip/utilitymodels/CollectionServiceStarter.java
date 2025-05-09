@@ -104,7 +104,7 @@ public class CollectionServiceStarter {
                     if (startPending) {
                         Log.d(TAG, "processPending: Issuing a start");
 
-                        String collection_method = Pref.getString("dex_collection_method", "BluetoothWixel");
+                        String collection_method = Pref.getString("dex_collection_method", "None");
                         if (collection_method.equals("SHAndCLFollow")){
                             starter.start(xdrip.getAppContext(), "SHFollower");
                             starter.start(xdrip.getAppContext(), "CLFollower");
@@ -131,11 +131,11 @@ public class CollectionServiceStarter {
     }
 
     public static boolean isWifiandBTWixel(Context context) {
-        return Pref.getString("dex_collection_method", "BluetoothWixel").equals("WifiBlueToothWixel");
+        return Pref.getString("dex_collection_method", "None").equals("WifiBlueToothWixel");
     }
 
     public static boolean isWifiandBTLibre(Context context) {
-        return Pref.getString("dex_collection_method", "BluetoothWixel").equals("LimiTTerWifi");
+        return Pref.getString("dex_collection_method", "None").equals("LimiTTerWifi");
     }
 
     // are we in the specifc mode supporting wifi and dexbridge at the same time
@@ -148,18 +148,8 @@ public class CollectionServiceStarter {
         return isWifiandDexBridge() || isDexbridgeWixel(xdrip.getAppContext());
     }
 
-    public static boolean isBTWixelOrLimiTTer(Context context) {
-        String collection_method = Pref.getString("dex_collection_method", "BluetoothWixel");
-        return isBTWixelOrLimiTTer(collection_method);
-    }
-
-    private static boolean isBTWixelOrLimiTTer(String collection_method) {
-        return collection_method.equals("BluetoothWixel")
-                || collection_method.equals("LimiTTer");
-    }
-
     private static boolean isDexbridgeWixel(Context context) {
-        String collection_method = Pref.getString("dex_collection_method", "BluetoothWixel");
+        String collection_method = Pref.getString("dex_collection_method", "None");
         return collection_method.equals("DexbridgeWixel");
     }
 
@@ -168,7 +158,7 @@ public class CollectionServiceStarter {
     }
 
     public static boolean isBTShare(Context context) {
-        String collection_method = Pref.getString("dex_collection_method", "BluetoothWixel");
+        String collection_method = Pref.getString("dex_collection_method", "None");
         return collection_method.equals("DexcomShare");
     }
 
@@ -178,7 +168,7 @@ public class CollectionServiceStarter {
 
     public static boolean isBTG5(Context context) {
 
-        String collection_method = Pref.getString("dex_collection_method", "BluetoothWixel");
+        String collection_method = Pref.getString("dex_collection_method", "None");
         return collection_method.equals("DexcomG5");
     }
 
@@ -187,21 +177,11 @@ public class CollectionServiceStarter {
     }
 
     public static boolean isWifiWixel(Context context) {
-        return Pref.getString("dex_collection_method", "BluetoothWixel").equals("WifiWixel");
+        return Pref.getString("dex_collection_method", "None").equals("WifiWixel");
     }
 
     public static boolean isWifiLibre(Context context) {
-        return Pref.getString("dex_collection_method", "BluetoothWixel").equals("LibreWifi");
-    }
-
-    /*
-     * LimiTTer emulates a BT-Wixel and works with the BT-Wixel service.
-     * It would work without any changes but in some cases knowing that the data does not
-     * come from a Dexcom sensor but from a Libre sensor might enhance the performance.
-     * */
-
-    public static boolean isLimitter() {
-        return Pref.getStringDefaultBlank("dex_collection_method").equals("LimiTTer");
+        return Pref.getString("dex_collection_method", "None").equals("LibreWifi");
     }
 
     public static boolean isWifiandBTLibre() {
@@ -249,7 +229,7 @@ public class CollectionServiceStarter {
         xdrip.checkAppContext(context);
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
 
-        if (isBTWixelOrLimiTTer(collection_method) || isDexbridgeWixel(collection_method)) {
+        if (isDexbridgeWixel(collection_method)) {
             Log.d("DexDrip", "Starting bt wixel collector");
             stopWifWixelThread();
             stopBtShareService();
@@ -366,7 +346,7 @@ public class CollectionServiceStarter {
     }
 
     private void start() {
-        start(xdrip.getAppContext(), Pref.getString("dex_collection_method", "BluetoothWixel"));
+        start(xdrip.getAppContext(), Pref.getString("dex_collection_method", "None"));
     }
 
     // private constructer, use static methods to start

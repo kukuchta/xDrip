@@ -93,8 +93,6 @@ public class DexCollectionHelper {
                                         })));
                 break;
 
-            case LimiTTer:
-            case BluetoothWixel:
             case DexcomShare:
             case Medtrum:
                 bluetoothScanIfNeeded();

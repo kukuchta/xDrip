@@ -1529,7 +1529,7 @@
     <string name="classic_simple">Klasyczny prosty</string>
     <string name="libre">Libre</string>
     <string name="what_type_of_libre_bridge_device_do_you_use">Jakiego typu mostka Libre używasz?</string>
-    <string name="bluetooth_bridge_device_blucon_limitter_bluereader_tomato_etc">Mostek Bluetooth: BluCon, Bubble, LimiTTer, blueReader, Tomato, itp.</string>
+    <string name="bluetooth_bridge_device_blucon_limitter_bluereader_tomato_etc">Mostek Bluetooth: BluCon, Bubble, blueReader, Tomato, itp.</string>
     <string name="libre_patched">Załatane Libre2</string>
     <string name="librealarm_app_using_sony_smartwatch">Aplikacja LibreAlarm: używając zegarka Sony</string>
     <string name="__data_source_disabled">\n WYŁĄCZONE ŹRÓDŁO DANYCH</string>

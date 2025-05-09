@@ -1545,7 +1545,7 @@
     <string name="classic_simple">xBridge Classico</string>
     <string name="libre">Libre</string>
     <string name="what_type_of_libre_bridge_device_do_you_use">Che tipo di trasmettitore Libre utilizzi?</string>
-    <string name="bluetooth_bridge_device_blucon_limitter_bluereader_tomato_etc">Dispositivo Bluetooth: Blucon, Bubble, LimiTTer, blueReader, Miaomiao ecc</string>
+    <string name="bluetooth_bridge_device_blucon_limitter_bluereader_tomato_etc">Dispositivo Bluetooth: Blucon, Bubble, blueReader, Miaomiao ecc</string>
     <string name="libre_patched">Libre2 App modificata</string>
     <string name="librealarm_app_using_sony_smartwatch">LibreAlarm: con Sony Smartwatch 3</string>
     <string name="__data_source_disabled">\n SORGENTE DATI DISABILITATA</string>

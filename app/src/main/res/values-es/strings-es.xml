@@ -1528,7 +1528,7 @@
     <string name="classic_simple">Clásico simple</string>
     <string name="libre">Libre</string>
     <string name="what_type_of_libre_bridge_device_do_you_use">¿Qué tipo de dispositivo colector Libre usa?</string>
-    <string name="bluetooth_bridge_device_blucon_limitter_bluereader_tomato_etc">Dispositivo Colector Bluetooth: Blucon, Bubble, LimiTTer, Bluereader, Tomato, etc</string>
+    <string name="bluetooth_bridge_device_blucon_limitter_bluereader_tomato_etc">Dispositivo Colector Bluetooth: Blucon, Bubble, Bluereader, Tomato, etc</string>
     <string name="libre_patched">Libre2 Parcheado</string>
     <string name="librealarm_app_using_sony_smartwatch">LibreAlarm App: usando Sony Smartwatch</string>
     <string name="__data_source_disabled">\n FUENTE DE DATOS DESHABILITADA</string>

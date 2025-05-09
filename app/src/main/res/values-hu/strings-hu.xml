@@ -1516,7 +1516,7 @@
     <string name="xbridge_compatible">xBridge kompatibilis</string>
     <string name="libre">Libre</string>
     <string name="what_type_of_libre_bridge_device_do_you_use">Milyen Libre transzmittert használ?</string>
-    <string name="bluetooth_bridge_device_blucon_limitter_bluereader_tomato_etc">Bluetooth-transzmitter: Blucon, Bubble, LimiTTer, Bluereader, Tomato stb.</string>
+    <string name="bluetooth_bridge_device_blucon_limitter_bluereader_tomato_etc">Bluetooth-transzmitter: Blucon, Bubble, Bluereader, Tomato stb.</string>
     <string name="libre_patched">Libre2 Patched</string>
     <string name="librealarm_app_using_sony_smartwatch">LibreAlarm App: Sony Smartwatch-ot használ</string>
     <string name="__data_source_disabled">\n ADATFORRÁS LEÁLLÍTVA</string>

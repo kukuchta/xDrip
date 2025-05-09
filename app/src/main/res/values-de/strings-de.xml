@@ -1509,7 +1509,7 @@
     <string name="classic_simple">Klassisch einfach</string>
     <string name="libre">Libre</string>
     <string name="what_type_of_libre_bridge_device_do_you_use">Welche Art von Libre-Transmitter verwendest du?</string>
-    <string name="bluetooth_bridge_device_blucon_limitter_bluereader_tomato_etc">Bluetooth Transmitter: Blucon, Bubble, LimiTTer, Bluereader, Tomato etc.</string>
+    <string name="bluetooth_bridge_device_blucon_limitter_bluereader_tomato_etc">Bluetooth Transmitter: Blucon, Bubble, Bluereader, Tomato etc.</string>
     <string name="libre_patched">Libre2 gepatcht</string>
     <string name="librealarm_app_using_sony_smartwatch">LibreAlarm App: verwende Sony Smartwatch</string>
     <string name="__data_source_disabled">\n DATENQUELLE DEAKTIVIERT</string>

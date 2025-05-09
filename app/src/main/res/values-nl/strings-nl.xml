@@ -1468,7 +1468,7 @@
     <string name="classic_simple">Klassiek eenvoudig</string>
     <string name="libre">Libre</string>
     <string name="what_type_of_libre_bridge_device_do_you_use">Welk type Libre bridge-apparaat gebruikt u?</string>
-    <string name="bluetooth_bridge_device_blucon_limitter_bluereader_tomato_etc">Bluetooth Bridge-apparaat: BluCon, Bubble, LimiTTer, blueReader, Tomato etc</string>
+    <string name="bluetooth_bridge_device_blucon_limitter_bluereader_tomato_etc">Bluetooth Bridge-apparaat: BluCon, Bubble, blueReader, Tomato etc</string>
     <string name="libre_patched">Libre2 gepatcht</string>
     <string name="librealarm_app_using_sony_smartwatch">LibreAlarm-app: Sony Smartwatch gebruiken</string>
     <string name="__data_source_disabled">\n GEGEVENSBRON UITGESCHAKELD</string>

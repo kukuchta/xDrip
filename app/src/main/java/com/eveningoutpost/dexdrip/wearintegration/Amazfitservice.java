@@ -260,7 +260,7 @@ public class Amazfitservice extends Service {
             currentdevice = "None Set";
         }
 
-        String collection_method = prefs.getString("dex_collection_method", "BluetoothWixel");
+        String collection_method = prefs.getString("dex_collection_method", "None");
         if (collection_method.compareTo("DexcomG5") == 0) {
             Transmitter defaultTransmitter = new Transmitter(prefs.getString("dex_txid", "ABCDEF"));
             if (Build.VERSION.SDK_INT >= 18) {
@@ -291,7 +291,7 @@ public class Amazfitservice extends Service {
 
     // TODO use getBestCollectorHardwareName instead ?
     private String getCollectionMethod() {
-        return prefs.getString("dex_collection_method", "BluetoothWixel").replace("Dexbridge", "xBridge");
+        return prefs.getString("dex_collection_method", "None").replace("Dexbridge", "xBridge");
     }
 
     public String getSGVJSON() {

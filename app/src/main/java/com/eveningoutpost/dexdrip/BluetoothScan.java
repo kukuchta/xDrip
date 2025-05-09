@@ -382,17 +382,6 @@ public class BluetoothScan extends ListActivityWithMenu {
         boolean using_rfduino = false;
 
         try {
-            if (device.getName().toLowerCase().contains("limitter")
-                    && (adverts.containsKey(device.getAddress())
-                    && ((new String(adverts.get(device.getAddress()), "UTF-8").contains("eLeR"))
-                    || (new String(adverts.get(device.getAddress()), "UTF-8").contains("data"))))||
-                    device.getName().toLowerCase().contains("limitterd")) {
-                String msg = "Auto-detected transmiter_pl device!";
-                Log.e(TAG, msg);
-                JoH.static_toast_long(msg);
-                using_transmiter = true;
-            }
-
             prefs.edit().putBoolean("use_transmiter_pl_bluetooth", using_transmiter).apply();
 
             // Experimental support for rfduino from Tomasz Stachowicz
@@ -423,32 +412,8 @@ public class BluetoothScan extends ListActivityWithMenu {
                 } else returnToHome();
 
             } else if (device.getName().toLowerCase().contains("drip")) {
-                if (!
-                        (CollectionServiceStarter.isBTWixelOrLimiTTer(getApplicationContext())
-                                || CollectionServiceStarter.isWifiandBTWixel(getApplicationContext())
-                        ) || CollectionServiceStarter.isLimitter()) {
-                    prefs.edit().putString("dex_collection_method", "BluetoothWixel").apply();
-                }
-                returnToHome();
-            } else if (device.getName().toLowerCase().contains("limitter")) {
-                if (!CollectionServiceStarter.isLimitter()) {
-                    prefs.edit().putString("dex_collection_method", "LimiTTer").apply();
-                }
-                returnToHome();
-            } else if (device.getName().toLowerCase().contains("bluereader")) {
-                if (!CollectionServiceStarter.isLimitter()) {
-                    prefs.edit().putString("dex_collection_method", "LimiTTer").apply();
-                }
-                returnToHome();
-            } else if ((device.getName().toLowerCase().contains("miaomiao"))
-                    || (device.getName().toLowerCase().startsWith("watlaa"))) {
-                if (!(CollectionServiceStarter.isLimitter() || CollectionServiceStarter.isWifiandBTLibre())) {
-                    prefs.edit().putString("dex_collection_method", "LimiTTer").apply();
-                }
-                returnToHome();
-            } else if (device.getName().toLowerCase().contains("sweetreader")) {
-                if (!CollectionServiceStarter.isLimitter()) {
-                    prefs.edit().putString("dex_collection_method", "LimiTTer").apply();
+                if (!CollectionServiceStarter.isWifiandBTWixel(getApplicationContext())) {
+                    prefs.edit().putString("dex_collection_method", "None").apply();
                 }
                 returnToHome();
             } else if (device.getName().matches("^BLU[0-9][0-9][0-9][0-9][0-9].*$")) {
@@ -457,10 +422,7 @@ public class BluetoothScan extends ListActivityWithMenu {
                         new Runnable() {
                             @Override
                             public void run() {
-                                if (!CollectionServiceStarter.isLimitter()) {
-                                    prefs.edit().putString("dex_collection_method", "LimiTTer").apply();
-                                }
-                                returnToHome();
+                                //deleted with Limitter
                             }
                         });
 

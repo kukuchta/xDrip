@@ -1113,7 +1113,7 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             this.prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-            final DexCollectionType collectionType = DexCollectionType.getType(this.prefs.getString("dex_collection_method", "BluetoothWixel"));
+            final DexCollectionType collectionType = DexCollectionType.getType(this.prefs.getString("dex_collection_method", "None"));
 
             static_units = this.prefs.getString("units", "mgdl");
             addPreferencesFromResource(R.xml.pref_license);
@@ -2532,11 +2532,9 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                     }
 
 
-                /*    if ((collectionType != DexCollectionType.BluetoothWixel
-                            && collectionType != DexCollectionType.DexcomShare
+                /*    if ((collectionType != DexCollectionType.DexcomShare
                             && collectionType != DexCollectionType.WifiWixel
                             && collectionType != DexCollectionType.DexbridgeWixel
-                            && collectionType != DexCollectionType.LimiTTer
                             && collectionType != DexCollectionType.DexcomG5
                             && collectionType != DexCollectionType.WifiBlueToothWixel
                             && collectionType != DexCollectionType.WifiDexBridgeWixel

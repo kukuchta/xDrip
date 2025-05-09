@@ -42,7 +42,7 @@ public class CollectionServiceStarter {
 
     public static boolean isWifiandBTWixel(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        String collection_method = prefs.getString("dex_collection_method", "BluetoothWixel");
+        String collection_method = prefs.getString("dex_collection_method", "None");
         if (collection_method.compareTo("WifiBlueToothWixel") == 0) {
             return true;
         }
@@ -61,20 +61,9 @@ public class CollectionServiceStarter {
         return isWifiandDexBridge() || isDexbridgeWixel(xdrip.getAppContext());
     }
 
-    public static boolean isBTWixel(Context context) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        String collection_method = prefs.getString("dex_collection_method", "BluetoothWixel");
-        return isBTWixel(collection_method);
-    }
-
-    public static boolean isBTWixel(String collection_method) {
-        return collection_method.equals("BluetoothWixel")
-                || collection_method.equals("LimiTTer");
-    }
-
     public static boolean isDexbridgeWixel(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        String collection_method = prefs.getString("dex_collection_method", "BluetoothWixel");
+        String collection_method = prefs.getString("dex_collection_method", "None");
         if (collection_method.compareTo("DexbridgeWixel") == 0) {
             return true;
         }
@@ -87,7 +76,7 @@ public class CollectionServiceStarter {
 
     public static boolean isBTShare(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        String collection_method = prefs.getString("dex_collection_method", "BluetoothWixel");
+        String collection_method = prefs.getString("dex_collection_method", "None");
         if (collection_method.compareTo("DexcomShare") == 0) {
             return true;
         }
@@ -100,7 +89,7 @@ public class CollectionServiceStarter {
 
     public static boolean isBTG5(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        String collection_method = prefs.getString("dex_collection_method", "BluetoothWixel");
+        String collection_method = prefs.getString("dex_collection_method", "None");
         if (collection_method.compareTo("DexcomG5") == 0) {
             return true;
         }
@@ -113,21 +102,11 @@ public class CollectionServiceStarter {
 
     public static boolean isWifiWixel(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        String collection_method = prefs.getString("dex_collection_method", "BluetoothWixel");
+        String collection_method = prefs.getString("dex_collection_method", "None");
         if (collection_method.compareTo("WifiWixel") == 0) {
             return true;
         }
         return false;
-    }
-
-        /*
-     * LimiTTer emulates a BT-Wixel and works with the BT-Wixel service.
-     * It would work without any changes but in some cases knowing that the data does not
-     * come from a Dexcom sensor but from a Libre sensor might enhance the performance.
-     * */
-
-    public static boolean isLimitter() {
-        return Pref.getStringDefaultBlank("dex_collection_method").equals("LimiTTer");
     }
 
     public static boolean isWifiWixel(String collection_method) {
@@ -148,7 +127,7 @@ public class CollectionServiceStarter {
         xdrip.checkAppContext(context);
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
 
-        if (isBTWixel(collection_method) || isDexbridgeWixel(collection_method)) {
+        if (isDexbridgeWixel(collection_method)) {
             Log.d("DexDrip", "Starting bt wixel collector");
             //KS stopWifWixelThread();
             stopBtShareService();
@@ -238,7 +217,7 @@ public class CollectionServiceStarter {
 
     public void start(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        String collection_method = prefs.getString("dex_collection_method", "BluetoothWixel");
+        String collection_method = prefs.getString("dex_collection_method", "None");
 
         start(context, collection_method);
     }

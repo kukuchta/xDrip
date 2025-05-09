@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="DexCollectionMethods">
-        <item>Bluetooth Wixel</item>
         <item>xBridge Wixel</item>
         <item>Wifi Wixel / Parakeet</item>
         <item>Wifi Wixel + BT Wixel</item>
         <item>Wifi Wixel + xBridge Wixel</item>
         <item>Dex</item>
-        <item>Libre Bluetooth</item>
         <item>Libre Bluetooth + wifi</item>
         <item>Libre wifi</item>
         <item>xDrip+ Sync Follower</item>
@@ -26,13 +24,11 @@
     </string-array>
 
     <string-array name="DexCollectionMethodValues">
-        <item>BluetoothWixel</item>
         <item>DexbridgeWixel</item>
         <item>WifiWixel</item>
         <item>WifiBlueToothWixel</item>
         <item>WifiDexbridgeWixel</item>
         <item>DexcomG5</item>
-        <item>LimiTTer</item>
         <item>LimiTTerWifi</item>
         <item>LibreWifi</item>
         <item>Follower</item>

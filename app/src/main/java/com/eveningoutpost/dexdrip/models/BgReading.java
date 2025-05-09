@@ -726,7 +726,7 @@ public class BgReading extends Model implements ShareUploadableBg {
     public static String getSlopeArrowSymbolBeforeCalibration() {
         final List<BgReading> last = BgReading.latestUnCalculated(2);
         if ((last!=null) && (last.size()==2)) {
-            final double guess_slope = 1; // This is the "Default" slope for Dex and LimiTTer
+            final double guess_slope = 1; // This is the "Default" slope for Dex
             final double time_delta = (last.get(0).timestamp-last.get(1).timestamp);
             if (time_delta<=(BgGraphBuilder.DEXCOM_PERIOD * 2)) {
                 final double estimated_delta = (last.get(0).age_adjusted_raw_value * guess_slope) - (last.get(1).age_adjusted_raw_value * guess_slope);

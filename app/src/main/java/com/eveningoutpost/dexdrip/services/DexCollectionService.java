@@ -93,7 +93,6 @@ import static com.eveningoutpost.dexdrip.xdrip.gs;
 
 @TargetApi(Build.VERSION_CODES.KITKAT)
 public class DexCollectionService extends Service implements BtCallBack {
-    public static final String LIMITTER_NAME = "LimiTTer";
     private final static String TAG = DexCollectionService.class.getSimpleName();
     private static final boolean d = true;
     //private Context mContext;
@@ -923,7 +922,7 @@ public class DexCollectionService extends Service implements BtCallBack {
             return "Transmiter PL";
         } else if (static_use_rfduino_bluetooth) {
             return "Rfduino";
-        } else return LIMITTER_NAME;
+        } else return "deleted";
     }
 
     // data for MegaStatus
@@ -992,8 +991,6 @@ public class DexCollectionService extends Service implements BtCallBack {
         if (static_use_nrf && Tomato.isTomato()) {
             l.add(new StatusItem("Hardware", xdrip.getAppContext().getString(R.string.tomato)));
         }
-
-        // TODO add LimiTTer info
 
         if (last_transmitter_Data != null) {
             l.add(new StatusItem("Glucose data from", JoH.niceTimeSince(last_transmitter_Data.timestamp) + " ago"));
@@ -1073,8 +1070,6 @@ public class DexCollectionService extends Service implements BtCallBack {
             l.add(new StatusItem());
             l.add(new StatusItem("Watch Service State", lastStateWatch));
             l.add(new StatusItem("Bridge Device", JoH.ucFirst(getStateStr(mStaticStateWatch))));
-
-            // TODO add LimiTTer info
 
             if ((last_transmitter_DataWatch != null) && (last_transmitter_DataWatch.timestamp > 0)) {
                 l.add(new StatusItem("Watch Glucose data", JoH.niceTimeSince(last_transmitter_DataWatch.timestamp) + " ago"));

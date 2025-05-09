@@ -23,7 +23,7 @@
 
 #"Libre"
 #"What type of Libre bridge device do you use?"
-#"Bluetooth Bridge device: Blucon, LimiTTer, Bluereader, Tomato etc"
+#"Bluetooth Bridge device: Blucon, Bluereader, Tomato etc"
 #"LibreAlarm App: using Sony Smartwatch"
 #"\n DATA SOURCE DISABLED"
 #"Data Source is set to: "

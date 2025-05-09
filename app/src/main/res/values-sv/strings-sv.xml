@@ -1429,7 +1429,7 @@
     <string name="classic_simple">Klassisk enkel</string>
     <string name="libre">Libre</string>
     <string name="what_type_of_libre_bridge_device_do_you_use">Vilken typ av Libre-brygga använder du?</string>
-    <string name="bluetooth_bridge_device_blucon_limitter_bluereader_tomato_etc">Blåtandsbryggenhet: Blucon, Bubble, LimiTTer, Bluereader, Tomato mm</string>
+    <string name="bluetooth_bridge_device_blucon_limitter_bluereader_tomato_etc">Blåtandsbryggenhet: Blucon, Bubble, Bluereader, Tomato mm</string>
     <string name="libre_patched">Patchad Libre2</string>
     <string name="librealarm_app_using_sony_smartwatch">LibreAlarm App: med Sony smartklocka</string>
     <string name="__data_source_disabled">\n DATAKÄLLA AVSTÄNGD</string>

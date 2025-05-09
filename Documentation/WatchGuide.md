@@ -42,7 +42,7 @@ Polar M600 | WearOS 2  | Yes: 5 minutes if patched, 10 minutes if not | [patch t
 
 
 # Enable xDrip+ Android Wear Integration
-xDrip+ supports wear integration through its wear app.  The xDrip+ wear app is installed with the standard xDrip+ apk. On **Android Wear 1.x** watches, the wear component gets synced automatically to the watch. On **Android Wear 2.0** watches you need to install (activate) the wear component separately from the Play-Store on the _watch_ (under the section "Apps on your phone") after installing xDrip+ on the phone. The latest release supports a standalone mode which allows the wear app to communicate directly with the Bluetooth Collector, whether it is a Dexcom G5, a Dexcom G4 + xBridge, Dexcom Share, or a Libre LimiTTer.
+xDrip+ supports wear integration through its wear app.  The xDrip+ wear app is installed with the standard xDrip+ apk. On **Android Wear 1.x** watches, the wear component gets synced automatically to the watch. On **Android Wear 2.0** watches you need to install (activate) the wear component separately from the Play-Store on the _watch_ (under the section "Apps on your phone") after installing xDrip+ on the phone. The latest release supports a standalone mode which allows the wear app to communicate directly with the Bluetooth Collector, whether it is a Dexcom G5, a Dexcom G4 + xBridge, Dexcom Share.
 
 
 The wear standalone feature is enabled via the following xDrip+ Settings located under **Smart Watch Features**, and corresponding watch **XDrip Prefs** settings.
@@ -208,7 +208,7 @@ The following new preferences are supported:
   - Show Status - Show Loop Status on the XDrip, XDrip(Large) and XDrip (BigChart)watchfaces.  This will display the HAPP status message containing Basal%, IOB, COB.
   - Opaque Card - Show notifications cards with opaque background.  This will allow cards to be read more easily in ambient mode.
   - Small Font - Fontsize of small text in status and delta time fields on the XDrip and XDrip(Large) watchfaces.
-  - Show Bridge Battery - Show bridge battery usage on the XDrip and XDrip(Large) watchfaces.  This setting will only be displayed when the BT Collector uses a battery, for example, LimiTTer or Wixel/xBridge.
+  - Show Bridge Battery - Show bridge battery usage on the XDrip and XDrip(Large) watchfaces.  This setting will only be displayed when the BT Collector uses a battery, for example, Wixel/xBridge.
 
 The following images show some of the watchface preferences under XDrip Watchface Settings.
 
@@ -259,7 +259,7 @@ The following images show an example of the HAPP message and its integration wit
 
 #### Battery Usage
 The wear app supports the display of two battery usage options:
-* Bridge - displays the wixel or LimiTTer battery usage.  The Show Bridge Battery must be enabled to display the bridge battery usage.
+* Bridge - displays the wixel battery usage.  The Show Bridge Battery must be enabled to display the bridge battery usage.
 * Uploader or Wear - will display the battery usage of the device running the collection service.  So, if Enable Wear and Force Wear prefs are enabled, it will display the **watch** battery usage.  If only Enable Wear is enabled, then it will display the battery usage of whichever device is actually running the collection service.  If neither prefs are enabled, it displays the phone's battery usage.  The label, **Uploader** or **Wear** corresponds to the device running the collector.  **Uploader** for phone which is the default, and **Wear** for the watch.  This will allow users to identify which device is running the collection service.
 
 The following images show an example of BT Collector running under each device, with and without Show Status enabled, and Chart Timeframe toggled.
@@ -349,10 +349,8 @@ Refer to [XDrip BT Settings](#xdrip-bt-settings) above for additional details.
 ### Confirm Collection Method is consistent on both phone and watch
 
   Confirm the phone's Hardware Data Source preference matches the watch's BT Collector preference.  The watch's BT Collector preference is a read-only preference.  It gets set based on the phone's Hardware Data Source preference. The following values correspond to the collectors:
-   - BluetoothWixel("BluetoothWixel"),
    - DexcomShare("DexcomShare"),
    - DexbridgeWixel("DexbridgeWixel"),
-   - LimiTTer("LimiTTer"),
    - WifiWixel("WifiWixel"),
    - DexcomG5("DexcomG5"),
    - WifiDexBridgeWixel("WifiDexbridgeWixel"),

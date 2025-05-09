@@ -144,7 +144,7 @@ public class InfluxDBUploader {
     private Point createMeterPoint(Calibration record) {
         return Point.measurement("meter")
                 .time(record.timestamp, TimeUnit.MILLISECONDS)
-                .tag("device", "xDrip-" + prefs.getString("dex_collection_method", "BluetoothWixel"))
+                .tag("device", "xDrip-" + prefs.getString("dex_collection_method", "None"))
                 .tag("type", "mbg")
                 .addField("mbg", record.bg)
                 .build();
@@ -153,7 +153,7 @@ public class InfluxDBUploader {
     private Point createCalibrationPoint(Calibration record) {
         Point.Builder builder = Point.measurement("calibration")
                 .time(record.timestamp, TimeUnit.MILLISECONDS)
-                .tag("device", "xDrip-" + prefs.getString("dex_collection_method", "BluetoothWixel"))
+                .tag("device", "xDrip-" + prefs.getString("dex_collection_method", "None"))
                 .tag("type", "cal");
 
         if (record.check_in) {

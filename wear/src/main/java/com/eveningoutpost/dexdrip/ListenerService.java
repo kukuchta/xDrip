@@ -1633,7 +1633,7 @@ public class ListenerService extends WearableListenerService implements GoogleAp
             Log.d(TAG, "syncPrefData dataMap=" + dataMap);
             if (localnode == null || (localnode != null && localnode.isEmpty())) setLocalNodeName();
 
-            String dexCollector = dataMap.getString(DexCollectionType.DEX_COLLECTION_METHOD, "None");//BluetoothWixel "DexcomG5"
+            String dexCollector = dataMap.getString(DexCollectionType.DEX_COLLECTION_METHOD, "None");// "DexcomG5"
             Log.d(TAG, "syncPrefData dataMap dexCollector=" + dexCollector + " mPrefs DexCollectionType.DEX_COLLECTION_METHOD:" + mPrefs.getString(DexCollectionType.DEX_COLLECTION_METHOD, "xxxxxxxx"));
             DexCollectionType collectionType = DexCollectionType.getType(dexCollector);
 

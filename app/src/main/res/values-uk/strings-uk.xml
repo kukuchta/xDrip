@@ -1540,7 +1540,7 @@
     <string name="classic_simple">Класичний простий</string>
     <string name="libre">Libre</string>
     <string name="what_type_of_libre_bridge_device_do_you_use">Тип пристрою?</string>
-    <string name="bluetooth_bridge_device_blucon_limitter_bluereader_tomato_etc">Blucon, Bubble, LimiTTer, Bluereader, Tomato тощо</string>
+    <string name="bluetooth_bridge_device_blucon_limitter_bluereader_tomato_etc">Blucon, Bubble, Bluereader, Tomato тощо</string>
     <string name="libre_patched">Додаток Libre 2 Patched</string>
     <string name="librealarm_app_using_sony_smartwatch">Додаток LibreAlarm через Sony Smartwatch</string>
     <string name="__data_source_disabled">\n ДЖЕРЕЛО ДАНИХ ВИМКНЕНО</string>

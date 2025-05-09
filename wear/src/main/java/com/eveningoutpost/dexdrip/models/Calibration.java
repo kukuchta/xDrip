@@ -96,20 +96,6 @@ class DexParametersAdrian extends SlopeParameters {
 
 }
 
-class LiParameters extends SlopeParameters {
-    LiParameters() {
-        LOW_SLOPE_1 = 1;
-        LOW_SLOPE_2 = 1;
-        HIGH_SLOPE_1 = 1;
-        HIGH_SLOPE_2 = 1;
-        DEFAULT_LOW_SLOPE_LOW = 1;
-        DEFAULT_LOW_SLOPE_HIGH = 1;
-        DEFAULT_SLOPE = 1;
-        DEFAULT_HIGH_SLOPE_HIGH = 1;
-        DEFAULT_HIGH_SLOPE_LOW = 1;
-    }
-}
-
 class TestParameters extends SlopeParameters {
     TestParameters() {
         LOW_SLOPE_1 = 0.85; //0.95
@@ -682,10 +668,6 @@ public class Calibration extends Model {
 
     @NonNull
     private static SlopeParameters getSlopeParameters() {
-
-        if (CollectionServiceStarter.isLimitter()) {
-            return new LiParameters();
-        }
 
         if (Pref.getBooleanDefaultFalse("engineering_mode") && Pref.getBooleanDefaultFalse("old_school_calibration_mode")) {
             JoH.static_toast_long("Using old pre-2017 calibration mode!");

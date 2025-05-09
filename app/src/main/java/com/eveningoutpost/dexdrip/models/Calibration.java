@@ -811,13 +811,6 @@ public class Calibration extends Model {
             return new Li2AppParameters();
         }
 
-        if (CollectionServiceStarter.isLimitter()) {
-            if (Pref.getBooleanDefaultFalse("use_non_fixed_li_parameters")) {
-                return new LiParametersNonFixed();
-            } else {
-                return new LiParameters();
-            }
-        }
         // open question about parameters used with LibreAlarm
 
         if (Pref.getBooleanDefaultFalse("engineering_mode") && Pref.getBooleanDefaultFalse("old_school_calibration_mode")) {
