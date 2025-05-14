@@ -814,16 +814,6 @@ public class DexCollectionService extends Service implements BtCallBack {
         return bk_pin != null ? bk_pin : HM10Attributes.HM_DEFAULT_BT_PIN;
     }
 
-    @SuppressLint("ObsoleteSdkInt")
-    private boolean shouldServiceRun() {
-        if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2) return false;
-        final boolean result = (DexCollectionType.hasXbridgeWixel() || DexCollectionType.hasBtWixel())
-                && ((!Home.get_forced_wear() && !JoH.areWeRunningOnAndroidWear())
-                || PersistentStore.getBoolean(CollectionServiceStarter.pref_run_wear_collector));
-        if (d) Log.d(TAG, "shouldServiceRun() returning: " + result);
-        return result;
-    }
-
     // remember needs proguard exclusion due to access by reflection
     public static boolean isCollecting() {
         if (static_use_blukon) {
@@ -1191,20 +1181,11 @@ public class DexCollectionService extends Service implements BtCallBack {
         static_use_transmiter_pl_bluetooth = use_transmiter_pl_bluetooth;
         static_use_polling = use_polling;
         status("Started");
-        if (shouldServiceRun()) {
-            setFailoverTimer();
-        } else {
-            status("Stopping");
-            stopSelf();
-            JoH.releaseWakeLock(wl);
-            return START_NOT_STICKY;
-        }
-        lastdata = null;
-        DisconnectReceiver.addCallBack(this, TAG);
-        checkConnection();
-        watchdog();
+
+        status("Stopping");
+        stopSelf();
         JoH.releaseWakeLock(wl);
-        return START_STICKY;
+        return START_NOT_STICKY;
     }
 
     private void unRegisterPairingReceiver() {
@@ -1232,19 +1213,13 @@ public class DexCollectionService extends Service implements BtCallBack {
             scanMeister.stop();
         }
 
-        if (shouldServiceRun()) {//Android killed service
-            setRetryTimer();
-            status("Stopped, attempting restart");
-        } else {//onDestroy triggered by CollectionServiceStart.stopBtService
-            Log.d(TAG, "onDestroy stop Alarm serviceIntent");
-            JoH.cancelAlarm(this, serviceIntent);
-            Log.d(TAG, "onDestroy stop Alarm serviceFailoverIntent");
-            JoH.cancelAlarm(this, serviceFailoverIntent);
-            status("Service full stop");
-            retry_time = 0;
-            failover_time = 0;
-        }
-
+        Log.d(TAG, "onDestroy stop Alarm serviceIntent");
+        JoH.cancelAlarm(this, serviceIntent);
+        Log.d(TAG, "onDestroy stop Alarm serviceFailoverIntent");
+        JoH.cancelAlarm(this, serviceFailoverIntent);
+        status("Service full stop");
+        retry_time = 0;
+        failover_time = 0;
         retry_backoff = 0;
         poll_backoff = 0;
         servicesDiscovered = DISCOVERED.NULL;
@@ -1259,44 +1234,11 @@ public class DexCollectionService extends Service implements BtCallBack {
 
     public void setRetryTimer() {
         mStaticState = mConnectionState;
-        if (shouldServiceRun()) {
-            final long retry_in = whenToRetryNext();
-            Log.d(TAG, "setRetryTimer: Restarting in: " + (retry_in / Constants.SECOND_IN_MS) + " seconds");
-            serviceIntent = WakeLockTrampoline.getPendingIntent(this.getClass(), Constants.DEX_COLLECTION_SERVICE_RETRY_ID);
-            retry_time = JoH.wakeUpIntent(this, retry_in, serviceIntent);
-        } else {
-            Log.d(TAG, "Not setting retry timer as service should not be running");
-        }
+        Log.d(TAG, "Not setting retry timer as service should not be running");
     }
 
     public synchronized void setFailoverTimer() {
-        if (shouldServiceRun()) {
-            final long retry_in = use_polling ? whenToPollNext() : (Constants.MINUTE_IN_MS * 6);
-            Log.d(TAG, "setFailoverTimer: Fallover Restarting in: " + (retry_in / (Constants.MINUTE_IN_MS)) + " minutes");
-            serviceFailoverIntent = WakeLockTrampoline.getPendingIntent(this.getClass(), Constants.DEX_COLLECTION_SERVICE_FAILOVER_ID);
-            failover_time = JoH.wakeUpIntent(this, retry_in, serviceFailoverIntent);
-            retry_time = 0; // only one alarm will run
-        } else {
-            stopSelf();
-        }
-    }
-
-    private long whenToRetryNext() {
-        final long poll_time = Math.max((Constants.SECOND_IN_MS * 10) + retry_backoff, RETRY_PERIOD - JoH.msSince(lastPacketTime));
-        if (retry_backoff < (Constants.MINUTE_IN_MS)) {
-            retry_backoff += Constants.SECOND_IN_MS;
-        }
-        Log.d(TAG, "Scheduling next retry in: " + JoH.niceTimeScalar(poll_time) + " @ " + JoH.dateTimeText(poll_time + JoH.tsl()) + " period diff: " + (RETRY_PERIOD - JoH.msSince(lastPacketTime)));
-        return poll_time;
-    }
-
-    private long whenToPollNext() {
-        final long poll_time = Math.max((Constants.SECOND_IN_MS * 5) + poll_backoff, POLLING_PERIOD - JoH.msSince(lastPacketTime));
-        if (poll_backoff < (Constants.MINUTE_IN_MS * 6)) {
-            poll_backoff += Constants.SECOND_IN_MS;
-        }
-        Log.d(TAG, "Scheduling next poll in: " + JoH.niceTimeScalar(poll_time) + " @ " + JoH.dateTimeText(poll_time + JoH.tsl()) + " period diff: " + (POLLING_PERIOD - JoH.msSince(lastPacketTime)));
-        return poll_time;
+        stopSelf();
     }
 
     synchronized void checkConnection() {
@@ -1891,47 +1833,9 @@ public class DexCollectionService extends Service implements BtCallBack {
         return false;
     }
 
-    private void watchdog() {
-        if (last_time_seen == 0) return;
-        if (prefs.getBoolean("bluetooth_watchdog", false)) {
-
-            int MAX_BT_WDG = 20;
-            int bt_wdg_timer = JoH.parseIntWithDefault(Pref.getString("bluetooth_watchdog_timer", Integer.toString(MAX_BT_WDG)), 10, MAX_BT_WDG);
-
-            if ((bt_wdg_timer <= 5) || (bt_wdg_timer > MAX_BT_WDG)) {
-                bt_wdg_timer = MAX_BT_WDG;
-            }
-
-            if ((JoH.msSince(last_time_seen)) > bt_wdg_timer * Constants.MINUTE_IN_MS) {
-                Log.d(TAG, "Use BT Watchdog timer=" + bt_wdg_timer);
-                if (!JoH.isOngoingCall()) {
-                    Log.e(TAG, "Watchdog triggered, attempting to reset bluetooth");
-                    status("Watchdog triggered");
-                    JoH.restartBluetooth(getApplicationContext());
-                    last_time_seen = JoH.tsl();
-                    watchdog_count++;
-                    if (watchdog_count > 5) last_time_seen = 0;
-                } else {
-                    Log.e(TAG, "Delaying watchdog reset as phone call is ongoing.");
-                }
-            }
-        }
-    }
-
     private static boolean useScanning() {
         // TODO check location services
         return Pref.getBooleanDefaultFalse("bluetooth_use_scan");
-    }
-
-    public void waitFor(final int millis) {
-        synchronized (mLock) {
-            try {
-                UserError.Log.d(TAG, "waiting " + millis + "ms");
-                mLock.wait(millis);
-            } catch (final InterruptedException e) {
-                UserError.Log.e(TAG, "Sleeping interrupted", e);
-            }
-        }
     }
 
     private enum DISCOVERED {

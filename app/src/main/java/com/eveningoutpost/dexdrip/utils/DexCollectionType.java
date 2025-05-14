@@ -51,8 +51,6 @@ public enum DexCollectionType {
     String internalName;
     private static final Map<String, DexCollectionType> mapToInternalName;
     private static final HashSet<DexCollectionType> usesBluetooth = new HashSet<>();
-    private static final HashSet<DexCollectionType> usesBtWixel = new HashSet<>();
-    private static final HashSet<DexCollectionType> usesXbridge = new HashSet<>();
     private static final HashSet<DexCollectionType> usesFiltered = new HashSet<>();
     private static final HashSet<DexCollectionType> usesLibre = new HashSet<>();
     private static final HashSet<DexCollectionType> isPassive = new HashSet<>();
@@ -73,8 +71,6 @@ public enum DexCollectionType {
         }
 
         Collections.addAll(usesBluetooth, DexcomShare, DexcomG5, Medtrum);
-        Collections.addAll(usesBtWixel); // Name is misleading here, should probably be using dexcollectionservice
-        Collections.addAll(usesXbridge);
         Collections.addAll(usesFiltered, DexcomG5, Follower); // Bluetooth and Wifi+Bluetooth need dynamic mode
         Collections.addAll(usesLibre, LibreReceiver);
         Collections.addAll(isPassive, NSEmulator, NSFollow, SHFollow, WebFollow, LibreReceiver, UiBased, CLFollow, AidexReceiver, SHAndCLFollow);
@@ -109,14 +105,6 @@ public enum DexCollectionType {
         return usesBluetooth.contains(getDexCollectionType());
     }
 
-    public static boolean hasBtWixel() {
-        return usesBtWixel.contains(getDexCollectionType());
-    }
-
-    public static boolean hasXbridgeWixel() {
-        return usesXbridge.contains(getDexCollectionType());
-    }
-
     public static boolean hasLibre() {
         return usesLibre.contains(getDexCollectionType());
     }
@@ -131,10 +119,6 @@ public enum DexCollectionType {
 
     public static boolean hasDexcomRaw() {
         return hasDexcomRaw(getDexCollectionType());
-    }
-
-    public static boolean usesDexCollectionService(DexCollectionType type) {
-        return usesBtWixel.contains(type) || usesXbridge.contains(type);
     }
 
     public static boolean usesClassicTransmitterBattery() {

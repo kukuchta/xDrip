@@ -166,9 +166,6 @@ public class MegaStatus extends FloatingLocaleActivityWithScreenshot {
             final DexCollectionType dexCollectionType = DexCollectionType.getDexCollectionType();
 
             // probably want a DexCollectionService related set
-            if (DexCollectionType.usesDexCollectionService(dexCollectionType)) {
-                addAsection(G4_STATUS, "Bluetooth Collector Status");
-            }
             if (dexCollectionType.equals(DexcomG5)) {
                 if (Pref.getBooleanDefaultFalse(Ob1G5CollectionService.OB1G5_PREFS)) {
                     addAsection(G5_STATUS, "G6/Dex1/G7/1+ Collector/Transmitter Status");
