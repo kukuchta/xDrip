@@ -159,18 +159,9 @@ public class CollectionServiceStarter {
         return collection_method.equals("DexcomG5");
     }
 
-    public static boolean isWifiWixel(Context context) {
-        return Pref.getString("dex_collection_method", "None").equals("WifiWixel");
-    }
-
     private static boolean isWifiWixel(String collection_method) {
-        return collection_method.equals("WifiWixel") || DexCollectionType.getDexCollectionType() == DexCollectionType.Mock;
+        return DexCollectionType.getDexCollectionType() == DexCollectionType.Mock;
     }
-
-    //private static boolean isWifiLibre(String collection_method) {
-    //    return DexCollectionType.getDexCollectionType() == DexCollectionType.Mock;
-    //}
-
 
     private static boolean isFollower(String collection_method) {
         return collection_method.equals("Follower");

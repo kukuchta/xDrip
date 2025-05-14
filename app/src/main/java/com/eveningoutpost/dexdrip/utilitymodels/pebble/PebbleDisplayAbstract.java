@@ -174,13 +174,6 @@ public abstract class PebbleDisplayAbstract implements PebbleDisplayInterface {
         return DexCollectionType.getType(PreferenceManager.getDefaultSharedPreferences(this.context).getString("dex_collection_method", "None"));
     }
 
-    public boolean doWeDisplayWixelBatteryStatus() {
-        DexCollectionType dexCollectionType = getDexCollectionType();
-
-        return ((dexCollectionType == DexCollectionType.WifiWixel && ParakeetHelper.isRealParakeetDevice()) &&
-                getBooleanValue("display_bridge_battery", true));
-    }
-
     public boolean getBooleanValue(String key) {
         return getBooleanValue(key, false);
     }
@@ -199,14 +192,8 @@ public abstract class PebbleDisplayAbstract implements PebbleDisplayInterface {
 
 
     public void addBatteryStatusToDictionary(PebbleDictionary dictionary) {
-        if (doWeDisplayWixelBatteryStatus()) {
-            dictionary.addString(UPLOADER_BATTERY_KEY, getBatteryString("parakeet_battery"));
-            dictionary.addString(NAME_KEY, "Phone");
-        } else {
-            dictionary.addString(UPLOADER_BATTERY_KEY, getPhoneBatteryStatus());
-            dictionary.addString(NAME_KEY, "Phone");
-        }
-
+        dictionary.addString(UPLOADER_BATTERY_KEY, getPhoneBatteryStatus());
+        dictionary.addString(NAME_KEY, "Phone");
     }
 
     public void removeBatteryStatusFromDictionary(PebbleDictionary dictionary) {

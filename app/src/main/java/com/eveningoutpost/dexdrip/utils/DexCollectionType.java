@@ -31,7 +31,6 @@ public enum DexCollectionType {
 
     None("None"),
     DexcomShare("DexcomShare"),
-    WifiWixel("WifiWixel"),
     DexcomG5("DexcomG5"),
     DexcomG6("DexcomG6"), // currently pseudo
     WifiDexBridgeWixel("WifiDexbridgeWixel"),
@@ -79,14 +78,14 @@ public enum DexCollectionType {
 
         Collections.addAll(usesBluetooth, DexcomShare, DexcomG5, WifiDexBridgeWixel, Medtrum);
         Collections.addAll(usesBtWixel); // Name is misleading here, should probably be using dexcollectionservice
-        Collections.addAll(usesWifi, WifiWixel, WifiDexBridgeWixel, Mock);
+        Collections.addAll(usesWifi, WifiDexBridgeWixel, Mock);
         Collections.addAll(usesXbridge, WifiDexBridgeWixel);
-        Collections.addAll(usesFiltered, WifiDexBridgeWixel, DexcomG5, WifiWixel, Follower, Mock); // Bluetooth and Wifi+Bluetooth need dynamic mode
+        Collections.addAll(usesFiltered, WifiDexBridgeWixel, DexcomG5, Follower, Mock); // Bluetooth and Wifi+Bluetooth need dynamic mode
         Collections.addAll(usesLibre, LibreAlarm, LibreReceiver);
         Collections.addAll(isPassive, NSEmulator, NSFollow, SHFollow, WebFollow, LibreReceiver, UiBased, CLFollow, AidexReceiver, SHAndCLFollow);
         Collections.addAll(usesBattery, WifiDexBridgeWixel, Follower, LibreAlarm); // parakeet separate
-        Collections.addAll(usesDexcomRaw, WifiWixel, DexcomG5, WifiDexBridgeWixel, Mock);
-        Collections.addAll(usesTransmitterBattery, WifiWixel, WifiDexBridgeWixel); // G4 transmitter battery
+        Collections.addAll(usesDexcomRaw, DexcomG5, WifiDexBridgeWixel, Mock);
+        Collections.addAll(usesTransmitterBattery, WifiDexBridgeWixel); // G4 transmitter battery
     }
 
 
@@ -191,7 +190,6 @@ public enum DexCollectionType {
                 }
             case DexcomShare:
                 return DexShareCollectionService.class;
-            case WifiWixel:
             case Mock:
                 return WifiCollectionService.class;
             case Medtrum:
@@ -266,8 +264,6 @@ public enum DexCollectionType {
             case AidexReceiver:
             case LibreReceiver:
                 return "Other App";
-            case WifiWixel:
-                return "Network G4";
             case WifiDexBridgeWixel:
                 return "Network G4 and xBridge";
             case DexcomG5:

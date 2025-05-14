@@ -232,8 +232,6 @@ public class SystemStatusFragment extends Fragment {
         setCurrentDevice();
         if (Home.get_follower()) {
             setConnectionStatusFollower();
-        } else if (prefs.getString("dex_collection_method", "bogus").equals("WifiWixel")) {
-            setConnectionStatusWifiWixel();
         } else {
             setConnectionStatus();
         }

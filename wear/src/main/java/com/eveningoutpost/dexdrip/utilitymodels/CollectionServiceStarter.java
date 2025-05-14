@@ -78,19 +78,6 @@ public class CollectionServiceStarter {
         return collection_method.equals("DexcomG5");
     }
 
-    public static boolean isWifiWixel(Context context) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        String collection_method = prefs.getString("dex_collection_method", "None");
-        if (collection_method.compareTo("WifiWixel") == 0) {
-            return true;
-        }
-        return false;
-    }
-
-    public static boolean isWifiWixel(String collection_method) {
-        return collection_method.equals("WifiWixel");
-    }
-
     public static boolean isFollower(String collection_method) {
         return collection_method.equals("Follower");
     }
@@ -105,15 +92,7 @@ public class CollectionServiceStarter {
         xdrip.checkAppContext(context);
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
 
-        if (isWifiWixel(collection_method)) {
-            Log.d("DexDrip", "Starting wifi wixel collector");
-            stopBtWixelService();
-            //KS stopFollowerThread();
-            stopBtShareService();
-            stopG5ShareService();
-
-            //KS startWifWixelThread();
-        } else if (isBTShare(collection_method)) {
+        if (isBTShare(collection_method)) {
             Log.d("DexDrip", "Starting bt share collector");
             stopBtWixelService();
             //KS stopFollowerThread();
@@ -143,32 +122,19 @@ public class CollectionServiceStarter {
         } else if (isWifiandDexBridge()) {
             Log.d("DexDrip", "Starting wifi and bt wixel collector");
             stopBtWixelService();
-            //KS stopFollowerThread();
-            //KS stopWifWixelThread();
             stopBtShareService();
             stopG5ShareService();
 
             // start both
-            //KS Log.d("DexDrip", "Starting wifi wixel collector first");
-            //KS startWifWixelThread();
             Log.d("DexDrip", "Starting bt wixel collector second");
             startBtWixelService();
             Log.d("DexDrip", "Started wifi and bt wixel collector");
         } else if (isFollower(collection_method)) {
-            //KS stopWifWixelThread();
             stopBtShareService();
             stopBtWixelService();
             stopG5ShareService();
-
-            //KS startFollowerThread();
         }
 
-        //KS if (prefs.getBoolean("broadcast_to_pebble", false) && (PebbleUtil.getCurrentPebbleSyncType(prefs) != 1)) {
-        //KS     startPebbleSyncService();
-        //KS }
-
-        //KS startSyncService();
-        //KS startDailyIntentService();
         Log.d(TAG, collection_method);
 
         // Start logging to logcat
@@ -216,15 +182,12 @@ public class CollectionServiceStarter {
         CollectionServiceStarter collectionServiceStarter = new CollectionServiceStarter(context);
         collectionServiceStarter.stopBtShareService();
         collectionServiceStarter.stopBtWixelService();
-        //KS collectionServiceStarter.stopWifWixelThread();
-        //KS collectionServiceStarter.stopFollowerThread();
         collectionServiceStarter.stopG5ShareService();
         collectionServiceStarter.start(context, collection_method);
     }
 
     public static void startBtService(Context context) {
         Log.d(TAG, "startBtService: " + DexCollectionType.getDexCollectionType());
-        //stopBtService(context);
         CollectionServiceStarter collectionServiceStarter = new CollectionServiceStarter(context);
         collectionServiceStarter.stopBtShareService();
         collectionServiceStarter.stopBtWixelService();
@@ -291,55 +254,10 @@ public class CollectionServiceStarter {
         //}
     }
 
-    /* KS not needed on wear
-    private void startPebbleSyncService() {
-        Log.d(TAG, "starting PebbleWatchSync service");
-        this.mContext.startService(new Intent(this.mContext, PebbleWatchSync.class));
-    }
-
-    private void startSyncService() {
-        Log.d(TAG, "starting Sync service");
-        this.mContext.startService(new Intent(this.mContext, SyncService.class));
-    }
-
-    private void startDailyIntentService() {
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.HOUR_OF_DAY, 4);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-
-        PendingIntent pi = PendingIntent.getService(this.mContext, 0, new Intent(this.mContext, DailyIntentService.class), PendingIntent.FLAG_UPDATE_CURRENT);
-        AlarmManager am = (AlarmManager) this.mContext.getSystemService(Context.ALARM_SERVICE);
-        am.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pi);
-    }
-    */
-
     private void stopBtShareService() {
         Log.d(TAG, "stopping bt share service");
         this.mContext.stopService(new Intent(this.mContext, DexShareCollectionService.class));
     }
-
-    /* KS not needed on wear
-    private void startWifWixelThread() {
-        Log.d(TAG, "starting wifi wixel service");
-        this.mContext.startService(new Intent(this.mContext, WifiCollectionService.class));
-    }
-
-    private void stopWifWixelThread() {
-        Log.d(TAG, "stopping wifi wixel service");
-        this.mContext.stopService(new Intent(this.mContext, WifiCollectionService.class));
-    }
-
-    private void startFollowerThread() {
-        Log.d(TAG, "starting follower service");
-        this.mContext.startService(new Intent(this.mContext, DoNothingService.class));
-    }
-
-    private void stopFollowerThread() {
-        Log.d(TAG, "stopping follower service");
-        this.mContext.stopService(new Intent(this.mContext, DoNothingService.class));
-    }
-    */
 
     private void stopG5ShareService() {
         Log.d(TAG, "stopping G5 service");
