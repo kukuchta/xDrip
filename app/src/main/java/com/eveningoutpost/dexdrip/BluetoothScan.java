@@ -410,9 +410,7 @@ public class BluetoothScan extends ListActivityWithMenu {
                 } else returnToHome();
 
             } else if (device.getName().toLowerCase().contains("drip")) {
-                if (!CollectionServiceStarter.isWifiandBTWixel(getApplicationContext())) {
-                    prefs.edit().putString("dex_collection_method", "None").apply();
-                }
+                prefs.edit().putString("dex_collection_method", "None").apply();
                 returnToHome();
             } else if (device.getName().matches("^BLU[0-9][0-9][0-9][0-9][0-9].*$")) {
 

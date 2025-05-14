@@ -2534,7 +2534,6 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                 /*    if ((collectionType != DexCollectionType.DexcomShare
                             && collectionType != DexCollectionType.WifiWixel
                             && collectionType != DexCollectionType.DexcomG5
-                            && collectionType != DexCollectionType.WifiBlueToothWixel
                             && collectionType != DexCollectionType.WifiDexBridgeWixel
                             && collectionType != DexCollectionType.LibreAlarm
                             ) || (!Experience.gotData())) {

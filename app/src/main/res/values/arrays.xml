@@ -2,7 +2,6 @@
 <resources>
     <string-array name="DexCollectionMethods">
         <item>Wifi Wixel / Parakeet</item>
-        <item>Wifi Wixel + BT Wixel</item>
         <item>Wifi Wixel + xBridge Wixel</item>
         <item>Dex</item>
         <item>xDrip+ Sync Follower</item>
@@ -22,7 +21,6 @@
 
     <string-array name="DexCollectionMethodValues">
         <item>WifiWixel</item>
-        <item>WifiBlueToothWixel</item>
         <item>WifiDexbridgeWixel</item>
         <item>DexcomG5</item>
         <item>Follower</item>

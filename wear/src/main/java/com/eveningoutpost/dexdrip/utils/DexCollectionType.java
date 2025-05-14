@@ -24,7 +24,6 @@ public enum DexCollectionType {
 
     None("None"),
     DexcomShare("DexcomShare"),
-    WifiBlueToothWixel("WifiBlueToothWixel"),
     WifiWixel("WifiWixel"),
     DexcomG5("DexcomG5"),
     DexcomG6("DexcomG6"), // currently pseudo
@@ -64,15 +63,15 @@ public enum DexCollectionType {
             mapToInternalName.put(dct.internalName, dct);
         }
 
-        Collections.addAll(usesBluetooth, DexcomShare, WifiBlueToothWixel, DexcomG5, WifiDexBridgeWixel, Medtrum);
-        Collections.addAll(usesBtWixel, WifiBlueToothWixel); // Name is misleading here, should probably be using dexcollectionservice
-        Collections.addAll(usesWifi, WifiBlueToothWixel, WifiWixel, WifiDexBridgeWixel, Mock);
+        Collections.addAll(usesBluetooth, DexcomShare, DexcomG5, WifiDexBridgeWixel, Medtrum);
+        Collections.addAll(usesBtWixel); // Name is misleading here, should probably be using dexcollectionservice
+        Collections.addAll(usesWifi, WifiWixel, WifiDexBridgeWixel, Mock);
         Collections.addAll(usesXbridge, WifiDexBridgeWixel);
         Collections.addAll(usesFiltered, WifiDexBridgeWixel, DexcomG5, WifiWixel, Follower, Mock); // Bluetooth and Wifi+Bluetooth need dynamic mode
         Collections.addAll(usesLibre, LibreAlarm, LibreReceiver);
-        Collections.addAll(usesBattery, WifiBlueToothWixel, WifiDexBridgeWixel, Follower, LibreAlarm); // parakeet separate
-        Collections.addAll(usesDexcomRaw, WifiWixel, WifiBlueToothWixel, DexcomG5, WifiDexBridgeWixel, Mock);
-        Collections.addAll(usesTransmitterBattery, WifiWixel, WifiBlueToothWixel, WifiDexBridgeWixel); // G4 transmitter battery
+        Collections.addAll(usesBattery, WifiDexBridgeWixel, Follower, LibreAlarm); // parakeet separate
+        Collections.addAll(usesDexcomRaw, WifiWixel, DexcomG5, WifiDexBridgeWixel, Mock);
+        Collections.addAll(usesTransmitterBattery, WifiWixel, WifiDexBridgeWixel); // G4 transmitter battery
     }
 
 
@@ -245,8 +244,6 @@ public enum DexCollectionType {
                 return "Network G4";
             case WifiDexBridgeWixel:
                 return "Network G4 and xBridge";
-            case WifiBlueToothWixel:
-                return "Network G4 and Classic xDrip";
             case DexcomG5:
                 if (Ob1G5CollectionService.usingNativeMode()) {
                     return Ob1G5CollectionService.usingG6() ? "G6 Native" : "G5 Native";

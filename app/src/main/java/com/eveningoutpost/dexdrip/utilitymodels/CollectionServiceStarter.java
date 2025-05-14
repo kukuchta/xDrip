@@ -130,10 +130,6 @@ public class CollectionServiceStarter {
         return Pref.getString("dex_collection_method", "").equals("LibreReceiver");
     }
 
-    public static boolean isWifiandBTWixel(Context context) {
-        return Pref.getString("dex_collection_method", "None").equals("WifiBlueToothWixel");
-    }
-
     // are we in the specifc mode supporting wifi and dexbridge at the same time
     private static boolean isWifiandDexBridge() {
         return DexCollectionType.getDexCollectionType() == DexCollectionType.WifiDexBridgeWixel;
@@ -252,7 +248,7 @@ public class CollectionServiceStarter {
                 startBtG5Service();
             }
 
-        } else if (isWifiandBTWixel(context) || isWifiandDexBridge()) {
+        } else if (isWifiandDexBridge()) {
             Log.d("DexDrip", "Starting wifi and bt wixel collector");
             stopBtWixelService();
             stopFollowerThread();

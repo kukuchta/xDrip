@@ -40,15 +40,6 @@ public class CollectionServiceStarter {
         return PreferenceManager.getDefaultSharedPreferences(context).getString("dex_collection_method", "").equals("Follower");
     }
 
-    public static boolean isWifiandBTWixel(Context context) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        String collection_method = prefs.getString("dex_collection_method", "None");
-        if (collection_method.compareTo("WifiBlueToothWixel") == 0) {
-            return true;
-        }
-        return false;
-    }
-
     // are we in the specifc mode supporting wifi and dexbridge at the same time
     public static boolean isWifiandDexBridge()
     {
@@ -149,7 +140,7 @@ public class CollectionServiceStarter {
                 startBtG5Service();
             }
 
-        } else if (isWifiandBTWixel(context) || isWifiandDexBridge()) {
+        } else if (isWifiandDexBridge()) {
             Log.d("DexDrip", "Starting wifi and bt wixel collector");
             stopBtWixelService();
             //KS stopFollowerThread();
