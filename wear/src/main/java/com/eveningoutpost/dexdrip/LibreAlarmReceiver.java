@@ -154,12 +154,6 @@ public class LibreAlarmReceiver extends BroadcastReceiver {
 
                         switch (action) {
                             case Intents.LIBRE_ALARM_TO_XDRIP_PLUS:
-
-                                // If we are not currently in a mode supporting libre then switch
-                                if (!DexCollectionType.hasLibre()) {
-                                    DexCollectionType.setDexCollectionType(DexCollectionType.LibreAlarm);
-                                }
-
                                 if (bundle == null) break;
 
                                 Log.d(TAG, "Receiving LIBRE_ALARM broadcast");

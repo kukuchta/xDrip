@@ -2050,13 +2050,10 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                     Log.wtf(TAG, "Nullpointer wifireceivers ", e);
                 }
 
-                if (collectionType != DexCollectionType.WifiDexBridgeWixel) {
-                    try {
-                        collectionCategory.removePreference(transmitterId);
-                        // collectionCategory.removePreference(closeGatt);
-                    } catch (NullPointerException e) {
-                        Log.wtf(TAG, "Nullpointer removing txid ", e);
-                    }
+                try {
+                    collectionCategory.removePreference(transmitterId);
+                } catch (NullPointerException e) {
+                    Log.wtf(TAG, "Nullpointer removing txid ", e);
                 }
 
                 if (Build.VERSION.SDK_INT < 21) {
@@ -2530,17 +2527,6 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                         NFCReaderX.handleHomeScreenScanPreference(xdrip.getAppContext(), false); // always disable
                     }
 
-
-                /*    if ((collectionType != DexCollectionType.DexcomShare
-                            && collectionType != DexCollectionType.DexcomG5
-                            && collectionType != DexCollectionType.WifiDexBridgeWixel
-                            && collectionType != DexCollectionType.LibreAlarm
-                            ) || (!Experience.gotData())) {
-                        collectionCategory.removePreference(runInForeground);
-                    } else {
-                        collectionCategory.addPreference(runInForeground);
-                    }*/
-
                     // jamorham always show wifi receivers option if populated as we may switch modes dynamically
                     if (!DexCollectionType.hasWifi()) {
                         String receiversIpAddresses;
@@ -2554,14 +2540,10 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                         collectionCategory.addPreference(wifiRecievers);
                     }
 
-                    if (collectionType != DexCollectionType.WifiDexBridgeWixel) {
-                        collectionCategory.removePreference(transmitterId);
-                        //collectionCategory.removePreference(closeGatt);
-                        //TODO Bridge battery display support
-                    } else {
-                        collectionCategory.addPreference(transmitterId);
-                     //   collectionCategory.addPreference(closeGatt);
-                    }
+                    collectionCategory.removePreference(transmitterId);
+                    //collectionCategory.removePreference(closeGatt);
+                    //TODO Bridge battery display support
+
 
                     if (collectionType == DexCollectionType.DexcomG5) {
                         collectionCategory.addPreference(transmitterId);

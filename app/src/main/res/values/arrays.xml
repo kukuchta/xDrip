@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="DexCollectionMethods">
-        <item>Wifi Wixel + xBridge Wixel</item>
         <item>Dex</item>
         <item>xDrip+ Sync Follower</item>
-        <item>LibreAlarm</item>
         <item>Libre (patched App)</item>
         <item>640G / EverSense</item>
         <item>Medtrum A6</item>
@@ -19,10 +17,8 @@
     </string-array>
 
     <string-array name="DexCollectionMethodValues">
-        <item>WifiDexbridgeWixel</item>
         <item>DexcomG5</item>
         <item>Follower</item>
-        <item>LibreAlarm</item>
         <item>LibreReceiver</item>
         <item>NSEmulator</item>
         <item>Medtrum</item>

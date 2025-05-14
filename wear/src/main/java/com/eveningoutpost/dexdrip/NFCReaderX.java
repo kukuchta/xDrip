@@ -55,8 +55,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static com.eveningoutpost.dexdrip.xdrip.gs;
 
-// From LibreAlarm et al
-
 // TODO have we always checked checksum on this data? what about LibreAlarm path?
 
 

@@ -351,7 +351,6 @@ Refer to [XDrip BT Settings](#xdrip-bt-settings) above for additional details.
   Confirm the phone's Hardware Data Source preference matches the watch's BT Collector preference.  The watch's BT Collector preference is a read-only preference.  It gets set based on the phone's Hardware Data Source preference. The following values correspond to the collectors:
    - DexcomShare("DexcomShare"),
    - DexcomG5("DexcomG5"),
-   - WifiDexBridgeWixel("WifiDexbridgeWixel"),
    - LibreAlarm("LibreAlarm")
 
 Refer to [Collector](#collector) above for additional details.

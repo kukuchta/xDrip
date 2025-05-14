@@ -1145,16 +1145,9 @@ public class DexCollectionService extends Service implements BtCallBack {
 
         foregroundServiceStarter = new ForegroundServiceStarter(getApplicationContext(), this);
         foregroundServiceStarter.start();
-        //mContext = getApplicationContext();
         dexCollectionService = this;
         prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         listenForChangeInSettings();
-        //bgToSpeech = BgToSpeech.setupTTS(mContext); //keep reference to not being garbage collected
-        if (CollectionServiceStarter.isDexBridgeOrWifiandDexBridge()) {
-            Log.i(TAG, "onCreate: resetting bridge_battery preference to 0");
-            prefs.edit().putInt("bridge_battery", 0).apply();
-            //if (Home.get_master()) GcmActivity.sendBridgeBattery(prefs.getInt("bridge_battery",-1));
-        }
 
         cloner.dontClone(
                 android.bluetooth.BluetoothDevice.class,
@@ -1251,7 +1244,6 @@ public class DexCollectionService extends Service implements BtCallBack {
             retry_time = 0;
             failover_time = 0;
         }
-        //BgToSpeech.tearDownTTS();
 
         retry_backoff = 0;
         poll_backoff = 0;
@@ -1268,10 +1260,8 @@ public class DexCollectionService extends Service implements BtCallBack {
     public void setRetryTimer() {
         mStaticState = mConnectionState;
         if (shouldServiceRun()) {
-            //final long retry_in = (Constants.SECOND_IN_MS * 25);
             final long retry_in = whenToRetryNext();
             Log.d(TAG, "setRetryTimer: Restarting in: " + (retry_in / Constants.SECOND_IN_MS) + " seconds");
-            //serviceIntent = PendingIntent.getService(this, Constants.DEX_COLLECTION_SERVICE_RETRY_ID, new Intent(this, this.getClass()), 0);
             serviceIntent = WakeLockTrampoline.getPendingIntent(this.getClass(), Constants.DEX_COLLECTION_SERVICE_RETRY_ID);
             retry_time = JoH.wakeUpIntent(this, retry_in, serviceIntent);
         } else {
@@ -1283,7 +1273,6 @@ public class DexCollectionService extends Service implements BtCallBack {
         if (shouldServiceRun()) {
             final long retry_in = use_polling ? whenToPollNext() : (Constants.MINUTE_IN_MS * 6);
             Log.d(TAG, "setFailoverTimer: Fallover Restarting in: " + (retry_in / (Constants.MINUTE_IN_MS)) + " minutes");
-            //serviceFailoverIntent = PendingIntent.getService(this, Constants.DEX_COLLECTION_SERVICE_FAILOVER_ID, new Intent(this, this.getClass()), 0);
             serviceFailoverIntent = WakeLockTrampoline.getPendingIntent(this.getClass(), Constants.DEX_COLLECTION_SERVICE_FAILOVER_ID);
             failover_time = JoH.wakeUpIntent(this, retry_in, serviceFailoverIntent);
             retry_time = 0; // only one alarm will run
@@ -1586,15 +1575,8 @@ public class DexCollectionService extends Service implements BtCallBack {
 
         closeCycle(should_close);
 
-     /*   if (device != null) {
-            if (!device.getAddress().equals(address)) {
-                UserError.Log.e(TAG, "Device address changed from: " + device.getAddress() + " to " + address);
-                device = null;
-            }
-        }*/
-        //if (device == null) {
         device = mBluetoothAdapter.getRemoteDevice(address);
-        // }
+
         if (device == null) {
             Log.w(TAG, "Device not found.  Unable to connect.");
             setRetryTimer();
@@ -1774,7 +1756,7 @@ public class DexCollectionService extends Service implements BtCallBack {
             }
         } else {
             long timestamp = new Date().getTime();
-            if (((buffer.length > 0) && (buffer[0] == 0x07 || buffer[0] == 0x11 || buffer[0] == 0x15)) || CollectionServiceStarter.isDexBridgeOrWifiandDexBridge()) {
+            if ((buffer.length > 0) && (buffer[0] == 0x07 || buffer[0] == 0x11 || buffer[0] == 0x15)) {
                 if ((buffer.length == 1) && (buffer[0] == 0x00)) {
                     return; // null packet
                 }

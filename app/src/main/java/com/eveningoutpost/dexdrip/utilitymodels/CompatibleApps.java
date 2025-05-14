@@ -100,10 +100,8 @@ public class CompatibleApps extends BroadcastReceiver {
 
         package_name = "com.pimpimmobile.librealarm";
         if (InstalledApps.checkPackageExists(context, package_name)) {
-            if (DexCollectionType.getDexCollectionType() != DexCollectionType.LibreAlarm) {
-                if (JoH.pratelimit(package_name + NOTIFY_MARKER, RENOTIFY_TIME)) {
-                    id = notify(gs(R.string.librealarm), gs(R.string.use_librealarm), id, Feature.ENABLE_LIBRE_ALARM);
-                }
+            if (JoH.pratelimit(package_name + NOTIFY_MARKER, RENOTIFY_TIME)) {
+                id = notify(gs(R.string.librealarm), gs(R.string.use_librealarm), id, Feature.ENABLE_LIBRE_ALARM);
             }
         }
 
@@ -298,11 +296,6 @@ public class CompatibleApps extends BroadcastReceiver {
                     case ENABLE_TASKER:
                         addStringtoSpaceDelimitedPreference("local_broadcast_specific_package_destination", "net.dinglisch.android.tasker net.dinglisch.android.taskerm");
                         JoH.static_toast_long("Setting specific package broadcast for Tasker");
-                        cancelSourceNotification(intent);
-                        break;
-
-                    case ENABLE_LIBRE_ALARM:
-                        DexCollectionType.setDexCollectionType(DexCollectionType.LibreAlarm);
                         cancelSourceNotification(intent);
                         break;
 

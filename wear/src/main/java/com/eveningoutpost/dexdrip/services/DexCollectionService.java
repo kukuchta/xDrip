@@ -1099,16 +1099,9 @@ public class DexCollectionService extends Service implements BtCallBack {
 
         foregroundServiceStarter = new ForegroundServiceStarter(getApplicationContext(), this);
         foregroundServiceStarter.start();
-        //mContext = getApplicationContext();
         dexCollectionService = this;
         prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         listenForChangeInSettings();
-        //bgToSpeech = BgToSpeech.setupTTS(mContext); //keep reference to not being garbage collected
-        if (CollectionServiceStarter.isDexBridgeOrWifiandDexBridge()) {
-            Log.i(TAG, "onCreate: resetting bridge_battery preference to 0");
-            prefs.edit().putInt("bridge_battery", 0).apply();
-            //if (Home.get_master()) GcmActivity.sendBridgeBattery(prefs.getInt("bridge_battery",-1));
-        }
 
         cloner.dontClone(
                 android.bluetooth.BluetoothDevice.class,
@@ -1699,7 +1692,7 @@ public class DexCollectionService extends Service implements BtCallBack {
             }
         } else {
             long timestamp = new Date().getTime();
-            if (((buffer.length > 0) && (buffer[0] == 0x07 || buffer[0] == 0x11 || buffer[0] == 0x15)) || CollectionServiceStarter.isDexBridgeOrWifiandDexBridge()) {
+            if ((buffer.length > 0) && (buffer[0] == 0x07 || buffer[0] == 0x11 || buffer[0] == 0x15)) {
                 if ((buffer.length == 1) && (buffer[0] == 0x00)) {
                     return; // null packet
                 }

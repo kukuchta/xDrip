@@ -2437,7 +2437,6 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
         final DexCollectionType collector = DexCollectionType.getDexCollectionType();
         // TODO unify code using DexCollectionType methods
         // port this lot to DexCollectionType to avoid multiple lookups of the same preference
-        boolean isDexbridgeWixel = CollectionServiceStarter.isDexBridgeOrWifiandDexBridge();
 
         isBTShare = CollectionServiceStarter.isBTShare(getApplicationContext());
         isG5Share = CollectionServiceStarter.isBTG5(getApplicationContext());
@@ -2448,15 +2447,12 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
         if (isG5Share) {
             updateCurrentBgInfoCommon(collector, notificationText);
         }
-        if (isDexbridgeWixel) {
-            updateCurrentBgInfoForBtBasedWixel(collector, notificationText);
-        }
         if (collector.equals(DexCollectionType.Mock)) {
             updateCurrentBgInfoForWifiWixel(collector, notificationText);
         } else if (is_follower || collector.isPassive()) {
             displayCurrentInfo();
             Inevitable.task("home-notifications-start", 5000, Notifications::start);
-        } else if (!alreadyDisplayedBgInfoCommon && (DexCollectionType.getDexCollectionType() == DexCollectionType.LibreAlarm || collector == DexCollectionType.Medtrum)) {
+        } else if (!alreadyDisplayedBgInfoCommon && (collector == DexCollectionType.Medtrum)) {
             updateCurrentBgInfoCommon(collector, notificationText);
         }
         if (collector.equals(DexCollectionType.Disabled)) {
@@ -2583,19 +2579,6 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
             return;
         }
 
-        updateCurrentBgInfoCommon(collector, notificationText);
-    }
-
-    private void updateCurrentBgInfoForBtBasedWixel(DexCollectionType collector, TextView notificationText) {
-        if ((android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN_MR2)) {
-            notificationText.setText(R.string.unfortunately_andoird_version_no_blueooth_low_energy);
-            return;
-        }
-
-        if (ActiveBluetoothDevice.first() == null) {
-            notificationText.setText(R.string.first_use_menu_to_scan);
-            return;
-        }
         updateCurrentBgInfoCommon(collector, notificationText);
     }
 
@@ -2869,22 +2852,13 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
         DecimalFormat df = new DecimalFormat("#");
         df.setMaximumFractionDigits(0);
 
-        final boolean isDexbridge = CollectionServiceStarter.isDexBridgeOrWifiandDexBridge();
-        // final boolean hasBtWixel = DexCollectionType.hasBtWixel();
-        //boolean isWifiWixel = CollectionServiceStarter.isWifiandBTWixel(getApplicationContext()) | CollectionServiceStarter.isWifiWixel(getApplicationContext());
-        //  if (isDexbridge||isLimitter||hasBtWixel||is_follower) {
         if (DexCollectionType.hasBattery()) {
             final int bridgeBattery = Pref.getInt("bridge_battery", 0);
 
             if (bridgeBattery < 1) {
-                //dexbridgeBattery.setText(R.string.waiting_for_packet);
                 dexbridgeBattery.setVisibility(View.INVISIBLE);
             } else {
-                if (isDexbridge) {
-                    dexbridgeBattery.setText(getString(R.string.xbridge_battery) + ": " + bridgeBattery + "%");
-                } else {
-                    dexbridgeBattery.setText(getString(R.string.bridge_battery) + ": " + bridgeBattery + ((bridgeBattery < 200) ? "%" : "mV"));
-                }
+                dexbridgeBattery.setText(getString(R.string.bridge_battery) + ": " + bridgeBattery + ((bridgeBattery < 200) ? "%" : "mV"));
             }
             if (bridgeBattery < 50) dexbridgeBattery.setTextColor(Color.YELLOW);
             if (bridgeBattery < 25) dexbridgeBattery.setTextColor(Color.RED);
@@ -2989,8 +2963,6 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
 
     // TODO consider moving this out of Home
     public static long stale_data_millis() {
-        if (DexCollectionType.getDexCollectionType() == DexCollectionType.LibreAlarm)
-            return (60000 * 13);
         return (60000 * 11);
     }
 
@@ -3746,50 +3718,6 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
         return PendingIntent.getActivity(xdrip.getAppContext(), 0, new Intent(xdrip.getAppContext(), Home.class), android.app.PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
-   /* class SnackbarUriListener implements ActionClickListener {
-        Uri uri;
-
-        SnackbarUriListener(Uri uri) {
-            this.uri = uri;
-        }
-
-        @Override
-        public void onActionClicked(Snackbar snackbar) {
-            Intent shareIntent = new Intent();
-            shareIntent.setAction(Intent.ACTION_SEND);
-            shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
-            shareIntent.setType("application/octet-stream");
-            startActivity(Intent.createChooser(shareIntent, "Share database..."));
-        }
-    }*/
-
-    class MyActionItemTarget implements Target {
-
-        //private final Toolbar toolbar;
-        // private final int menuItemId;
-        private final View mView;
-        private final int xoffset;
-        private final int yoffset;
-
-        public MyActionItemTarget(View mView, int xoffset, int yoffset) {
-            // this.toolbar = toolbar;
-            //this.menuItemId = itemId;
-            this.mView = mView;
-            // get dp yada
-            this.xoffset = xoffset;
-            this.yoffset = yoffset;
-        }
-
-        @Override
-        public Point getPoint() {
-            int[] location = new int[2];
-            mView.getLocationInWindow(location);
-            int x = location[0] + mView.getWidth() / 2;
-            int y = location[1] + mView.getHeight() / 2;
-            return new Point(x + xoffset, y + yoffset);
-        }
-    }
-
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String[] permissions,
@@ -3801,21 +3729,4 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
             SdcardImportExport.restoreSettingsNow(this);
         }
     }
-
-  /*  class ToolbarActionItemTarget implements Target {
-
-        private final Toolbar toolbar;
-        private final int menuItemId;
-
-        public ToolbarActionItemTarget(Toolbar toolbar, @IdRes int itemId) {
-            this.toolbar = toolbar;
-            this.menuItemId = itemId;
-        }
-
-        @Override
-        public Point getPoint() {
-            return new ViewTarget(toolbar.findViewById(menuItemId)).getPoint();
-        }
-
-    }*/
 }
