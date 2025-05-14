@@ -2038,13 +2038,11 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                 }
 
                 try {
-                    if (!DexCollectionType.hasWifi()) {
-                        final String receiversIpAddresses = this.prefs.getString("wifi_recievers_addresses", "").trim();
-                        // only hide if non wifi wixel mode and value not previously set to cope with
-                        // dynamic mode changes. jamorham
-                        if (receiversIpAddresses.equals("")) {
-                            collectionCategory.removePreference(wifiRecievers);
-                        }
+                    final String receiversIpAddresses = this.prefs.getString("wifi_recievers_addresses", "").trim();
+                    // only hide if non wifi wixel mode and value not previously set to cope with
+                    // dynamic mode changes. jamorham
+                    if (receiversIpAddresses.equals("")) {
+                        collectionCategory.removePreference(wifiRecievers);
                     }
                 } catch (NullPointerException e) {
                     Log.wtf(TAG, "Nullpointer wifireceivers ", e);
@@ -2528,17 +2526,14 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                     }
 
                     // jamorham always show wifi receivers option if populated as we may switch modes dynamically
-                    if (!DexCollectionType.hasWifi()) {
-                        String receiversIpAddresses;
-                        receiversIpAddresses = AllPrefsFragment.this.prefs.getString("wifi_recievers_addresses", "");
-                        if (receiversIpAddresses == null || receiversIpAddresses.trim().equals("")) {
-                            collectionCategory.removePreference(wifiRecievers);
-                        } else {
-                            collectionCategory.addPreference(wifiRecievers);
-                        }
+                    String receiversIpAddresses;
+                    receiversIpAddresses = AllPrefsFragment.this.prefs.getString("wifi_recievers_addresses", "");
+                    if (receiversIpAddresses == null || receiversIpAddresses.trim().equals("")) {
+                        collectionCategory.removePreference(wifiRecievers);
                     } else {
                         collectionCategory.addPreference(wifiRecievers);
                     }
+
 
                     collectionCategory.removePreference(transmitterId);
                     //collectionCategory.removePreference(closeGatt);

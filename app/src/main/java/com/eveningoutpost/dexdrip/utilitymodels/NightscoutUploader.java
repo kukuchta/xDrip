@@ -1121,10 +1121,6 @@ public class NightscoutUploader {
             batteries.add(NightscoutBatteryDevice.BRIDGE);
         }
 
-        if (DexCollectionType.hasWifi()) {
-            batteries.add(NightscoutBatteryDevice.PARAKEET);
-        }
-
         boolean sendDexcomTxBattery = Pref.getBooleanDefaultFalse("send_ob1dex_tx_battery_to_nightscout");
         if (sendDexcomTxBattery) {
             batteries.add(NightscoutBatteryDevice.DEXCOM_TRANSMITTER);

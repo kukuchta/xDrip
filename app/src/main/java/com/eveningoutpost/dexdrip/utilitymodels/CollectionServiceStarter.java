@@ -144,10 +144,6 @@ public class CollectionServiceStarter {
         return collection_method.equals("DexcomG5");
     }
 
-    private static boolean isWifiWixel(String collection_method) {
-        return DexCollectionType.getDexCollectionType() == DexCollectionType.Mock;
-    }
-
     private static boolean isFollower(String collection_method) {
         return collection_method.equals("Follower");
     }
@@ -175,15 +171,7 @@ public class CollectionServiceStarter {
         xdrip.checkAppContext(context);
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
 
-        if (isWifiWixel(collection_method)) {
-            Log.d("DexDrip", "Starting wifi wixel collector");
-            stopBtWixelService();
-            stopFollowerThread();
-            stopBtShareService();
-            stopG5Service();
-
-            startWifWixelThread();
-        } else if (isBTShare(collection_method)) {
+        if (isBTShare(collection_method)) {
             Log.d("DexDrip", "Starting bt share collector");
             stopBtWixelService();
             stopFollowerThread();

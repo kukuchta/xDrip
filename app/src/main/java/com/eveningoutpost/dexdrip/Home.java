@@ -29,7 +29,6 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Point;
 import android.graphics.Typeface;
 import android.media.AudioManager;
 import android.net.Uri;
@@ -90,10 +89,8 @@ import com.eveningoutpost.dexdrip.models.StepCounter;
 import com.eveningoutpost.dexdrip.models.Treatments;
 import com.eveningoutpost.dexdrip.models.UserError;
 import com.eveningoutpost.dexdrip.services.ActivityRecognizedService;
-import com.eveningoutpost.dexdrip.services.DexCollectionService;
 import com.eveningoutpost.dexdrip.services.Ob1G5CollectionService;
 import com.eveningoutpost.dexdrip.services.PlusSyncService;
-import com.eveningoutpost.dexdrip.services.WixelReader;
 import com.eveningoutpost.dexdrip.utilitymodels.AlertPlayer;
 import com.eveningoutpost.dexdrip.utilitymodels.BgGraphBuilder;
 import com.eveningoutpost.dexdrip.utilitymodels.CollectionServiceStarter;
@@ -104,7 +101,6 @@ import com.eveningoutpost.dexdrip.utilitymodels.Experience;
 import com.eveningoutpost.dexdrip.utilitymodels.Inevitable;
 import com.eveningoutpost.dexdrip.utilitymodels.Intents;
 import com.eveningoutpost.dexdrip.utilitymodels.JamorhamShowcaseDrawer;
-import com.eveningoutpost.dexdrip.utilitymodels.MockDataSource;
 import com.eveningoutpost.dexdrip.utilitymodels.NanoStatus;
 import com.eveningoutpost.dexdrip.utilitymodels.NightscoutUploader;
 import com.eveningoutpost.dexdrip.utilitymodels.Notifications;
@@ -157,7 +153,6 @@ import com.eveningoutpost.dexdrip.utils.TestFeature;
 import com.eveningoutpost.dexdrip.wearintegration.Amazfitservice;
 import com.eveningoutpost.dexdrip.wearintegration.WatchUpdaterService;
 import com.github.amlcurran.showcaseview.ShowcaseView;
-import com.github.amlcurran.showcaseview.targets.Target;
 import com.github.amlcurran.showcaseview.targets.ViewTarget;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.gson.Gson;
@@ -2446,9 +2441,7 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
         if (isG5Share) {
             updateCurrentBgInfoCommon(collector, notificationText);
         }
-        if (collector.equals(DexCollectionType.Mock)) {
-            updateCurrentBgInfoForWifiWixel(collector, notificationText);
-        } else if (is_follower || collector.isPassive()) {
+        if (is_follower || collector.isPassive()) {
             displayCurrentInfo();
             Inevitable.task("home-notifications-start", 5000, Notifications::start);
         } else if (!alreadyDisplayedBgInfoCommon && (collector == DexCollectionType.Medtrum)) {
@@ -2467,14 +2460,6 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
                     }
                 }, 500);
 
-            }
-        } else if (collector.equals(DexCollectionType.Mock)) {
-            notificationText.append("\n USING FAKE DATA SOURCE !!!");
-            if (MockDataSource.divisor_scale == 1500000) {
-                notificationText.append(" F");
-            }
-            if (MockDataSource.amplify_cnst == 330000) {
-                notificationText.append(" Amp");
             }
         }
         if (Pref.getLong("alerts_disabled_until", 0) > new Date().getTime()) {
@@ -2567,19 +2552,8 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
         } else {
             btnVehicleMode.setVisibility(View.INVISIBLE);
         }
-
-        //if (isG5Share) showcasemenu(SHOWCASE_G5FIRMWARE); // nov 2016 firmware warning resolved 15/12/2016
-        //showcasemenu(1); // 3 dot menu
     }
 
-    private void updateCurrentBgInfoForWifiWixel(DexCollectionType collector, TextView notificationText) {
-        if (!WixelReader.IsConfigured()) {
-            notificationText.setText(R.string.first_configure_ip_address);
-            return;
-        }
-
-        updateCurrentBgInfoCommon(collector, notificationText);
-    }
 
     private void updateCurrentBgInfoCommon(DexCollectionType collector, TextView notificationText) {
         if (alreadyDisplayedBgInfoCommon) return; // with bluetooth and wifi, skip second time
@@ -2868,25 +2842,7 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
             dexbridgeBattery.setVisibility(View.INVISIBLE);
         }
 
-        if (DexCollectionType.hasWifi()) {
-            final int bridgeBattery = Pref.getInt("parakeet_battery", 0);
-            if (bridgeBattery > 0) {
-                if (bridgeBattery < 50) {
-                    parakeetBattery.setText(getString(R.string.parakeet_battery) + ": " + bridgeBattery + "%");
-
-                    if (bridgeBattery < 40) {
-                        parakeetBattery.setTextColor(Color.RED);
-                    } else {
-                        parakeetBattery.setTextColor(Color.YELLOW);
-                    }
-                    parakeetBattery.setVisibility(View.VISIBLE);
-                } else {
-                    parakeetBattery.setVisibility(View.INVISIBLE);
-                }
-            }
-        } else {
-            parakeetBattery.setVisibility(View.INVISIBLE);
-        }
+        parakeetBattery.setVisibility(View.INVISIBLE);
 
         if (!Pref.getBoolean("display_bridge_battery", true)) {
             dexbridgeBattery.setVisibility(View.INVISIBLE);
@@ -3161,9 +3117,6 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
         }
 
         boolean parakeet_menu_items = false;
-        if (DexCollectionType.hasWifi()) {
-            parakeet_menu_items = Pref.getBoolean("plus_extra_features", false);
-        }
         menu.findItem(R.id.showmap).setVisible(parakeet_menu_items);
         menu.findItem(R.id.parakeetsetup).setVisible(parakeet_menu_items);
 

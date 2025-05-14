@@ -184,9 +184,6 @@ public class MegaStatus extends FloatingLocaleActivityWithScreenshot {
             if (DexCollectionType.getDexCollectionType() == DexCollectionType.LibreReceiver) {
                 addAsection(XDRIP_LIBRE2, "Libre Patched App Status");
             }
-            if (DexCollectionType.hasWifi()) {
-                addAsection(IP_COLLECTOR, dexCollectionType == DexCollectionType.Mock ? "FAKE / MOCK DATA SOURCE" : "Wifi Wixel / Parakeet Status");
-            }
             if (InPenEntry.isEnabled()) {
                 addAsection(INPEN_STATUS,"InPen Status");
             }

@@ -76,11 +76,6 @@ public class WifiCollectionService extends Service {
         if (JoH.buggy_samsung) {
             l.add(new StatusItem("Buggy handset", "Using workaround", max_wakeup_jitter < TOLERABLE_JITTER ? StatusItem.Highlight.GOOD : StatusItem.Highlight.BAD));
         }
-        if(DexCollectionType.hasLibre()) {
-            l.addAll(LibreWifiReader.megaStatus());
-        } else {
-            l.addAll(WixelReader.megaStatus());
-        }
         
         final int bridgeBattery = Pref.getInt("parakeet_battery", 0);
         if (bridgeBattery > 0) {
@@ -127,19 +122,10 @@ public class WifiCollectionService extends Service {
             }
         }
 
-        if (DexCollectionType.hasWifi()) {
-            runWixelReader();
-            // For simplicity done here, would better happen once we know if we have a packet or not...
-            setFailoverTimer();
-        } else {
-            lastState = "Stopping " + JoH.hourMinuteString();
-            stopSelf();
-            if (wl.isHeld()) wl.release();
-            return START_NOT_STICKY;
-        }
-        lastState = "Started " + JoH.hourMinuteString();
+        lastState = "Stopping " + JoH.hourMinuteString();
+        stopSelf();
         if (wl.isHeld()) wl.release();
-        return START_STICKY;
+        return START_NOT_STICKY;
     }
 
     @Override
@@ -157,37 +143,8 @@ public class WifiCollectionService extends Service {
         }
     }
 
-    public void setFailoverTimer() {
-        if (DexCollectionType.hasWifi()) {
-            long retry_in;
-            if(DexCollectionType.hasLibre()) {
-                retry_in = LibreWifiReader.timeForNextRead();
-            } else {
-                retry_in = WixelReader.timeForNextRead();
-            }
-            Log.d(TAG, "setFailoverTimer: Fallover Restarting in: " + (retry_in / (60 * 1000)) + " minutes");
-            //requested_wake_time = JoH.wakeUpIntent(this, retry_in, PendingIntent.getService(this, Constants.WIFI_COLLECTION_SERVICE_ID, new Intent(this, this.getClass()), 0));
-            requested_wake_time = JoH.wakeUpIntent(this, retry_in, WakeLockTrampoline.getPendingIntent(this.getClass(), Constants.WIFI_COLLECTION_SERVICE_ID));
-            PersistentStore.setLong(WIFI_COLLECTION_WAKEUP, requested_wake_time);
-        } else {
-            stopSelf();
-        }
-    }
-
     public void listenForChangeInSettings() {
         prefs.registerOnSharedPreferenceChangeListener(prefListener);
-    }
-
-    private void runWixelReader() {
-        // Theoretically can create more than one task. Should not be a problem since android runs them
-        // on the same thread.
-        AsyncTask<String, Void, Void> task;
-        if(DexCollectionType.hasLibre()) {
-            task = new LibreWifiReader(getApplicationContext());
-        } else {
-            task = new WixelReader(getApplicationContext());
-        }
-        task.executeOnExecutor(xdrip.executor);
     }
 
     // data for NanoStatus
