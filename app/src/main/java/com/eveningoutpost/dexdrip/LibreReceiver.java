@@ -1,7 +1,6 @@
 package com.eveningoutpost.dexdrip;
 
 import static com.eveningoutpost.dexdrip.Home.get_engineering_mode;
-import static com.eveningoutpost.dexdrip.LibreAlarmReceiver.LIBRE_SOURCE_INFO;
 import static com.eveningoutpost.dexdrip.models.JoH.emptyString;
 import static com.eveningoutpost.dexdrip.models.Libre2Sensor.Libre2Sensors;
 
@@ -38,6 +37,7 @@ import lombok.val;
 
 public class LibreReceiver extends BroadcastReceiver {
 
+    public static final String LIBRE_SOURCE_INFO = "Libre2";
     private static final String TAG = LibreReceiver.class.getSimpleName();
     private static final boolean d = false;
     private static final Object lock = new Object();
@@ -92,24 +92,6 @@ public class LibreReceiver extends BroadcastReceiver {
 
                                 } catch (Exception e) {
                                     UserError.Log.e(TAG, "Got exception processing realtime: " + e);
-                                }
-
-                                try {
-                                    val data = intent.getBundleExtra("sas").getBundle("historicGlucoseReadings");
-                                    val gd = new ArrayList<GlucoseData>(data.size());
-                                    for (String key : data.keySet()) {
-                                        val item = data.getBundle(key);
-                                        val glucose = item.getDouble("glucoseValue");
-                                        val timestamp = item.getLong("timestamp");
-                                        if (d) UserError.Log.d(TAG, "Historical item: " + JoH.dateTimeText(timestamp) + " value: " + Unitized.unitized_string_static(glucose));
-                                        val g = new GlucoseData((int) Math.round(glucose), timestamp);
-                                        g.glucoseLevel = g.glucoseLevelRaw;
-                                        gd.add(g);
-                                    }
-                                    LibreAlarmReceiver.insertFromHistory(gd, false);
-
-                                } catch (Exception e) {
-                                    UserError.Log.e(TAG, "Got exception processing history: " + e);
                                 }
 
                                 Home.staticRefreshBGChartsOnIdle();

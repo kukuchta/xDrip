@@ -316,45 +316,14 @@ public class NFCReaderX {
 
         sendLibrereadingToFollowers(tagId, data1, CaptureDateTime, patchUid, patchInfo);
 
-if (Pref.getBooleanDefaultFalse("external_blukon_algorithm")) {
+        if (Pref.getBooleanDefaultFalse("external_blukon_algorithm")) {
             // If oop is used, there is no need to  do the checksum It will be done by the oop.
             // (or actually we don't know how to do it, for us 14/de sensors).
             // Save raw block record (we start from block 0)
             LibreBlock.createAndSave(tagId, CaptureDateTime, data1, 0, allowUpload, patchUid, patchInfo);
             LibreOOPAlgorithm.sendData(data1, CaptureDateTime, patchUid, patchInfo, tagId);
-        } else {
-            final boolean checksum_ok = LibreUtils.verify(data1, patchInfo);
-            if (!checksum_ok) {
-                Log.e(TAG, "bad cs");
-                return false;
-            }
-            
-            // The 4'th byte is where the sensor status is (for libre1 libre2 and libre pro).
-            if(!LibreUtils.isSensorReady(data1[4])) {
-                Log.e(TAG, "Sensor is not ready, Ignoring reading!");
-                return true;
-            }
-            
-            final ReadingData mResult = parseData(data1, patchInfo, CaptureDateTime, trend_bg_vals, history_bg_vals);
-            new Thread() {
-                @Override
-                public void run() {
-                    final PowerManager.WakeLock wl = JoH.getWakeLock("processTransferObject", 60000);
-                    try {
-                        // Protect against wifi reader and gmc reader coming at the same time.
-                        synchronized (NFCReaderX.class) {
-                            if (mResult != null) {
-                                boolean bg_val_exists = trend_bg_vals != null && history_bg_vals != null;
-                                LibreAlarmReceiver.processReadingDataTransferObject(mResult, CaptureDateTime, tagId, allowUpload, patchUid, patchInfo, bg_val_exists);
-                        Home.staticRefreshBGCharts();
-                            }
-                        }
-                    } finally {
-                        JoH.releaseWakeLock(wl);
-                    }
-                }
-            }.start();
         }
+
         return true; // Checksum tests have passed.
     }
 

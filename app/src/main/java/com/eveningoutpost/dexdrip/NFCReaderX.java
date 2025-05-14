@@ -335,25 +335,6 @@ public class NFCReaderX {
                 return true;
             }
 
-            final ReadingData mResult = parseData(data1, patchInfo, CaptureDateTime, trend_bg_vals, history_bg_vals);
-            new Thread() {
-                @Override
-                public void run() {
-                    final PowerManager.WakeLock wl = JoH.getWakeLock("processTransferObject", 60000);
-                    try {
-                        // Protect against wifi reader and gmc reader coming at the same time.
-                        synchronized (NFCReaderX.class) {
-                            if (mResult != null) {
-                                boolean bg_val_exists = trend_bg_vals != null && history_bg_vals != null;
-                                LibreAlarmReceiver.processReadingDataTransferObject(mResult, CaptureDateTime, tagId, allowUpload, patchUid, patchInfo, bg_val_exists);
-                                Home.staticRefreshBGCharts();
-                            }
-                        }
-                    } finally {
-                        JoH.releaseWakeLock(wl);
-                    }
-                }
-            }.start();
         }
         return true; // Checksum tests have passed.
     }

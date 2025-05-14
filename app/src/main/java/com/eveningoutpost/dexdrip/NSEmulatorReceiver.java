@@ -112,11 +112,6 @@ public class NSEmulatorReceiver extends BroadcastReceiver {
                                                     } catch (JSONException e) {
                                                         // Intentionly ignoring ecxeption.
                                                     }
-                                                    if (process_id == -1 || process_id == android.os.Process.myPid()) {
-                                                        LibreOOPAlgorithm.handleData(json_array.getString(1));
-                                                    } else {
-                                                        Log.d(TAG, "Ignoring OOP result since process id is wrong " + process_id);
-                                                    }
 
                                                 } else {
                                                     final JSONObject json_object = json_array.getJSONObject(0);

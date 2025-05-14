@@ -61,7 +61,6 @@ public class StopSensor extends ActivityWithMenu {
 
         JoH.static_toast_long(gs(R.string.sensor_stopped));
         JoH.clearCache();
-        LibreAlarmReceiver.clearSensorStats();
         PluggableCalibration.invalidateAllCaches();
 
         Treatments.sensorStop(null, "Stopped by xDrip");

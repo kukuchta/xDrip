@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.util.Pair;
 
 import com.eveningoutpost.dexdrip.importedlibraries.usbserial.util.HexDump;
-import com.eveningoutpost.dexdrip.LibreAlarmReceiver;
 import com.eveningoutpost.dexdrip.models.UserError.Log;
 import com.eveningoutpost.dexdrip.NFCReaderX;
 import com.eveningoutpost.dexdrip.R;
@@ -18,9 +17,6 @@ import com.eveningoutpost.dexdrip.xdrip;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import java.util.ArrayList;
 
@@ -226,68 +222,6 @@ public class LibreOOPAlgorithm {
         return currentSensorData.deviceName_;
     }
 
-    static public void handleData(String oopData) {
-        Log.e(TAG, "handleData called with " + oopData);
-        OOPResults oOPResults = null;
-        try {
-            final Gson gson = new GsonBuilder().create();
-            OOPResultsContainer oOPResultsContainer = gson.fromJson(oopData, OOPResultsContainer.class);
-
-            if (oOPResultsContainer.Message != null) {
-                Log.e(TAG, "recieved a message from oop algorithm:" + oOPResultsContainer.Message);
-            }
-
-            if (oOPResultsContainer.oOPResultsArray.length > 0) {
-                oOPResults = oOPResultsContainer.oOPResultsArray[0];
-            } else {
-                Log.e(TAG, "oOPResultsArray exists, but size is zero");
-                return;
-            }
-        } catch (Exception e) { //TODO: what exception should we catch here.
-            Log.e(TAG, "HandleData cought exception ", e);
-            return;
-        }
-        ReadingData readingData = new ReadingData();
-
-        readingData.trend = new ArrayList<GlucoseData>();
-
-        // Add the first object, that is the current time
-        GlucoseData glucoseData = new GlucoseData();
-        glucoseData.sensorTime = oOPResults.currentTime;
-        glucoseData.realDate = oOPResults.timestamp;
-        glucoseData.glucoseLevel = (int) (oOPResults.currentBg);
-        glucoseData.glucoseLevelRaw = (int) (oOPResults.currentBg);
-
-        verifyTime(glucoseData.sensorTime, "LibreOOPAlgorithm", null);
-        readingData.trend.add(glucoseData);
-
-        // TODO: Add here data of last 10 minutes or whatever.
-
-
-        // Add the historic data
-        readingData.history = new ArrayList<GlucoseData>();
-        for (HistoricBg historicBg : oOPResults.historicBg) {
-            if (historicBg.quality == 0) {
-                glucoseData = new GlucoseData();
-                glucoseData.realDate = oOPResults.timestamp + (historicBg.time - oOPResults.currentTime) * 60000;
-                glucoseData.glucoseLevel = (int) (historicBg.bg);
-                glucoseData.glucoseLevelRaw = (int) (historicBg.bg);
-                readingData.history.add(glucoseData);
-            }
-        }
-
-        // Add the current point again. This is needed in order to have the last gaps closed.
-        // TODO: Base this on real BG values.
-        glucoseData = new GlucoseData();
-        glucoseData.realDate = oOPResults.timestamp;
-        glucoseData.glucoseLevel = (int) (oOPResults.currentBg);
-        glucoseData.glucoseLevelRaw = (int) (oOPResults.currentBg);
-        readingData.history.add(glucoseData);
-
-        Log.d(TAG, "handleData Created the following object " + readingData.toString());
-        LibreAlarmReceiver.CalculateFromDataTransferObject(readingData, false, false);
-    }
-
     public static SensorType getSensorType(byte[] SensorInfo) {
         if (SensorInfo == null) {
             return SensorType.Libre1;
@@ -345,8 +279,6 @@ public class LibreOOPAlgorithm {
 
         Log.d(TAG, "handleDecodedBleResult Created the following object " + readingData.toString());
         NFCReaderX.sendLibrereadingToFollowers(SensorSN, readingData.raw_data, timestamp, patchUid, null);
-        boolean bg_val_exists = trend_bg_vals != null && history_bg_vals != null;
-        LibreAlarmReceiver.processReadingDataTransferObject(readingData, timestamp, SensorSN, true /*=allowupload*/, patchUid, null/*=patchInfo*/, bg_val_exists);
     }
 
     public static ArrayList<GlucoseData> parseBleDataPerMinute(byte[] ble_data, int[] trend_bg_vals, Long captureDateTime) {

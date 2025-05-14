@@ -1405,7 +1405,6 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
             updateCurrentBgInfo("delete all treatment");
         } else if (allWords.contentEquals("delete all glucose data")) {
             deleteAllBG(null);
-            LibreAlarmReceiver.clearSensorStats();
         } else if (allWords.contentEquals("test trend arrow")) {
             testGraphicalTrendArrow();
         } else {
