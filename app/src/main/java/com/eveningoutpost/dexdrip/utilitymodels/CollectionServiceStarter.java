@@ -167,17 +167,13 @@ public class CollectionServiceStarter {
         return Pref.getString("dex_collection_method", "None").equals("WifiWixel");
     }
 
-    public static boolean isWifiLibre(Context context) {
-        return Pref.getString("dex_collection_method", "None").equals("LibreWifi");
-    }
-
     private static boolean isWifiWixel(String collection_method) {
         return collection_method.equals("WifiWixel") || DexCollectionType.getDexCollectionType() == DexCollectionType.Mock;
     }
 
-    private static boolean isWifiLibre(String collection_method) {
-        return collection_method.equals("LibreWifi") || DexCollectionType.getDexCollectionType() == DexCollectionType.Mock;
-    }
+    //private static boolean isWifiLibre(String collection_method) {
+    //    return DexCollectionType.getDexCollectionType() == DexCollectionType.Mock;
+    //}
 
 
     private static boolean isFollower(String collection_method) {
@@ -211,7 +207,7 @@ public class CollectionServiceStarter {
         xdrip.checkAppContext(context);
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
 
-        if (isWifiWixel(collection_method) || isWifiLibre(collection_method)) {
+        if (isWifiWixel(collection_method)) {
             Log.d("DexDrip", "Starting wifi wixel collector");
             stopBtWixelService();
             stopFollowerThread();

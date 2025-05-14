@@ -2443,7 +2443,6 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
         isBTShare = CollectionServiceStarter.isBTShare(getApplicationContext());
         isG5Share = CollectionServiceStarter.isBTG5(getApplicationContext());
         boolean isWifiWixel = CollectionServiceStarter.isWifiWixel(getApplicationContext());
-        boolean isWifiLibre = CollectionServiceStarter.isWifiLibre(getApplicationContext());
         alreadyDisplayedBgInfoCommon = false; // reset flag
         if (isBTShare) {
             updateCurrentBgInfoForBtShare(notificationText);
@@ -2454,7 +2453,7 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
         if (isDexbridgeWixel || isWifiBluetoothWixel) {
             updateCurrentBgInfoForBtBasedWixel(collector, notificationText);
         }
-        if (isWifiWixel || isWifiBluetoothWixel || isWifiLibre || collector.equals(DexCollectionType.Mock)) {
+        if (isWifiWixel || isWifiBluetoothWixel || collector.equals(DexCollectionType.Mock)) {
             updateCurrentBgInfoForWifiWixel(collector, notificationText);
         } else if (is_follower || collector.isPassive()) {
             displayCurrentInfo();

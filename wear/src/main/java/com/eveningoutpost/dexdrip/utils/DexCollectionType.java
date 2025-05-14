@@ -24,7 +24,6 @@ public enum DexCollectionType {
 
     None("None"),
     DexcomShare("DexcomShare"),
-    LibreWifi("LibreWifi"),
     WifiBlueToothWixel("WifiBlueToothWixel"),
     WifiWixel("WifiWixel"),
     DexcomG5("DexcomG5"),
@@ -67,11 +66,11 @@ public enum DexCollectionType {
 
         Collections.addAll(usesBluetooth, DexcomShare, WifiBlueToothWixel, DexcomG5, WifiDexBridgeWixel, Medtrum);
         Collections.addAll(usesBtWixel, WifiBlueToothWixel); // Name is misleading here, should probably be using dexcollectionservice
-        Collections.addAll(usesWifi, WifiBlueToothWixel, WifiWixel, WifiDexBridgeWixel, Mock, LibreWifi);
+        Collections.addAll(usesWifi, WifiBlueToothWixel, WifiWixel, WifiDexBridgeWixel, Mock);
         Collections.addAll(usesXbridge, WifiDexBridgeWixel);
         Collections.addAll(usesFiltered, WifiDexBridgeWixel, DexcomG5, WifiWixel, Follower, Mock); // Bluetooth and Wifi+Bluetooth need dynamic mode
-        Collections.addAll(usesLibre, LibreAlarm, LibreWifi, LibreReceiver);
-        Collections.addAll(usesBattery, WifiBlueToothWixel, WifiDexBridgeWixel, Follower, LibreAlarm, LibreWifi); // parakeet separate
+        Collections.addAll(usesLibre, LibreAlarm, LibreReceiver);
+        Collections.addAll(usesBattery, WifiBlueToothWixel, WifiDexBridgeWixel, Follower, LibreAlarm); // parakeet separate
         Collections.addAll(usesDexcomRaw, WifiWixel, WifiBlueToothWixel, DexcomG5, WifiDexBridgeWixel, Mock);
         Collections.addAll(usesTransmitterBattery, WifiWixel, WifiBlueToothWixel, WifiDexBridgeWixel); // G4 transmitter battery
     }
@@ -253,8 +252,6 @@ public enum DexCollectionType {
                     return Ob1G5CollectionService.usingG6() ? "G6 Native" : "G5 Native";
                 }
                 return dct.name();
-            case LibreWifi:
-                return "Network libre";
             case NSFollow:
                 return "Nightscout";
             case SHFollow:
