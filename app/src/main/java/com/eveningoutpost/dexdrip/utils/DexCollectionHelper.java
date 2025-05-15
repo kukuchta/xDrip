@@ -88,9 +88,6 @@ public class DexCollectionHelper {
             case Medtrum:
                 bluetoothScanIfNeeded();
                 break;
-            case LibreReceiver:
-                Home.staticRefreshBGChartsOnIdle();
-                break;
 
             /* LOGIN via browser is required currently
             case CLFollow:

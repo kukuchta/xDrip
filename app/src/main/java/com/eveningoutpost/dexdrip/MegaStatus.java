@@ -178,9 +178,6 @@ public class MegaStatus extends FloatingLocaleActivityWithScreenshot {
             if (BlueJayEntry.isEnabled()) {
                 addAsection(BLUEJAY_STATUS, "BlueJay Watch Status");
             }
-            if (DexCollectionType.getDexCollectionType() == DexCollectionType.LibreReceiver) {
-                addAsection(XDRIP_LIBRE2, "Libre Patched App Status");
-            }
             if (InPenEntry.isEnabled()) {
                 addAsection(INPEN_STATUS,"InPen Status");
             }
@@ -280,9 +277,6 @@ public class MegaStatus extends FloatingLocaleActivityWithScreenshot {
                 break;
             case CARELINK_FOLLOW:
                 la.addRows(CareLinkFollowService.megaStatus());
-                break;
-            case XDRIP_LIBRE2:
-                la.addRows(LibreReceiver.megaStatus());
                 break;
         }
         la.changed();

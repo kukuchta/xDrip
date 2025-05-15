@@ -119,9 +119,8 @@ public class BroadcastGlucose {
                             bundle.putString(Intents.EXTRA_BG_SLOPE_NAME, dg.delta_name);
                         }
 
-                        final boolean is_oop = DexCollectionType.isLibreOOPNonCalibratebleAlgorithm(null);
-                        if (dg.from_plugin || is_oop) {
-                            bundle.putString(Intents.XDRIP_CALIBRATION_PLUGIN, (is_oop ? "OOP " : "") + dg.plugin_name);
+                        if (dg.from_plugin) {
+                            bundle.putString(Intents.XDRIP_CALIBRATION_PLUGIN, dg.plugin_name);
                         }
 
 

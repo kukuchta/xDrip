@@ -3,7 +3,6 @@
     <string-array name="DexCollectionMethods">
         <item>Dex</item>
         <item>xDrip+ Sync Follower</item>
-        <item>Libre (patched App)</item>
         <item>640G / EverSense</item>
         <item>Medtrum A6</item>
         <item>Nightscout Follower</item>
@@ -19,7 +18,6 @@
     <string-array name="DexCollectionMethodValues">
         <item>DexcomG5</item>
         <item>Follower</item>
-        <item>LibreReceiver</item>
         <item>NSEmulator</item>
         <item>Medtrum</item>
         <item>NSFollower</item>

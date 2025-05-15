@@ -806,11 +806,6 @@ public class Calibration extends Model {
 
     @NonNull
     private static SlopeParameters getSlopeParameters() {
-
-        if (CollectionServiceStarter.isLibre2App((Context)null)) {
-            return new Li2AppParameters();
-        }
-
         // open question about parameters used with LibreAlarm
 
         if (Pref.getBooleanDefaultFalse("engineering_mode") && Pref.getBooleanDefaultFalse("old_school_calibration_mode")) {

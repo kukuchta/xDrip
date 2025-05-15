@@ -121,8 +121,7 @@ public class DoNothingService extends Service {
             }
         }
 
-        if (CollectionServiceStarter.isFollower(getApplicationContext()) ||
-                CollectionServiceStarter.isLibre2App(getApplicationContext())) {
+        if (CollectionServiceStarter.isFollower(getApplicationContext())) {
             new Thread(() -> {
                 final int minsago = GcmListenerSvc.lastMessageMinutesAgo();
                 //Log.d(TAG, "Tick: minutes ago: " + minsago);

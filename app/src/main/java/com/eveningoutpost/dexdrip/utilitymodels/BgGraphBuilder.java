@@ -222,8 +222,6 @@ public class BgGraphBuilder {
             loaded_start = start;
             loaded_end = end;
             bgReadings = BgReading.latestForGraph(numValues, start, end);
-            if (DexCollectionType.getDexCollectionType() == DexCollectionType.LibreReceiver)
-                Libre2RawValues = Libre2RawValue.latestForGraph(numValues, start, end);
             plugin_adjusted = false;
             smoother_adjusted = false;
         } finally {
@@ -787,13 +785,6 @@ public class BgGraphBuilder {
             lines.add(treatments[5]); // predictive
             lines.add(treatments[6]); // cob
             lines.add(treatments[7]); // poly predict
-
-
-            if (prefs.getBoolean("show_libre_trend_line", false)) {
-                if (DexCollectionType.hasLibre()) {
-                    lines.add(libreTrendLine());
-                }
-            }
 
             lines.add(minShowLine());
             lines.add(maxShowLine());
@@ -1449,17 +1440,6 @@ public class BgGraphBuilder {
 
             }
 
-            try {
-                if (DexCollectionType.getDexCollectionType() == DexCollectionType.LibreReceiver && prefs.getBoolean("Libre2_showRawGraph", false)) {
-                    for (final Libre2RawValue bgLibre : Libre2RawValues) {
-                        if (bgLibre.glucose > 0) {
-                            rawInterpretedValues.add(new HPointValue((double) (bgLibre.timestamp / FUZZER), (float) unitized(bgLibre.glucose)));
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                Log.wtf(TAG, "Exception to generate Raw-Graph Libre2");
-            }
             if (avg1counter > 0) {
                 avg1value = avg1value / avg1counter;
             }

@@ -1038,16 +1038,6 @@ public class DexCollectionService extends Service implements BtCallBack {
         if (failover_time > 0)
             l.add(new StatusItem("Next Wake up", JoH.niceTimeTill(failover_time), JoH.msTill(failover_time) < -2 ? StatusItem.Highlight.CRITICAL : StatusItem.Highlight.NORMAL));
 
-        if (Home.get_engineering_mode() && DexCollectionType.hasLibre()) {
-            l.add(new StatusItem("Request Data", "Test for xBridgePlus protocol", immediateSend == null ? StatusItem.Highlight.NORMAL : StatusItem.Highlight.NOTICE, "long-press", new Runnable() {
-                @Override
-                public void run() {
-                    immediateSend = XbridgePlus.sendDataRequestPacket();
-                    CollectionServiceStarter.restartCollectionService(xdrip.getAppContext()); // TODO quicker/cleaner restart
-                }
-            }));
-        }
-
         if (Home.get_engineering_mode() && (static_last_hexdump != null)) {
             l.add(new StatusItem("Received Data", filterHexdump(static_last_hexdump)));
         }

@@ -768,24 +768,6 @@ public class DexCollectionService extends Service implements BtCallBack {
         return bk_pin != null ? bk_pin : HM10Attributes.HM_DEFAULT_BT_PIN;
     }
 
-    @SuppressLint("ObsoleteSdkInt")
-    private boolean shouldServiceRun() {
-        if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2) return false;
-        final boolean result = (DexCollectionType.hasXbridgeWixel() || DexCollectionType.hasBtWixel())
-                && ((!Home.get_forced_wear() && !JoH.areWeRunningOnAndroidWear())
-                || PersistentStore.getBoolean(CollectionServiceStarter.pref_run_wear_collector));
-        if (d) Log.d(TAG, "shouldServiceRun() returning: " + result);
-        return result;
-    }
-
-    // remember needs proguard exclusion due to access by reflection
-    public static boolean isCollecting() {
-        if (static_use_blukon) {
-            return Blukon.isCollecting();
-        }
-        return false;
-    }
-
     private static void status(String msg) {
         lastState = msg + " " + JoH.hourMinuteString();
     }
@@ -1002,16 +984,6 @@ public class DexCollectionService extends Service implements BtCallBack {
         if (failover_time > 0)
             l.add(new StatusItem("Next Wake up", JoH.niceTimeTill(failover_time), JoH.msTill(failover_time) < -2 ? StatusItem.Highlight.CRITICAL : StatusItem.Highlight.NORMAL));
 
-        if (Home.get_engineering_mode() && DexCollectionType.hasLibre()) {
-            l.add(new StatusItem("Request Data", "Test for xBridgePlus protocol", immediateSend == null ? StatusItem.Highlight.NORMAL : StatusItem.Highlight.NOTICE, "long-press", new Runnable() {
-                @Override
-                public void run() {
-                    immediateSend = XbridgePlus.sendDataRequestPacket();
-                    CollectionServiceStarter.restartCollectionService(xdrip.getAppContext()); // TODO quicker/cleaner restart
-                }
-            }));
-        }
-
         if (Home.get_engineering_mode() && (static_last_hexdump != null)) {
             l.add(new StatusItem("Received Data", filterHexdump(static_last_hexdump)));
         }
@@ -1142,20 +1114,11 @@ public class DexCollectionService extends Service implements BtCallBack {
         static_use_transmiter_pl_bluetooth = use_transmiter_pl_bluetooth;
         static_use_polling = use_polling;
         status("Started");
-        if (shouldServiceRun()) {
-            setFailoverTimer();
-        } else {
-            status("Stopping");
-            stopSelf();
-            JoH.releaseWakeLock(wl);
-            return START_NOT_STICKY;
-        }
-        lastdata = null;
-        DisconnectReceiver.addCallBack(this, TAG);
-        checkConnection();
-        watchdog();
+
+        status("Stopping");
+        stopSelf();
         JoH.releaseWakeLock(wl);
-        return START_STICKY;
+        return START_NOT_STICKY;
     }
 
     private void unRegisterPairingReceiver() {
@@ -1183,19 +1146,13 @@ public class DexCollectionService extends Service implements BtCallBack {
             scanMeister.stop();
         }
 
-        if (shouldServiceRun()) {//Android killed service
-            setRetryTimer();
-            status("Stopped, attempting restart");
-        } else {//onDestroy triggered by CollectionServiceStart.stopBtService
-            Log.d(TAG, "onDestroy stop Alarm serviceIntent");
-            JoH.cancelAlarm(this, serviceIntent);
-            Log.d(TAG, "onDestroy stop Alarm serviceFailoverIntent");
-            JoH.cancelAlarm(this, serviceFailoverIntent);
-            status("Service full stop");
-            retry_time = 0;
-            failover_time = 0;
-        }
-        //BgToSpeech.tearDownTTS();
+        Log.d(TAG, "onDestroy stop Alarm serviceIntent");
+        JoH.cancelAlarm(this, serviceIntent);
+        Log.d(TAG, "onDestroy stop Alarm serviceFailoverIntent");
+        JoH.cancelAlarm(this, serviceFailoverIntent);
+        status("Service full stop");
+        retry_time = 0;
+        failover_time = 0;
 
         retry_backoff = 0;
         poll_backoff = 0;
@@ -1211,29 +1168,11 @@ public class DexCollectionService extends Service implements BtCallBack {
 
     public void setRetryTimer() {
         mStaticState = mConnectionState;
-        if (shouldServiceRun()) {
-            //final long retry_in = (Constants.SECOND_IN_MS * 25);
-            final long retry_in = whenToRetryNext();
-            Log.d(TAG, "setRetryTimer: Restarting in: " + (retry_in / Constants.SECOND_IN_MS) + " seconds");
-            //serviceIntent = PendingIntent.getService(this, Constants.DEX_COLLECTION_SERVICE_RETRY_ID, new Intent(this, this.getClass()), 0);
-            serviceIntent = WakeLockTrampoline.getPendingIntent(this.getClass(), Constants.DEX_COLLECTION_SERVICE_RETRY_ID);
-            retry_time = JoH.wakeUpIntent(this, retry_in, serviceIntent);
-        } else {
-            Log.d(TAG, "Not setting retry timer as service should not be running");
-        }
+        Log.d(TAG, "Not setting retry timer as service should not be running");
     }
 
     public synchronized void setFailoverTimer() {
-        if (shouldServiceRun()) {
-            final long retry_in = use_polling ? whenToPollNext() : (Constants.MINUTE_IN_MS * 6);
-            Log.d(TAG, "setFailoverTimer: Fallover Restarting in: " + (retry_in / (Constants.MINUTE_IN_MS)) + " minutes");
-            //serviceFailoverIntent = PendingIntent.getService(this, Constants.DEX_COLLECTION_SERVICE_FAILOVER_ID, new Intent(this, this.getClass()), 0);
-            serviceFailoverIntent = WakeLockTrampoline.getPendingIntent(this.getClass(), Constants.DEX_COLLECTION_SERVICE_FAILOVER_ID);
-            failover_time = JoH.wakeUpIntent(this, retry_in, serviceFailoverIntent);
-            retry_time = 0; // only one alarm will run
-        } else {
-            stopSelf();
-        }
+        stopSelf();
     }
 
     private long whenToRetryNext() {

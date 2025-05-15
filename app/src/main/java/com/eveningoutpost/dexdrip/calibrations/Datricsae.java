@@ -71,7 +71,6 @@ public class Datricsae extends CalibrationAbstract {
 
                 final List<Double> raws = new ArrayList<>();
                 final List<Double> bgs = new ArrayList<>();
-                final boolean adjust_raw = !DexCollectionType.hasLibre();
 
                 for (int i = 1; i < 3; i++) {
                     final List<Calibration> cweight = Calibration.latestValid(i, until);
@@ -82,7 +81,7 @@ public class Datricsae extends CalibrationAbstract {
                 for (Calibration calibration : calibrations) {
                     // sanity check?
                     // weighting!
-                    final double raw = adjust_raw ? calibration.adjusted_raw_value : calibration.raw_value;
+                    final double raw = calibration.adjusted_raw_value;
                     Log.d(TAG, "Calibration: " + JoH.qs(raw, 4) + " -> " + JoH.qs(calibration.bg, 4) + "  @ " + JoH.dateTimeText(calibration.raw_timestamp));
                     raws.add(raw);
                     bgs.add(calibration.bg);

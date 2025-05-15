@@ -43,7 +43,6 @@ public enum DexCollectionType {
     UiBased("UiBased"),
     Disabled("Disabled"),
     Manual("Manual"),
-    LibreReceiver("LibreReceiver"),
     AidexReceiver("AidexReceiver"),
     SHAndCLFollow("SHAndCLFollower");
 
@@ -52,7 +51,6 @@ public enum DexCollectionType {
     private static final Map<String, DexCollectionType> mapToInternalName;
     private static final HashSet<DexCollectionType> usesBluetooth = new HashSet<>();
     private static final HashSet<DexCollectionType> usesFiltered = new HashSet<>();
-    private static final HashSet<DexCollectionType> usesLibre = new HashSet<>();
     private static final HashSet<DexCollectionType> isPassive = new HashSet<>();
     private static final HashSet<DexCollectionType> usesBattery = new HashSet<>();
     private static final HashSet<DexCollectionType> usesDexcomRaw = new HashSet<>();
@@ -72,8 +70,7 @@ public enum DexCollectionType {
 
         Collections.addAll(usesBluetooth, DexcomShare, DexcomG5, Medtrum);
         Collections.addAll(usesFiltered, DexcomG5, Follower); // Bluetooth and Wifi+Bluetooth need dynamic mode
-        Collections.addAll(usesLibre, LibreReceiver);
-        Collections.addAll(isPassive, NSEmulator, NSFollow, SHFollow, WebFollow, LibreReceiver, UiBased, CLFollow, AidexReceiver, SHAndCLFollow);
+        Collections.addAll(isPassive, NSEmulator, NSFollow, SHFollow, WebFollow, UiBased, CLFollow, AidexReceiver, SHAndCLFollow);
         Collections.addAll(usesBattery, Follower); // parakeet separate
         Collections.addAll(usesDexcomRaw, DexcomG5);
         Collections.addAll(usesTransmitterBattery); // G4 transmitter battery
@@ -105,14 +102,6 @@ public enum DexCollectionType {
         return usesBluetooth.contains(getDexCollectionType());
     }
 
-    public static boolean hasLibre() {
-        return usesLibre.contains(getDexCollectionType());
-    }
-
-    public static boolean hasLibre(DexCollectionType t) {
-        return usesLibre.contains(t);
-    }
-
     public static boolean hasBattery() {
         return usesBattery.contains(getDexCollectionType());
     }
@@ -137,16 +126,6 @@ public enum DexCollectionType {
         return does_have_filtered || usesFiltered.contains(getDexCollectionType());
     }
 
-    // Non calibrable means that raw values are used with oop2
-    public static boolean isLibreOOPNonCalibratebleAlgorithm(DexCollectionType collector) {
-        if (collector == null) {
-            collector = DexCollectionType.getDexCollectionType();
-        }
-        return hasLibre(collector) &&
-                (Pref.getBooleanDefaultFalse("external_blukon_algorithm") ||
-                        Pref.getString("calibrate_external_libre_2_algorithm_type", "calibrate_raw").equals("no_calibration"));
-    }
-
     public static Class<?> getCollectorServiceClass() {
         return getCollectorServiceClass(getDexCollectionType());
     }
@@ -164,7 +143,6 @@ public enum DexCollectionType {
             case Medtrum:
                 return MedtrumCollectionService.class;
             case Follower:
-            case LibreReceiver:
                 return DoNothingService.class;
             case NSFollow:
                 return NightscoutFollowService.class;
@@ -231,7 +209,6 @@ public enum DexCollectionType {
         switch (dct) {
             case NSEmulator:
             case AidexReceiver:
-            case LibreReceiver:
                 return "Other App";
             case DexcomG5:
                 if (Ob1G5CollectionService.usingNativeMode()) {
@@ -288,12 +265,7 @@ public enum DexCollectionType {
             && Pref.getBooleanDefaultFalse("engineering_mode");
 
     public static long getCollectorSamplePeriod(final DexCollectionType type) {
-        switch (type) {
-            case LibreReceiver:
-                return libreOneMinute ? 60_000 : 300_000;
-            default:
-                return 300_000; // 5 minutes
-        }
+        return 300_000; // 5 minutes
     }
 
     public static long getCurrentSamplePeriod() {

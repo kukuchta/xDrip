@@ -190,7 +190,7 @@ public class Tomato {
         // Set the time of the current reading
         PersistentStore.setLong("libre-reading-timestamp", JoH.tsl());
 
-        if(NFCReaderX.use_fake_de_data()) {
+        if(Pref.getBooleanDefaultFalse("use_fake_de_data")) {
             FakeData libreData = FakeLibreData.getInstance().getFakeData();
             data = libreData.data;
             patchUid = libreData.patchUid;

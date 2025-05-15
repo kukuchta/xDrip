@@ -1756,14 +1756,6 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
                 recognitionRunning = false;
                 break;
 
-            case NFCReaderX.REQ_CODE_NFC_TAG_FOUND:
-                if (NFCReaderX.useNFC()) {
-                    NFCReaderX nfcReader = new NFCReaderX();
-                    //noinspection AccessStaticViaInstance
-                    nfcReader.tagFound(this, data);
-                }
-                break;
-
             case REQ_CODE_BATTERY_OPTIMIZATION:
                 staticRefreshBGCharts();
                 break;
@@ -2643,15 +2635,6 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
             }
         }
 
-        if (DexCollectionType.isLibreOOPNonCalibratebleAlgorithm(collector)) {
-            // Rest of this function deals with initial calibration. Since we currently don't have a way to calibrate,
-            // And even once we will have, there is probably no need to force a calibration at start of sensor use.
-            displayCurrentInfo();
-            // JamorHam, should I put here something like:
-            // ?? if (screen_forced_on)  dontKeepScreenOn();
-            return;
-        }
-
         // TODO this logic needed a rework even a year ago, now its a lot more confused with the additional complexity of native mode
         if (Ob1G5CollectionService.isG5ActiveButUnknownState() && Calibration.latestValid(2).size() < 2) {
             // TODO use format string
@@ -2850,7 +2833,7 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
         }
 
         final int sensor_age = Pref.getInt("nfc_sensor_age", 0);
-        if (sensor_age > 0 && (DexCollectionType.hasLibre() || hasLibreblock())) {
+        if (sensor_age > 0 && hasLibreblock()) {
             final String age_problem = (Pref.getBooleanDefaultFalse("nfc_age_problem") ? " \u26A0\u26A0\u26A0" : "");
             if (Pref.getBoolean("nfc_show_age", true)) {
                 sensorAge.setText(getResources().getQuantityString(R.plurals.sensor_age, sensor_age / 1440, JoH.qs(((double) sensor_age) / 1440, 1)) + age_problem);

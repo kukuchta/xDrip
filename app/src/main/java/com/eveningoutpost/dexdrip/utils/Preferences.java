@@ -1899,7 +1899,7 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                 findPreference("nfc_scan_homescreen").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                     @Override
                     public boolean onPreferenceChange(Preference preference, Object newValue) {
-                        NFCReaderX.handleHomeScreenScanPreference(xdrip.getAppContext(), (boolean) newValue && (NFCReaderX.useNFC()));
+                        NFCReaderX.handleHomeScreenScanPreference(xdrip.getAppContext(), false );
                         return true;
                     }
                 });
@@ -1997,19 +1997,7 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                 });
             //}
 
-            if (!DexCollectionType.hasLibre(collectionType)) {
-                collectionCategory.removePreference(nfcSettings);
-            } else {
-                // has libre
-                if (!engineering_mode)
-                    try {
-                        nfcScreen.removePreference(findPreference("nfc_test_diagnostic"));
-                    } catch (NullPointerException e) {
-                        //
-                    }
-                set_nfc_expiry_change_listeners();
-                update_nfc_expiry_preferences(null);
-            }
+            collectionCategory.removePreference(nfcSettings);
 
             if (!DexCollectionService.getBestLimitterHardwareName().equals("BlueReader")) {
                 collectionCategory.removePreference(bluereadersettings);
@@ -2030,9 +2018,7 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
             try {
 
                 try {
-                    if (DexCollectionType.getDexCollectionType() != DexCollectionType.LibreReceiver) {
-                        collectionCategory.removePreference(libre2settings);
-                    }
+                    collectionCategory.removePreference(libre2settings);
                 } catch (NullPointerException e) {
                     Log.wtf(TAG, "Nullpointer Libre2Settings: ", e);
                 }
@@ -2511,19 +2497,8 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                         AllPrefsFragment.this.prefs.edit().putBoolean("calibration_notifications", false).apply();
                     }
 
-                    if (DexCollectionType.hasLibre(collectionType)) {
-                        collectionCategory.addPreference(nfcSettings);
-                        NFCReaderX.handleHomeScreenScanPreference(xdrip.getAppContext(), prefs.getBoolean("nfc_scan_homescreen", false) && prefs.getBoolean("use_nfc_scan", false));
-                        if (!engineering_mode)
-                            try {
-                                nfcScreen.removePreference(findPreference("nfc_test_diagnostic"));
-                            } catch (NullPointerException e) {
-                                //
-                            }
-                    } else {
-                        collectionCategory.removePreference(nfcSettings);
-                        NFCReaderX.handleHomeScreenScanPreference(xdrip.getAppContext(), false); // always disable
-                    }
+                    collectionCategory.removePreference(nfcSettings);
+                    NFCReaderX.handleHomeScreenScanPreference(xdrip.getAppContext(), false); // always disable
 
                     // jamorham always show wifi receivers option if populated as we may switch modes dynamically
                     String receiversIpAddresses;

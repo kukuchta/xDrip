@@ -121,9 +121,6 @@ public class CollectionServiceStarter {
     public static boolean isFollower(Context context) {
         return Pref.getString("dex_collection_method", "").equals("Follower");
     }
-    public static boolean isLibre2App(Context context) {
-        return Pref.getString("dex_collection_method", "").equals("LibreReceiver");
-    }
 
     public static boolean isBTShare(Context context) {
         String collection_method = Pref.getString("dex_collection_method", "None");
@@ -146,9 +143,6 @@ public class CollectionServiceStarter {
 
     private static boolean isFollower(String collection_method) {
         return collection_method.equals("Follower");
-    }
-    private static boolean isLibre2App(String collection_method) {
-        return collection_method.equals("LibreReceiver");
     }
 
     private void stopAll() {
@@ -207,7 +201,7 @@ public class CollectionServiceStarter {
             } else {
                 startBtG5Service();
             }
-        } else if (isFollower(collection_method) || isLibre2App(collection_method)) {
+        } else if (isFollower(collection_method)) {
             stopWifWixelThread();
             stopBtShareService();
             stopBtWixelService();

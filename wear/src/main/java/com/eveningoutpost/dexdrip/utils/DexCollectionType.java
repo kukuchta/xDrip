@@ -32,18 +32,12 @@ public enum DexCollectionType {
     SHFollow("SHFollower"),
     Medtrum("Medtrum"),
     Disabled("Disabled"),
-    Mock("Mock"),
-    Manual("Manual"),
-    LibreReceiver("LibreReceiver");
+    Manual("Manual");
 
     String internalName;
     private static final Map<String, DexCollectionType> mapToInternalName;
     private static final HashSet<DexCollectionType> usesBluetooth = new HashSet<>();
-    private static final HashSet<DexCollectionType> usesBtWixel = new HashSet<>();
-    private static final HashSet<DexCollectionType> usesWifi = new HashSet<>();
-    private static final HashSet<DexCollectionType> usesXbridge = new HashSet<>();
     private static final HashSet<DexCollectionType> usesFiltered = new HashSet<>();
-    private static final HashSet<DexCollectionType> usesLibre = new HashSet<>();
     private static final HashSet<DexCollectionType> usesBattery = new HashSet<>();
     private static final HashSet<DexCollectionType> usesDexcomRaw = new HashSet<>();
     private static final HashSet<DexCollectionType> usesTransmitterBattery = new HashSet<>();
@@ -61,13 +55,9 @@ public enum DexCollectionType {
         }
 
         Collections.addAll(usesBluetooth, DexcomShare, DexcomG5, Medtrum);
-        Collections.addAll(usesBtWixel); // Name is misleading here, should probably be using dexcollectionservice
-        Collections.addAll(usesWifi, Mock);
-        Collections.addAll(usesXbridge);
-        Collections.addAll(usesFiltered, DexcomG5, Follower, Mock); // Bluetooth and Wifi+Bluetooth need dynamic mode
-        Collections.addAll(usesLibre, LibreReceiver);
+        Collections.addAll(usesFiltered, DexcomG5, Follower); // Bluetooth and Wifi+Bluetooth need dynamic mode
         Collections.addAll(usesBattery, Follower); // parakeet separate
-        Collections.addAll(usesDexcomRaw, DexcomG5, Mock);
+        Collections.addAll(usesDexcomRaw, DexcomG5);
         Collections.addAll(usesTransmitterBattery); // G4 transmitter battery
     }
 
@@ -97,44 +87,12 @@ public enum DexCollectionType {
         return usesBluetooth.contains(getDexCollectionType());
     }
 
-    public static boolean hasBtWixel() {
-        return usesBtWixel.contains(getDexCollectionType());
-    }
-
-    public static boolean hasXbridgeWixel() {
-        return usesXbridge.contains(getDexCollectionType());
-    }
-
-    public static boolean hasWifi() {
-        return usesWifi.contains(getDexCollectionType());
-    }
-
-    public static boolean hasLibre() {
-        return usesLibre.contains(getDexCollectionType());
-    }
-
-    public static boolean hasLibre(DexCollectionType t) {
-        return usesLibre.contains(t);
-    }
-
     public static boolean hasBattery() {
         return usesBattery.contains(getDexCollectionType());
     }
 
-    public static boolean hasSensor() {
-        return getDexCollectionType() != DexCollectionType.Manual;
-    }
-
     public static boolean hasDexcomRaw() {
         return hasDexcomRaw(getDexCollectionType());
-    }
-
-    public static boolean usesDexCollectionService(DexCollectionType type) {
-        return usesBtWixel.contains(type) || usesXbridge.contains(type);
-    }
-
-    public static boolean usesClassicTransmitterBattery() {
-        return usesTransmitterBattery.contains(getDexCollectionType());
     }
 
     public static boolean hasDexcomRaw(DexCollectionType type) {
@@ -147,14 +105,6 @@ public enum DexCollectionType {
 
     public static boolean hasFiltered() {
         return does_have_filtered || usesFiltered.contains(getDexCollectionType());
-    }
-
-    public static boolean isLibreOOPAlgorithm(DexCollectionType collector) {
-        if (collector == null) {
-            collector = DexCollectionType.getDexCollectionType();
-        }
-        return hasLibre(collector) &&
-                Pref.getBooleanDefaultFalse("external_blukon_algorithm");
     }
 
     public static Class<?> getCollectorServiceClass() {
@@ -171,12 +121,9 @@ public enum DexCollectionType {
                 }
             case DexcomShare:
                 return DexShareCollectionService.class;
-            case Mock:
-                return WifiCollectionService.class;
             case Medtrum:
                 return MedtrumCollectionService.class;
             case Follower:
-            case LibreReceiver:
                 return DoNothingService.class;
             case NSFollow:
                 return NightscoutFollowService.class;
@@ -234,7 +181,6 @@ public enum DexCollectionType {
         final DexCollectionType dct = getDexCollectionType();
         switch (dct) {
             case NSEmulator:
-            case LibreReceiver:
                 return "Other App";
             case DexcomG5:
                 if (Ob1G5CollectionService.usingNativeMode()) {
@@ -259,19 +205,8 @@ public enum DexCollectionType {
                 default:
                     return Pref.getInt("bridge_battery", -1);
             }
-        } else if (DexCollectionType.hasWifi()) {
-            return Pref.getInt("parakeet_battery", -3);
         } else {
             return -2;
-        }
-    }
-
-    public static String getBestBridgeBatteryPercentString() {
-        final int battery = getBestBridgeBatteryPercent();
-        if (battery > 0) {
-            return "" + battery;
-        } else {
-            return "";
         }
     }
 
@@ -286,18 +221,8 @@ public enum DexCollectionType {
         }
     }
 
-    public static long getCurrentSamplePeriod() {
-        return getDexCollectionType().getSamplePeriod();
-    }
-
     public static long getCurrentDeduplicationPeriod() {
         final long period = getDexCollectionType().getSamplePeriod();
         return period - (period / 6); // TODO this needs more validation
     }
-
-    public static int getCurrentSamplesForPeriod(final long periodMs) {
-        return (int) (periodMs / getDexCollectionType().getSamplePeriod());
-    }
-
-
 }

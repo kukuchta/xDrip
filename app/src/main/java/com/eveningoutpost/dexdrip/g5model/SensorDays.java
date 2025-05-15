@@ -35,7 +35,6 @@ import static com.eveningoutpost.dexdrip.utils.DexCollectionType.None;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.getBestCollectorHardwareName;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.getDexCollectionType;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.hasDexcomRaw;
-import static com.eveningoutpost.dexdrip.utils.DexCollectionType.hasLibre;
 
 // jamorham
 
@@ -79,12 +78,7 @@ public class SensorDays {
 
         val ths = new SensorDays();
 
-        if (hasLibre(type)) {
-            ths.period = DAY_IN_MS * 14; // TODO 10 day sensors?
-            ths.strategy = USE_LIBRE_STRATEGY;
-            ths.warmupMs = HOUR_IN_MS;
-
-        } else if (hasDexcomRaw(type)) {
+        if (hasDexcomRaw(type)) {
             ths.strategy = USE_DEXCOM_STRATEGY;
             val vr2 = (VersionRequest2RxMessage)
                     getFirmwareXDetails(tx_id, 2);

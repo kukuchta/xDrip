@@ -33,11 +33,6 @@ public class NFControl {
                     | NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS;
 
         }
-        if (NFCReaderX.useNFC()) {
-            flags |= NfcAdapter.FLAG_READER_NFC_V
-                    | NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK
-                    | NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS;
-        }
 
         if (GlucoMen.isEnabled()) {
             flags |= NfcAdapter.FLAG_READER_NFC_V
@@ -46,20 +41,6 @@ public class NFControl {
         }
 
         return flags;
-    }
-
-    private static Bundle getOptionsBundle() {
-        if (NFCReaderX.useNFC()) {
-            final Bundle options = new Bundle();
-            options.putInt(NfcAdapter.EXTRA_READER_PRESENCE_CHECK_DELAY, 5000);
-            return options;
-        } else {
-            return null;
-        }
-    }
-
-    public static void initNFCbackground(final Activity context, final boolean disable) {
-        new Thread(() -> NFControl.initNFC(context, disable)).start();
     }
 
     public static synchronized void initNFC(final Activity context, final boolean disable) {
@@ -98,7 +79,7 @@ public class NFControl {
 
             UserError.Log.d(TAG, "Enabling reader mode with flags: " + flags);
             try {
-                mNfcAdapter.enableReaderMode(context, new TagMultiplexer(context), flags, getOptionsBundle());
+                mNfcAdapter.enableReaderMode(context, new TagMultiplexer(context), flags, null);
             } catch (Exception e) {
                 UserError.Log.e(TAG, "Got exception enabling reader mode: " + e);
             }

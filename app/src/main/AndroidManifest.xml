@@ -597,15 +597,6 @@
                 <action android:name="com.eveningoutpost.dexdrip.THINJAM_API" />
             </intent-filter>
         </receiver>
-        <receiver android:name=".LibreReceiver">
-            <intent-filter>
-                <action android:name="com.librelink.app.ThirdPartyIntegration.GLUCOSE_READING" />
-                <action android:name="com.librelink.app.ThirdPartyIntegration.SENSOR_ACTIVATE" />
-                <action android:name="com.librelink.app.ThirdPartyIntegration.FOUND_DEVICE" />
-                <action android:name="com.librelink.app.ThirdPartyIntegration.CONNECTION_STATE" />
-                <action android:name="com.librelink.app.ThirdPartyIntegration.SENSOR_SCAN" />
-            </intent-filter>
-        </receiver>
         <receiver android:name=".utilitymodels.BroadcastSnoozeReceiver">
             <intent-filter>
                 <action android:name="com.eveningoutpost.dexdrip.Snooze" />

@@ -65,11 +65,10 @@ public class LastSevenUnweightedA extends CalibrationAbstract {
 
                 final List<Double> raws = new ArrayList<>();
                 final List<Double> bgs = new ArrayList<>();
-                final boolean adjust_raw = !DexCollectionType.hasLibre();
                 for (Calibration calibration : calibrations) {
                     // sanity check?
                     // weighting!
-                    final double raw = adjust_raw ? calibration.adjusted_raw_value : calibration.raw_value;
+                    final double raw = calibration.adjusted_raw_value;
                     Log.d(TAG, "Calibration: " + raw + " -> " + calibration.bg);
                     raws.add(raw);
                     bgs.add(calibration.bg);
