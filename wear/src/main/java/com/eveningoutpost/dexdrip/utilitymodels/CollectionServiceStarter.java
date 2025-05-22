@@ -31,14 +31,10 @@ import java.io.IOException;
  */
 public class CollectionServiceStarter {
     private Context mContext;
-    public static boolean run_wear_collector = false;//KS
     final public static String pref_run_wear_collector = "run_wear_collector";
 
     private final static String TAG = CollectionServiceStarter.class.getSimpleName();
 
-    public static boolean isFollower(Context context) {
-        return PreferenceManager.getDefaultSharedPreferences(context).getString("dex_collection_method", "").equals("Follower");
-    }
 
     public static boolean isBTShare(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
@@ -54,25 +50,15 @@ public class CollectionServiceStarter {
     }
 
     public static boolean isBTG5(Context context) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        String collection_method = prefs.getString("dex_collection_method", "None");
-        if (collection_method.compareTo("DexcomG5") == 0) {
-            return true;
-        }
         return false;
     }
 
     public static boolean isBTG5(String collection_method) {
-        return collection_method.equals("DexcomG5");
+        return false;
     }
 
     public static boolean isFollower(String collection_method) {
         return collection_method.equals("Follower");
-    }
-
-    public static void newStart(Context context) {
-        CollectionServiceStarter collectionServiceStarter = new CollectionServiceStarter(context);
-        collectionServiceStarter.start(context);
     }
 
     public void start(Context context, String collection_method) {//KS use ListenerService processConnectG5 / startBtService methods instead
@@ -154,15 +140,6 @@ public class CollectionServiceStarter {
         collectionServiceStarter.start(context);
     }
 
-    public static void restartCollectionService(Context context, String collection_method) {
-        Log.d(TAG, "restartCollectionService: " + collection_method);
-        CollectionServiceStarter collectionServiceStarter = new CollectionServiceStarter(context);
-        collectionServiceStarter.stopBtShareService();
-        collectionServiceStarter.stopBtWixelService();
-        collectionServiceStarter.stopG5ShareService();
-        collectionServiceStarter.start(context, collection_method);
-    }
-
     public static void startBtService(Context context) {
         Log.d(TAG, "startBtService: " + DexCollectionType.getDexCollectionType());
         CollectionServiceStarter collectionServiceStarter = new CollectionServiceStarter(context);
@@ -172,9 +149,6 @@ public class CollectionServiceStarter {
         switch (DexCollectionType.getDexCollectionType()) {
             case DexcomShare:
                 collectionServiceStarter.startBtShareService();
-                break;
-            case DexcomG5:
-                collectionServiceStarter.startBtG5Service();
                 break;
             default:
                 collectionServiceStarter.startBtWixelService();

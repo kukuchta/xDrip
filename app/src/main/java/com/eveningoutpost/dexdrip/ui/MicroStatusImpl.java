@@ -41,7 +41,7 @@ public class MicroStatusImpl extends BaseObservable implements MicroStatus {
 
     @Override
     public boolean xmitterBattery() {
-        return DexCollectionType.usesClassicTransmitterBattery();
+        return false; // if transmitter battery info is used
     }
 
 }

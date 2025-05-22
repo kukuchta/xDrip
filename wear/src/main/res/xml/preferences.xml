@@ -8,7 +8,7 @@
         android:title="@string/pref_xdrip_bt_settings">
 
         <Preference
-            android:defaultValue="DexcomG5"
+            android:defaultValue="CLFollower"
             android:editable="false"
             android:key="dex_collection_method"
             android:summary="@string/pref_summary_bt_collection_method"

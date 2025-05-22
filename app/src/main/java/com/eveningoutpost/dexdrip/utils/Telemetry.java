@@ -3,7 +3,6 @@ package com.eveningoutpost.dexdrip.utils;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.eveningoutpost.dexdrip.g5model.Ob1G5StateMachine;
 import com.eveningoutpost.dexdrip.Home;
 import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.models.Sensor;
@@ -11,9 +10,6 @@ import com.eveningoutpost.dexdrip.NFCReaderX;
 import com.eveningoutpost.dexdrip.utilitymodels.Pref;
 import com.eveningoutpost.dexdrip.stats.StatsResult;
 import com.eveningoutpost.dexdrip.xdrip;
-
-import static com.eveningoutpost.dexdrip.services.Ob1G5CollectionService.getTransmitterID;
-import static com.eveningoutpost.dexdrip.utils.DexCollectionType.DexcomG5;
 
 //import com.crashlytics.android.answers.Answers;
 //import com.crashlytics.android.answers.CustomEvent;
@@ -40,30 +36,6 @@ public class Telemetry {
     adjusts features based on which firmware is being used.
 
      */
-
-    public static void sendFirmwareReport() {
-        try {
-            if (JoH.ratelimit("firmware-capture-report", 50000)) {
-                Log.d(TAG, "SEND Firmware EVENT START");
-
-                if (Pref.getBooleanDefaultFalse("enable_crashlytics") && Pref.getBooleanDefaultFalse("enable_telemetry")) {
-                    if (DexCollectionType.getDexCollectionType() == DexcomG5) {
-
-                        final String version = Ob1G5StateMachine.getRawFirmwareVersionString(getTransmitterID());
-                        if (version.length() > 0) {
-                            //Answers.getInstance().logCustom(new CustomEvent("GFirmware")
-                            //        .putCustomAttribute("Firmware", version));
-                        }
-                    }
-                }
-            }
-
-        } catch (Exception e) {
-            Log.e(TAG, "Got exception sending Firmware Report");
-        }
-
-    }
-
 
     public static void sendCaptureReport() {
         try {

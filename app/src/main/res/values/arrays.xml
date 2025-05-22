@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="DexCollectionMethods">
-        <item>Dex</item>
         <item>xDrip+ Sync Follower</item>
         <item>640G / EverSense</item>
         <item>Medtrum A6</item>
@@ -16,7 +15,6 @@
     </string-array>
 
     <string-array name="DexCollectionMethodValues">
-        <item>DexcomG5</item>
         <item>Follower</item>
         <item>NSEmulator</item>
         <item>Medtrum</item>

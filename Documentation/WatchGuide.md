@@ -350,8 +350,6 @@ Refer to [XDrip BT Settings](#xdrip-bt-settings) above for additional details.
 
   Confirm the phone's Hardware Data Source preference matches the watch's BT Collector preference.  The watch's BT Collector preference is a read-only preference.  It gets set based on the phone's Hardware Data Source preference. The following values correspond to the collectors:
    - DexcomShare("DexcomShare"),
-   - DexcomG5("DexcomG5"),
-   - LibreAlarm("LibreAlarm")
 
 Refer to [Collector](#collector) above for additional details.
 
@@ -390,7 +388,7 @@ Refer to [Collector](#collector) above for additional details.
   This message appears to occur only once, so it is easily missed if logging is not enabled via the Sync Wear Logs preference.
 
   However, this Permission is required, and therefore, if not enabled, the Collection Service will not be able to connect to the transmitter via BLE.
-  Connection errors such as the following (for G5CollectionService, DexcomG5 Hardware Service) will continued to be logged to the Events log:
+  Connection errors such as the following (for G5CollectionService, Hardware Service) will continued to be logged to the Events log:
 
   ```
   06-10 07:47:03.427 2162-2172/? E/G5CollectionService: Encountered 133: true

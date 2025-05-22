@@ -72,13 +72,12 @@ public class NavDrawerBuilder {
 
             if (is_active_sensor) {
                 if (!CollectionServiceStarter.isBTShare(context)) {
-                    if (last_two_bgReadings.size() > 1 || Ob1G5CollectionService.isG5WantingCalibration()) {
-                        if ((last_two_calibrations.size() > 1) && !Ob1G5CollectionService.isG5WantingInitialCalibration()) { //After two successful initial calibrations
+                    if (last_two_bgReadings.size() > 1) {
+                        if (last_two_calibrations.size() > 1) { //After two successful initial calibrations
                             // TODO tighten this time limit
                             if (bGreadings_in_last_30_mins.size() >= 2) {
                                 long time_now = JoH.tsl();
-                                if ((time_now - last_two_calibrations.get(0).timestamp < (1000 * 60 * 60))
-                                        && !Ob1G5CollectionService.isG5WantingCalibration()) { //Put steps in place to discourage over calibration
+                                if (time_now - last_two_calibrations.get(0).timestamp < (1000 * 60 * 60)) { //Put steps in place to discourage over calibration
                                     this.nav_drawer_options.add(context.getString(R.string.override_calibration));
                                     this.nav_drawer_intents.add(new Intent(context, CalibrationOverride.class));
                                 } else { //G5, old G6, or Firefly in no-code mode, after initial calibration and long enough after previous calibration
@@ -90,7 +89,7 @@ public class NavDrawerBuilder {
                                 this.nav_drawer_intents.add(new Intent(context, Home.class));
                             }
                         } else { //If there haven't been two initial calibrations
-                            if (BgReading.isDataSuitableForDoubleCalibration() || Ob1G5CollectionService.isG5WantingInitialCalibration()) {
+                            if (BgReading.isDataSuitableForDoubleCalibration()) {
                                 if ((FirmwareCapability.isTransmitterRawIncapable(getTransmitterID()) && last_two_bgReadings.size() > 1) || FirmwareCapability.isDeviceAltOrAlt2(getTransmitterID()) ) { //A Firefly G6 after third reading or a G7
                                     this.nav_drawer_options.add(context.getString(R.string.add_calibration));
                                     this.nav_drawer_intents.add(new Intent(context, AddCalibration.class));
@@ -113,7 +112,7 @@ public class NavDrawerBuilder {
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            if (DexCollectionType.hasBluetooth() && (DexCollectionType.getDexCollectionType() != DexCollectionType.DexcomG5)) {
+            if (DexCollectionType.hasBluetooth()) {
 
                 this.nav_drawer_options.add(context.getString(R.string.bluetooth_scan));
                 this.nav_drawer_intents.add(new Intent(context, BluetoothScan.class));

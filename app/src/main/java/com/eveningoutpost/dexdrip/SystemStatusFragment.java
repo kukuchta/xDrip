@@ -58,7 +58,6 @@ import java.util.Set;
 
 import static com.eveningoutpost.dexdrip.Home.startWatchUpdaterService;
 import static com.eveningoutpost.dexdrip.utils.DatabaseUtil.getDataBaseSizeInBytes;
-import static com.eveningoutpost.dexdrip.utils.DexCollectionType.DexcomG5;
 import static com.eveningoutpost.dexdrip.xdrip.gs;
 
 public class SystemStatusFragment extends Fragment {
@@ -106,9 +105,6 @@ public class SystemStatusFragment extends Fragment {
                     switch (action) {
                         case WatchUpdaterService.ACTION_BLUETOOTH_COLLECTION_SERVICE_UPDATE:
                             switch (DexCollectionType.getDexCollectionType()) {
-                                case DexcomG5:
-                                    G5CollectionService.setWatchStatus(dataMap);//msg, last_timestamp
-                                    break;
                                 case DexcomShare:
                                     if (lastState != null && !lastState.isEmpty()) {
                                         setConnectionStatus(lastState);//TODO getLastState() in non-G5 Services
@@ -136,12 +132,7 @@ public class SystemStatusFragment extends Fragment {
     private void requestWearCollectorStatus() {
         final PowerManager.WakeLock wl = JoH.getWakeLock("ACTION_STATUS_COLLECTOR",120000);
         if (Home.get_enable_wear()) {
-            if (DexCollectionType.getDexCollectionType().equals(DexcomG5)) {
-                startWatchUpdaterService(safeGetContext(), WatchUpdaterService.ACTION_STATUS_COLLECTOR, TAG, "getBatteryStatusNow", G5CollectionService.getBatteryStatusNow);
-            }
-            else {
-                startWatchUpdaterService(safeGetContext(), WatchUpdaterService.ACTION_STATUS_COLLECTOR, TAG);
-            }
+            startWatchUpdaterService(safeGetContext(), WatchUpdaterService.ACTION_STATUS_COLLECTOR, TAG);
         }
         JoH.releaseWakeLock(wl);
     }
@@ -307,42 +298,11 @@ public class SystemStatusFragment extends Fragment {
         }
     }
 
-    private void setCollectionMethod() {
-        collection_method.setText(prefs.getString("dex_collection_method", "None").replace("Dexbridge", "xBridge"));
-    }
-
     public void setCurrentDevice() {
         if (activeBluetoothDevice != null) {
             current_device.setText(activeBluetoothDevice.name);
         } else {
             current_device.setText("None Set");
-        }
-
-        String collection_method = prefs.getString("dex_collection_method", "None");
-        if (collection_method.compareTo("DexcomG5") == 0) {
-            Transmitter defaultTransmitter = new Transmitter(prefs.getString("dex_txid", "ABCDEF"));
-            if (Build.VERSION.SDK_INT >= 18) {
-                mBluetoothAdapter = mBluetoothManager.getAdapter();
-            }
-            if (mBluetoothAdapter != null) {
-                Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
-                if ((pairedDevices != null) && (pairedDevices.size() > 0)) {
-                    for (BluetoothDevice device : pairedDevices) {
-                        if (device.getName() != null) {
-
-                            String transmitterIdLastTwo = Extensions.lastTwoCharactersOfString(defaultTransmitter.transmitterId);
-                            String deviceNameLastTwo = Extensions.lastTwoCharactersOfString(device.getName());
-
-                            if (transmitterIdLastTwo.equals(deviceNameLastTwo)) {
-                                current_device.setText(defaultTransmitter.transmitterId);
-                            }
-
-                        }
-                    }
-                }
-            } else {
-                current_device.setText("No Bluetooth");
-            }
         }
     }
 
@@ -351,14 +311,6 @@ public class SystemStatusFragment extends Fragment {
             connection_status.setText(safeGetContext().getString(R.string.no_data));
         } else {
             connection_status.setText((JoH.qs((JoH.ts() - GcmListenerSvc.lastMessageReceived) / 60000, 0)) + " mins ago");
-        }
-    }
-
-    private void setConnectionStatusWifiWixel() {
-        if (ParakeetHelper.isParakeetCheckingIn()) {
-            connection_status.setText(ParakeetHelper.parakeetStatusString());
-        } else {
-            connection_status.setText(safeGetContext().getString(R.string.no_data));
         }
     }
 
@@ -381,33 +333,6 @@ public class SystemStatusFragment extends Fragment {
             connection_status.setText(safeGetContext().getString(R.string.connected));
         } else {
             connection_status.setText(safeGetContext().getString(R.string.not_connected));
-        }
-
-        String collection_method = prefs.getString("dex_collection_method", "None");
-        if (collection_method.compareTo("DexcomG5") == 0) {
-            Transmitter defaultTransmitter = new Transmitter(prefs.getString("dex_txid", "ABCDEF"));
-            if (Build.VERSION.SDK_INT >= 18) mBluetoothAdapter = mBluetoothManager.getAdapter();
-            if (mBluetoothAdapter != null) {
-                Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
-                if (pairedDevices.size() > 0) {
-                    for (BluetoothDevice device : pairedDevices) {
-                        if (device.getName() != null) {
-
-                            String transmitterIdLastTwo = Extensions.lastTwoCharactersOfString(defaultTransmitter.transmitterId);
-                            String deviceNameLastTwo = Extensions.lastTwoCharactersOfString(device.getName());
-
-                            if (transmitterIdLastTwo.equals(deviceNameLastTwo)) {
-                                final String fw = G5CollectionService.getFirmwareVersionString(defaultTransmitter.transmitterId);
-                                connection_status.setText(device.getName() + " Authed" + ((fw != null) ? ("\n" + fw) : ""));
-                                break;
-                            }
-
-                        }
-                    }
-                }
-            } else {
-                connection_status.setText(safeGetContext().getString(R.string.no_bluetooth)); 
-            }
         }
     }
 
@@ -517,34 +442,6 @@ public class SystemStatusFragment extends Fragment {
                                 }, 5000);
                             }
                         }, 1000);
-                    }
-                }
-
-                String collection_method = prefs.getString("dex_collection_method", "None");
-                if (collection_method.compareTo("DexcomG5") == 0) {
-                    Transmitter defaultTransmitter = new Transmitter(prefs.getString("dex_txid", "ABCDEF"));
-                    mBluetoothAdapter = mBluetoothManager.getAdapter();
-
-                    Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
-                    if ((pairedDevices != null) && (pairedDevices.size() > 0)) {
-                        for (BluetoothDevice device : pairedDevices) {
-                            if (device.getName() != null) {
-
-                                String transmitterIdLastTwo = Extensions.lastTwoCharactersOfString(defaultTransmitter.transmitterId);
-                                String deviceNameLastTwo = Extensions.lastTwoCharactersOfString(device.getName());
-
-                                if (transmitterIdLastTwo.equals(deviceNameLastTwo)) {
-                                    try {
-                                        Method m = device.getClass().getMethod("removeBond", (Class[]) null);
-                                        m.invoke(device, (Object[]) null);
-                                        notes.append("\nG5 Transmitter unbonded, switch device mode to prevent re-pairing to G5.");
-                                    } catch (Exception e) {
-                                        Log.e("SystemStatus", e.getMessage(), e);
-                                    }
-                                }
-
-                            }
-                        }
                     }
                 }
             }

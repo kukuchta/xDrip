@@ -48,7 +48,6 @@ public class NativeCalibrationPipe {
         UserError.Log.uel(TAG, "Queuing Calibration for transmitter: " + BgGraphBuilder.unitized_string_with_units_static(glucose) + " " + JoH.dateTimeText(timestamp));
 
         // Send to potential listeners
-        Ob1G5StateMachine.addCalibration(glucose, timestamp);
         Medtrum.addCalibration(glucose, timestamp);
 
         PersistentStore.setLong("last-calibration-pipe-timestamp", JoH.tsl());

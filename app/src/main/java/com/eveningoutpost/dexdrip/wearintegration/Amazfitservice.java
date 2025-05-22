@@ -260,32 +260,6 @@ public class Amazfitservice extends Service {
             currentdevice = "None Set";
         }
 
-        String collection_method = prefs.getString("dex_collection_method", "None");
-        if (collection_method.compareTo("DexcomG5") == 0) {
-            Transmitter defaultTransmitter = new Transmitter(prefs.getString("dex_txid", "ABCDEF"));
-            if (Build.VERSION.SDK_INT >= 18) {
-                mBluetoothAdapter = mBluetoothManager.getAdapter();
-            }
-            if (mBluetoothAdapter != null) {
-                Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
-                if ((pairedDevices != null) && (pairedDevices.size() > 0)) {
-                    for (BluetoothDevice device : pairedDevices) {
-                        if (device.getName() != null) {
-
-                            String transmitterIdLastTwo = Extensions.lastTwoCharactersOfString(defaultTransmitter.transmitterId);
-                            String deviceNameLastTwo = Extensions.lastTwoCharactersOfString(device.getName());
-
-                            if (transmitterIdLastTwo.equals(deviceNameLastTwo)) {
-                                currentdevice = defaultTransmitter.transmitterId;
-                            }
-
-                        }
-                    }
-                }
-            } else {
-                currentdevice = "No Bluetooth";
-            }
-        }
         return currentdevice;
     }
 

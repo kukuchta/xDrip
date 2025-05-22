@@ -242,18 +242,6 @@ public class WatchUpdaterService extends WearableListenerService implements
         }
     }
 
-    public static void checkOb1Queue() {
-        boolean enable_wearG5 = Pref.getBoolean("enable_wearG5", false);
-        if (enable_wearG5) {
-            if (Ob1G5CollectionService.usingNativeMode()) {
-                final String ob1QueueJson = Ob1G5StateMachine.extractQueueJson();
-                if (ob1QueueJson != null) {
-                    xdrip.getAppContext().startService(new Intent(xdrip.getAppContext(), WatchUpdaterService.class).setAction(WatchUpdaterService.ACTION_SEND_G5_QUEUE).putExtra("queueData", ob1QueueJson));
-                }
-            }
-        }
-    }
-
     private void syncPrefData(DataMap dataMap) {
         boolean enable_wearG5 = dataMap.getBoolean("enable_wearG5", false);
         boolean force_wearG5 = dataMap.getBoolean("force_wearG5", false);
@@ -730,7 +718,6 @@ public class WatchUpdaterService extends WearableListenerService implements
     public void onCreate() {
         mPrefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         wear_integration = mPrefs.getBoolean("wear_sync", false);
-        //is_using_g5 = (getDexCollectionType() == DexCollectionType.DexcomG5);
         is_using_bt = DexCollectionType.hasBluetooth();
         if (wear_integration) {
             googleApiConnect();
@@ -859,7 +846,7 @@ public class WatchUpdaterService extends WearableListenerService implements
 
     private void startBtService() {//KS
         Log.d(TAG, "startBtService");
-        is_using_bt = DexCollectionType.hasBluetooth();//(getDexCollectionType() == DexCollectionType.DexcomG5)
+        is_using_bt = DexCollectionType.hasBluetooth();
         if (is_using_bt) {
             if (!isCollectorRunning()) {
                 CollectionServiceStarter.startBtService(getApplicationContext());
@@ -880,7 +867,6 @@ public class WatchUpdaterService extends WearableListenerService implements
 
     private void startBtG5Service() {//KS
         Log.d(TAG, "startBtG5Service");
-        //is_using_g5 = (getDexCollectionType() == DexCollectionType.DexcomG5);
         is_using_bt = DexCollectionType.hasBluetooth();
         if (is_using_bt) {
             Context myContext = getApplicationContext();
@@ -931,7 +917,7 @@ public class WatchUpdaterService extends WearableListenerService implements
         }
 
         if (wear_integration) {
-            is_using_bt = DexCollectionType.hasBluetooth();//(getDexCollectionType() == DexCollectionType.DexcomG5)
+            is_using_bt = DexCollectionType.hasBluetooth();
             if (googleApiClient != null) {
                 if (googleApiClient.isConnected()) {
                     if (ACTION_RESEND.equals(action)) {
@@ -1767,7 +1753,7 @@ public class WatchUpdaterService extends WearableListenerService implements
         wear_integration = mPrefs.getBoolean("wear_sync", false);
         if (wear_integration) {
             Log.d(TAG, "sendPrefSettings wear_sync=true");
-            dexCollector = mPrefs.getString(DexCollectionType.DEX_COLLECTION_METHOD, "DexcomG5");
+            dexCollector = mPrefs.getString(DexCollectionType.DEX_COLLECTION_METHOD, "CLFollower");
             enable_wearG5 = mPrefs.getBoolean("enable_wearG5", false);
             force_wearG5 = mPrefs.getBoolean("force_wearG5", false);
             node_wearG5 = mPrefs.getString("node_wearG5", "");

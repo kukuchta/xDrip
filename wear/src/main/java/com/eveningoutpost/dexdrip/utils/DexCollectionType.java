@@ -3,9 +3,6 @@ package com.eveningoutpost.dexdrip.utils;
 import com.eveningoutpost.dexdrip.services.DexCollectionService;
 import com.eveningoutpost.dexdrip.services.DexShareCollectionService;
 import com.eveningoutpost.dexdrip.services.DoNothingService;
-import com.eveningoutpost.dexdrip.services.G5CollectionService;
-import com.eveningoutpost.dexdrip.services.Ob1G5CollectionService;
-import com.eveningoutpost.dexdrip.services.WifiCollectionService;
 import com.eveningoutpost.dexdrip.utilitymodels.Pref;
 import com.eveningoutpost.dexdrip.cgm.medtrum.MedtrumCollectionService;
 import com.eveningoutpost.dexdrip.cgm.nsfollow.NightscoutFollowService;
@@ -24,7 +21,6 @@ public enum DexCollectionType {
 
     None("None"),
     DexcomShare("DexcomShare"),
-    DexcomG5("DexcomG5"),
     DexcomG6("DexcomG6"), // currently pseudo
     Follower("Follower"),
     NSEmulator("NSEmulator"),
@@ -39,8 +35,6 @@ public enum DexCollectionType {
     private static final HashSet<DexCollectionType> usesBluetooth = new HashSet<>();
     private static final HashSet<DexCollectionType> usesFiltered = new HashSet<>();
     private static final HashSet<DexCollectionType> usesBattery = new HashSet<>();
-    private static final HashSet<DexCollectionType> usesDexcomRaw = new HashSet<>();
-    private static final HashSet<DexCollectionType> usesTransmitterBattery = new HashSet<>();
 
     public static final String DEX_COLLECTION_METHOD = "dex_collection_method";
 
@@ -54,11 +48,9 @@ public enum DexCollectionType {
             mapToInternalName.put(dct.internalName, dct);
         }
 
-        Collections.addAll(usesBluetooth, DexcomShare, DexcomG5, Medtrum);
-        Collections.addAll(usesFiltered, DexcomG5, Follower); // Bluetooth and Wifi+Bluetooth need dynamic mode
+        Collections.addAll(usesBluetooth, DexcomShare, Medtrum);
+        Collections.addAll(usesFiltered, Follower); // Bluetooth and Wifi+Bluetooth need dynamic mode
         Collections.addAll(usesBattery, Follower); // parakeet separate
-        Collections.addAll(usesDexcomRaw, DexcomG5);
-        Collections.addAll(usesTransmitterBattery); // G4 transmitter battery
     }
 
 
@@ -91,18 +83,6 @@ public enum DexCollectionType {
         return usesBattery.contains(getDexCollectionType());
     }
 
-    public static boolean hasDexcomRaw() {
-        return hasDexcomRaw(getDexCollectionType());
-    }
-
-    public static boolean hasDexcomRaw(DexCollectionType type) {
-        return usesDexcomRaw.contains(type);
-    }
-
-    public static boolean isFlakey() {
-        return getDexCollectionType() == DexCollectionType.DexcomG5;
-    }
-
     public static boolean hasFiltered() {
         return does_have_filtered || usesFiltered.contains(getDexCollectionType());
     }
@@ -113,12 +93,6 @@ public enum DexCollectionType {
 
     public static Class<?> getCollectorServiceClass(final DexCollectionType type) {
         switch (type) {
-            case DexcomG5:
-                if (Pref.getBooleanDefaultFalse(Ob1G5CollectionService.OB1G5_PREFS)) {
-                    return Ob1G5CollectionService.class;
-                } else {
-                    return G5CollectionService.class;
-                }
             case DexcomShare:
                 return DexShareCollectionService.class;
             case Medtrum:
@@ -182,11 +156,6 @@ public enum DexCollectionType {
         switch (dct) {
             case NSEmulator:
                 return "Other App";
-            case DexcomG5:
-                if (Ob1G5CollectionService.usingNativeMode()) {
-                    return Ob1G5CollectionService.usingG6() ? "G6 Native" : "G5 Native";
-                }
-                return dct.name();
             case NSFollow:
                 return "Nightscout";
             case SHFollow:

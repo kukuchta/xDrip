@@ -362,9 +362,8 @@ public class ListenerService extends WearableListenerService implements GoogleAp
                                                 sendMessagePayload(node, "SYNC_TREATMENTS_PATH", SYNC_TREATMENTS_PATH, datamap.toByteArray());
                                             }
                                             if (enable_wearG5) {//KS
-                                                if (!Ob1G5CollectionService.usingNativeMode()) {
-                                                    datamap = getWearTransmitterData(send_bg_count, last_send_previous, 0);//KS 36 data for last 3 hours; 288 for 1 day
-                                                }
+                                                datamap = getWearTransmitterData(send_bg_count, last_send_previous, 0);//KS 36 data for last 3 hours; 288 for 1 day
+
                                                 // fallback to using precalculated if our collection method doesn't appear to provide transmitter data or we know it doesn't
                                                 if (datamap == null) {
                                                     datamap = getWearBgReadingData(send_bg_count, last_send_previous, 0);//KS 36 data for last 3 hours; 288 for 1 day
@@ -393,7 +392,7 @@ public class ListenerService extends WearableListenerService implements GoogleAp
                                             }
                                             if (PersistentStore.getBoolean(G5_BATTERY_WEARABLE_SEND)) {
                                                 PersistentStore.setBoolean(G5_BATTERY_WEARABLE_SEND, false);
-                                                sendPersistentStore();
+
                                             }
                                             if (PersistentStore.getBoolean(WEARABLE_RESEND_PATH)) {
                                                 Log.d(TAG, "doInBackground WEARABLE_RESEND_PATH");
@@ -1232,7 +1231,6 @@ public class ListenerService extends WearableListenerService implements GoogleAp
                     G5CollectionService.getBatteryStatusNow = dataMap.getBoolean("getBatteryStatusNow", false);
                     Ob1G5CollectionService.getBatteryStatusNow = dataMap.getBoolean("getBatteryStatusNow", false);
                     sendCollectorStatus(getApplicationContext(), path);
-                    sendPersistentStore();
                 } else if (path.equals(WEARABLE_SENSOR_DATA_PATH)) {//KS
                     dataMap = DataMapItem.fromDataItem(event.getDataItem()).getDataMap();
                     Log.d(TAG, "onDataChanged path=" + path + " DataMap=" + dataMap);
@@ -1294,9 +1292,7 @@ public class ListenerService extends WearableListenerService implements GoogleAp
                                     Log.d(TAG, "DATA_ITEM_RECEIVED_PATH received! Duplicate confirmation! Ignore timeOfLastEntry=" + JoH.dateTimeText(timeOfLastEntry));
                                 }
                                 if (mPrefs.getBoolean("enable_wearG5", false)) {
-                                    if (!Ob1G5CollectionService.usingNativeMode()) {
-                                        dataMap = getWearTransmitterData(send_bg_count, last_send_previous, (send_bg_count / 3));
-                                    }
+                                    dataMap = getWearTransmitterData(send_bg_count, last_send_previous, (send_bg_count / 3));
                                     if (dataMap != null) {
                                         Log.i(TAG, "DATA_ITEM_RECEIVED_PATH received! New Request to sync BGs from " + JoH.dateTimeText(last_send_previous));
                                         sendData(SYNC_BGS_PATH, dataMap.toByteArray());
@@ -1439,14 +1435,6 @@ public class ListenerService extends WearableListenerService implements GoogleAp
         //long last_timestamp = 0;
         DataMap dataMap = new DataMap();
         switch (DexCollectionType.getDexCollectionType()) {
-            case DexcomG5:
-
-                if (DexCollectionType.getCollectorServiceClass() == G5CollectionService.class) {
-                    dataMap = G5CollectionService.getWatchStatus();//msg, last_timestamp
-                } else {
-                    dataMap = Ob1G5CollectionService.getWatchStatus();//msg, last_timestamp
-                }
-                break;
             case DexcomShare://TODO getLastState() in non-G5 Services
                 BluetoothManager mBluetoothManager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
                 ActiveBluetoothDevice activeBluetoothDevice = ActiveBluetoothDevice.first();
@@ -1511,37 +1499,6 @@ public class ListenerService extends WearableListenerService implements GoogleAp
         dataMap.putLong("timestamp", System.currentTimeMillis());
         dataMap.putLong("syncLogsRequested", syncLogsRequested);
         sendData(path, dataMap.toByteArray());
-    }
-
-    private synchronized void sendPersistentStore() {
-        if (DexCollectionType.getDexCollectionType().equals(DexCollectionType.DexcomG5)) {
-            DataMap dataMap = new DataMap();
-            String dex_txid = mPrefs.getString("dex_txid", "ABCDEF");
-            dataMap.putByteArray(G5_BATTERY_MARKER, PersistentStore.getBytes(G5_BATTERY_MARKER + dex_txid));
-            dataMap.putLong(G5_BATTERY_FROM_MARKER, PersistentStore.getLong(G5_BATTERY_FROM_MARKER + dex_txid));
-            dataMap.putString("dex_txid", dex_txid);
-
-            dataMap.putByteArray(G5_FIRMWARE_MARKER, PersistentStore.getBytes(G5_FIRMWARE_MARKER + dex_txid));
-            dataMap.putString("dex_txid", dex_txid);
-            sendData(WEARABLE_G5BATTERY_PAYLOAD, dataMap.toByteArray());
-        }
-    }
-
-    private boolean isSafeToDeleteDB() {//TODO remove once confirm not needed
-        TransmitterData last_bg = TransmitterData.last();
-        if (last_bg != null && last_send_previous <= last_bg.timestamp) {
-            Log.d(TAG, "onDataChanged SYNC_DB_PATH requestData for last_send_previous < last_bg.timestamp:" + JoH.dateTimeText(last_send_previous) + "<="+ JoH.dateTimeText(last_bg.timestamp));
-            requestData();
-            return false;
-        }
-        if (mPrefs.getBoolean("sync_wear_logs", false)) {
-            UserError last_log = UserError.last();
-            if (last_log != null && last_send_previous_log <= last_log.timestamp) {
-                Log.d(TAG, "onDataChanged SYNC_DB_PATH requestData for last_send_previous_log < last_log.timestamp:" + JoH.dateTimeText(last_send_previous_log) + "<=" + JoH.dateTimeText((long) last_log.timestamp));
-                return false;
-            }
-        }
-        return true;
     }
 
     private boolean resetDataToLatest(DataMap dataMap, Context context) {//KS
@@ -1633,7 +1590,7 @@ public class ListenerService extends WearableListenerService implements GoogleAp
             Log.d(TAG, "syncPrefData dataMap=" + dataMap);
             if (localnode == null || (localnode != null && localnode.isEmpty())) setLocalNodeName();
 
-            String dexCollector = dataMap.getString(DexCollectionType.DEX_COLLECTION_METHOD, "None");// "DexcomG5"
+            String dexCollector = dataMap.getString(DexCollectionType.DEX_COLLECTION_METHOD, "None");
             Log.d(TAG, "syncPrefData dataMap dexCollector=" + dexCollector + " mPrefs DexCollectionType.DEX_COLLECTION_METHOD:" + mPrefs.getString(DexCollectionType.DEX_COLLECTION_METHOD, "xxxxxxxx"));
             DexCollectionType collectionType = DexCollectionType.getType(dexCollector);
 
@@ -1645,7 +1602,7 @@ public class ListenerService extends WearableListenerService implements GoogleAp
                 stopBtService();//Change requires collector restart
             }
 
-            is_using_bt = DexCollectionType.hasBluetooth();//(collectionType == DexCollectionType.DexcomG5);
+            is_using_bt = DexCollectionType.hasBluetooth();
             Log.d(TAG, "syncPrefData is_using_bt:" + is_using_bt);
             //prefs.putBoolean("g5_collection_method", is_using_g5);
 
@@ -1752,8 +1709,7 @@ public class ListenerService extends WearableListenerService implements GoogleAp
             prefs.putBoolean("bridge_battery_alerts", dataMap.getBoolean("bridge_battery_alerts", false));
             prefs.putString("bridge_battery_alert_level", dataMap.getString("bridge_battery_alert_level", "30"));
 
-            if ((DexCollectionType.getDexCollectionType().equals(DexCollectionType.DexcomG5) ||
-                    DexCollectionType.getDexCollectionType().equals(DexCollectionType.DexcomShare)) && enable_wearG5) {///TODO confirm wear battery should be used as bridge
+            if ((DexCollectionType.getDexCollectionType().equals(DexCollectionType.DexcomShare)) && enable_wearG5) {///TODO confirm wear battery should be used as bridge
                 int wearBatteryLevel = CheckBridgeBattery.getBatteryLevel(Home.getAppContext());
                 Log.i(TAG, "syncPrefData wearBatteryLevel=" + wearBatteryLevel);
                 prefs.putInt("bridge_battery", wearBatteryLevel);//TODO confirm wear battery should be used as bridge

@@ -315,40 +315,13 @@ public class G5CollectionService extends G5BaseService {
 
                 //Log.d(TAG, "SDK: " + Build.VERSION.SDK_INT);
                 //stopScan();
-                if (!shouldServiceRun()) {
-                    Log.e(TAG,"Shutting down as no longer using G5 data source");
-                    service_running = false;
-                    keep_running = false;
-                    stopSelf();
-                    return START_NOT_STICKY;
-                } else {
 
-                    scanCycleCount = 0;
-                    mBluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-                    mBluetoothAdapter = mBluetoothManager.getAdapter();
+                Log.e(TAG,"Shutting down as no longer using G5 data source");
+                service_running = false;
+                keep_running = false;
+                stopSelf();
+                return START_NOT_STICKY;
 
-                    if (mGatt != null) {
-                        try {
-                            Log.d(TAG, "onStartCommand mGatt != null; mGatt.close() and set to null.");
-                            mGatt.close();
-                            mGatt = null;
-                        } catch (NullPointerException e) { //
-                        }
-                    }
-
-                    if (Sensor.isActive()) {
-                        setupBluetooth();
-                        Log.d(TAG, "Active Sensor");
-
-                    } else {
-                        stopScan();
-                        Log.d(TAG, "No Active Sensor");
-                    }
-
-                    service_running=false;
-
-                    return START_STICKY;
-                }
             } else {
                 Log.e(TAG,"G5 service already active!");
                 keepAlive();
@@ -394,12 +367,6 @@ public class G5CollectionService extends G5BaseService {
         Log.d(TAG, "getTransmitterDetails() result: Bonded? " + isBondedOrBonding.toString()+(isBonded ? " localed bonded" : " not locally bonded"));
     }
 
-    private static boolean shouldServiceRun() {
-        final boolean result = CollectionServiceStarter.isBTG5(xdrip.getAppContext()) && PersistentStore.getBoolean(CollectionServiceStarter.pref_run_wear_collector);
-        Log.d(TAG, "shouldServiceRun() returning: " + result);
-        return result;
-    }
-
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -410,7 +377,7 @@ public class G5CollectionService extends G5BaseService {
         Log.d(TAG, "onDestroy");
         //SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         scan_interval_timer.cancel();
-        if (pendingIntent != null && !shouldServiceRun()) {
+        if (pendingIntent != null) {
             Log.d(TAG, "onDestroy stop Alarm pendingIntent");
             AlarmManager alarm = (AlarmManager) getSystemService(ALARM_SERVICE);
             alarm.cancel(pendingIntent);

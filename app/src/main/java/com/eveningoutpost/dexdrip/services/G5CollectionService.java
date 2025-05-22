@@ -298,44 +298,13 @@ public class G5CollectionService extends G5BaseService {
 
                 //Log.d(TAG, "SDK: " + Build.VERSION.SDK_INT);
                 //stopScan();
-                if (!shouldServiceRun()) {
-                    Log.e(TAG,"Shutting down as no longer using G5 data source");
-                    service_running = false;
-                    keep_running = false;
-                    stopSelf();
-                    return START_NOT_STICKY;
-                } else {
 
-                    scanCycleCount = 0;
-                    mBluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-                    mBluetoothAdapter = mBluetoothManager.getAdapter();
+                Log.e(TAG,"Shutting down as no longer using G5 data source");
+                service_running = false;
+                keep_running = false;
+                stopSelf();
+                return START_NOT_STICKY;
 
-                    if (mGatt != null) {
-                        try {
-                            Log.d(TAG, "onStartCommand mGatt != null; mGatt.close() and set to null.");
-                            mGatt.close();
-                            mGatt = null;
-                        } catch (NullPointerException e) { //
-                        }
-                    }
-
-                    if (Sensor.isActive()) {
-                        setupBluetooth();
-                        Log.d(TAG, "Active Sensor");
-
-                    } else {
-                        stopScan();
-                        Log.d(TAG, "No Active Sensor");
-                    }
-
-                    service_running=false;
-
-                    if (JoH.quietratelimit("evaluateG6Settingsc", 600)) {
-                        evaluateG6Settings();
-                    }
-
-                    return START_STICKY;
-                }
             } else {
                 Log.e(TAG,"G5 service already active!");
                 keepAlive();
@@ -344,20 +313,6 @@ public class G5CollectionService extends G5BaseService {
 
         } finally {
             JoH.releaseWakeLock(wl);
-        }
-    }
-
-    public void evaluateG6Settings() {
-        if (defaultTransmitter == null) {
-            getTransmitterDetails();
-        }
-        if (haveFirmwareDetails()) {
-            if (FirmwareCapability.isTransmitterG6(defaultTransmitter.transmitterId)) {
-                if (!usingG6()) {
-                    setG6bareBones();
-                    JoH.showNotification("Enabled G6", "G6 Features for old collector automatically enabled", null, Constants.G6_DEFAULTS_MESSAGE, false, true, false);
-                }
-            }
         }
     }
 
@@ -398,9 +353,7 @@ public class G5CollectionService extends G5BaseService {
     }
 
     private static boolean shouldServiceRun() {
-        final boolean result = CollectionServiceStarter.isBTG5(xdrip.getAppContext()) && !Home.get_forced_wear();
-        Log.d(TAG, "shouldServiceRun() returning: " + result);
-        return result;
+        return false;
     }
 
     @Override
@@ -1874,23 +1827,6 @@ public class G5CollectionService extends G5BaseService {
                 + (tryPreBondWithDelay ? "tryPreBondWithDelay " : ""));
     }
 
-    // Status for Watchface
-    //public static boolean isRunning() {
-   //     return lastState.equals("Not running") || lastState.equals("Stopped") ? false : true;
-   // }
-
-   /* public static void setWatchStatus(DataMap dataMap) {
-        lastStateWatch = dataMap.getString("lastState", "");
-        static_last_timestamp_watch = dataMap.getLong("timestamp", 0);
-    }
-
-    public static DataMap getWatchStatus() {
-        DataMap dataMap = new DataMap();
-        dataMap.putString("lastState", lastState);
-        dataMap.putLong("timestamp", static_last_timestamp);
-        return dataMap;
-    }*/
-
     // data for MegaStatus
     public static List<StatusItem> megaStatus() {
         final List<StatusItem> l = new ArrayList<>();
@@ -1977,8 +1913,5 @@ public class G5CollectionService extends G5BaseService {
     // Status for Watchface
     public static String getLastState() {
         return lastState;
-    }
-    public static long getLastStateTimestamp() {
-        return static_last_timestamp;
     }
 }

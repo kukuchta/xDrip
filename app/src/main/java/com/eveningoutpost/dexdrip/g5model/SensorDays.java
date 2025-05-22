@@ -27,22 +27,18 @@ import static com.eveningoutpost.dexdrip.models.JoH.roundDouble;
 import static com.eveningoutpost.dexdrip.models.JoH.tsl;
 import static com.eveningoutpost.dexdrip.services.G5BaseService.usingG6;
 import static com.eveningoutpost.dexdrip.services.Ob1G5CollectionService.getTransmitterID;
-import static com.eveningoutpost.dexdrip.services.Ob1G5CollectionService.usingNativeMode;
 import static com.eveningoutpost.dexdrip.utilitymodels.Constants.DAY_IN_MS;
 import static com.eveningoutpost.dexdrip.utilitymodels.Constants.HOUR_IN_MS;
 import static com.eveningoutpost.dexdrip.utilitymodels.Constants.MINUTE_IN_MS;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.None;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.getBestCollectorHardwareName;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.getDexCollectionType;
-import static com.eveningoutpost.dexdrip.utils.DexCollectionType.hasDexcomRaw;
 
 // jamorham
 
 // helper class to deal with sensor expiry and warmup time
 
 public class SensorDays {
-
-    private static final String TAG = "SensorDays";
 
     private static final long UNKNOWN = -1;
     private static final int USE_DEXCOM_STRATEGY = 5;
@@ -55,9 +51,7 @@ public class SensorDays {
 
     @Getter
     private long period = UNKNOWN;
-    @Getter
-    private long warmupMs = 2 * HOUR_IN_MS;
-    private long created = 0;
+
     private int strategy = 0;
 
     // load current config and compute
@@ -78,38 +72,6 @@ public class SensorDays {
 
         val ths = new SensorDays();
 
-        if (hasDexcomRaw(type)) {
-            ths.strategy = USE_DEXCOM_STRATEGY;
-            val vr2 = (VersionRequest2RxMessage)
-                    getFirmwareXDetails(tx_id, 2);
-            if (vr2 != null) {
-                ths.period = DAY_IN_MS * vr2.typicalSensorDays;
-            } else {
-                if (usingG6()) {
-                    ths.period = DAY_IN_MS * 10; // G6 default
-                } else {
-                    ths.period = DAY_IN_MS * 7; // G5
-                }
-            }
-            val vr3 = (VersionRequest2RxMessage) getFirmwareXDetails(tx_id, 3);
-            if (vr3 != null) {
-                ths.warmupMs = Math.min(Constants.SECOND_IN_MS * vr3.warmupSeconds, 2 * HOUR_IN_MS);
-            } else {
-               ths.warmupMs = 2 * HOUR_IN_MS;
-            }
-
-            if (getBestCollectorHardwareName().equals("G7")) {
-                ths.period = DAY_IN_MS * 10 + HOUR_IN_MS * 12; // The device lasts 10.5 days.
-                ths.warmupMs = 30 * MINUTE_IN_MS; // The warmup time is 30 minutes.
-            }
-
-            if (isDeviceAlt2(getTransmitterID())) {
-                ths.period = DAY_IN_MS * 15 + HOUR_IN_MS * 12;
-            }
-
-        } else {
-            // unknown type
-        }
         ths.created = tsl();
         cache.put(type + tx_id, ths);
         return ths;
@@ -120,15 +82,11 @@ public class SensorDays {
     }
 
     private long getDexcomStart() {
-        if (usingNativeMode()) {
-            return DexSessionKeeper.getStart();
-        } else {
-            try {
-                // In non-native mode the expiration is a guide only
-                return Sensor.currentSensor().started_at;
-            } catch (Exception e) {
-                return -1;
-            }
+        try {
+            // In non-native mode the expiration is a guide only
+            return Sensor.currentSensor().started_at;
+        } catch (Exception e) {
+            return -1;
         }
     }
 
@@ -216,14 +174,6 @@ public class SensorDays {
 
     boolean isKnown() {
         return period != UNKNOWN;
-    }
-
-    boolean cacheValid() {
-        return msSince(created) < MINUTE_IN_MS * 10;
-    }
-
-    void invalidateCache() {
-        created = -1;
     }
 
 }

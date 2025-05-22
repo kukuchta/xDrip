@@ -31,7 +31,6 @@ public enum DexCollectionType {
 
     None("None"),
     DexcomShare("DexcomShare"),
-    DexcomG5("DexcomG5"),
     DexcomG6("DexcomG6"), // currently pseudo
     Follower("Follower"),
     NSEmulator("NSEmulator"),
@@ -53,8 +52,6 @@ public enum DexCollectionType {
     private static final HashSet<DexCollectionType> usesFiltered = new HashSet<>();
     private static final HashSet<DexCollectionType> isPassive = new HashSet<>();
     private static final HashSet<DexCollectionType> usesBattery = new HashSet<>();
-    private static final HashSet<DexCollectionType> usesDexcomRaw = new HashSet<>();
-    private static final HashSet<DexCollectionType> usesTransmitterBattery = new HashSet<>();
 
     public static final String DEX_COLLECTION_METHOD = "dex_collection_method";
 
@@ -68,12 +65,10 @@ public enum DexCollectionType {
             mapToInternalName.put(dct.internalName, dct);
         }
 
-        Collections.addAll(usesBluetooth, DexcomShare, DexcomG5, Medtrum);
-        Collections.addAll(usesFiltered, DexcomG5, Follower); // Bluetooth and Wifi+Bluetooth need dynamic mode
+        Collections.addAll(usesBluetooth, DexcomShare, Medtrum);
+        Collections.addAll(usesFiltered, Follower); // Bluetooth and Wifi+Bluetooth need dynamic mode
         Collections.addAll(isPassive, NSEmulator, NSFollow, SHFollow, WebFollow, UiBased, CLFollow, AidexReceiver, SHAndCLFollow);
         Collections.addAll(usesBattery, Follower); // parakeet separate
-        Collections.addAll(usesDexcomRaw, DexcomG5);
-        Collections.addAll(usesTransmitterBattery); // G4 transmitter battery
     }
 
 
@@ -106,20 +101,7 @@ public enum DexCollectionType {
         return usesBattery.contains(getDexCollectionType());
     }
 
-    public static boolean hasDexcomRaw() {
-        return hasDexcomRaw(getDexCollectionType());
-    }
-
-    public static boolean usesClassicTransmitterBattery() {
-        return usesTransmitterBattery.contains(getDexCollectionType());
-    }
-
     public static boolean hasDexcomRaw(DexCollectionType type) {
-        return usesDexcomRaw.contains(type);
-    }
-
-    public static boolean isFlakey() {
-        return getDexCollectionType() == DexCollectionType.DexcomG5;
     }
 
     public static boolean hasFiltered() {
@@ -132,12 +114,6 @@ public enum DexCollectionType {
 
     public static Class<?> getCollectorServiceClass(final DexCollectionType type) {
         switch (type) {
-            case DexcomG5:
-                if (Pref.getBooleanDefaultFalse(Ob1G5CollectionService.OB1G5_PREFS)) {
-                    return Ob1G5CollectionService.class;
-                } else {
-                    return G5CollectionService.class;
-                }
             case DexcomShare:
                 return DexShareCollectionService.class;
             case Medtrum:
@@ -210,11 +186,6 @@ public enum DexCollectionType {
             case NSEmulator:
             case AidexReceiver:
                 return "Other App";
-            case DexcomG5:
-                if (Ob1G5CollectionService.usingNativeMode()) {
-                    return Ob1G5CollectionService.usingG6() ? (shortTxId() ? "G7" : "G6 Native") : "G5 Native";
-                }
-                return dct.name();
             case NSFollow:
                 return "Nightscout";
             case SHFollow:

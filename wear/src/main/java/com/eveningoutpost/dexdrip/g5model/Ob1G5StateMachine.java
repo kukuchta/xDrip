@@ -70,7 +70,6 @@ import static com.eveningoutpost.dexdrip.services.G5BaseService.G5_BATTERY_WEARA
 import static com.eveningoutpost.dexdrip.services.G5BaseService.G5_FIRMWARE_MARKER;
 import static com.eveningoutpost.dexdrip.services.Ob1G5CollectionService.android_wear;
 import static com.eveningoutpost.dexdrip.services.Ob1G5CollectionService.getTransmitterID;
-import static com.eveningoutpost.dexdrip.services.Ob1G5CollectionService.onlyUsingNativeMode;
 import static com.eveningoutpost.dexdrip.services.Ob1G5CollectionService.wear_broadcast;
 import static com.eveningoutpost.dexdrip.utilitymodels.BgGraphBuilder.DEXCOM_PERIOD;
 import static com.eveningoutpost.dexdrip.utilitymodels.Constants.DAY_IN_MS;
@@ -564,7 +563,7 @@ public class Ob1G5StateMachine {
                                 if (Pref.getBooleanDefaultFalse("ob1_g5_restart_sensor") && (Sensor.isActive())) {
                                     if (pratelimit("secondary-g5-start", 1800)) {
                                         UserError.Log.ueh(TAG, "Trying to Start sensor again");
-                                        startSensor(tsl());
+                                        // deleted
                                     }
                                 }
                             }
@@ -859,11 +858,6 @@ public class Ob1G5StateMachine {
         }
     }
 
-    private static boolean queueContains(BaseMessage tm) {
-        final Class searchClass = tm.getClass();
-        return queueContains(searchClass);
-    }
-
     private static boolean queueContains(Class searchClass) {
         synchronized (commandQueue) {
             return searchQueue(searchClass);
@@ -953,18 +947,6 @@ public class Ob1G5StateMachine {
         return commandQueue.size();
     }
 
-    public static void emptyQueue() {
-        synchronized (commandQueue) {
-            if (commandQueue.size() > 0) {
-                UserError.Log.d(TAG, "Queue drained on wear, clearing: " + commandQueue.size() + " commands");
-                commandQueue.clear();
-                Inevitable.task("Save cleared G5 queue", 1000, Ob1G5StateMachine::saveQueue);
-            } else {
-                if (d) UserError.Log.d(TAG, "Local command queue is already empty");
-            }
-        }
-    }
-
     public static boolean deleteFirstQueueCalibration(final int mgdl) {
         synchronized (commandQueue) {
             final Ob1Work item = commandQueue.peek();
@@ -989,36 +971,7 @@ public class Ob1G5StateMachine {
     }
 
     private static boolean acceptCommands() {
-        return DexCollectionType.hasDexcomRaw() && Pref.getBooleanDefaultFalse("ob1_g5_use_transmitter_alg");
-    }
-
-    // actual limit is something like 20-30 mins but due to propagation delays its too risky to adjust
-    private static final long MAX_START_TIME_REWIND = Constants.MINUTE_IN_MS * 5;
-
-    public static void startSensor(long when) {
-        if (acceptCommands()) {
-            if (msSince(when) > MAX_START_TIME_REWIND) {
-                when = tsl() - MAX_START_TIME_REWIND;
-                UserError.Log.e(TAG, "Cannot rewind sensor start time beyond: " + JoH.dateTimeText(when));
-            }
-            if (usingG6()) {
-                final String code = G6CalibrationParameters.getCurrentSensorCode();
-                if (code == null) {
-                    UserError.Log.wtf(TAG, "Cannot start G6 sensor as calibration code not set!");
-                } else {
-                    UserError.Log.ueh(TAG, "Starting G6 sensor using calibration code: " + code);
-                    enqueueUniqueCommand(new SessionStartTxMessage(when,
-                                    DexTimeKeeper.getDexTime(getTransmitterID(), when), code),
-                            "Start G6 Sensor");
-                }
-
-            } else {
-                UserError.Log.ueh(TAG, "Starting G5 sensor");
-                enqueueUniqueCommand(new SessionStartTxMessage(when,
-                                DexTimeKeeper.getDexTime(getTransmitterID(), when)),
-                        "Start G5 Sensor");
-            }
-        }
+        return false;
     }
 
     private static void reprocessTxMessage(BaseMessage tm) {
@@ -1043,17 +996,6 @@ public class Ob1G5StateMachine {
             }
         }
     }
-
-
-    public static void stopSensor() {
-        if (acceptCommands()) {
-            enqueueCommand(
-                    new SessionStopTxMessage(
-                            DexTimeKeeper.getDexTime(getTransmitterID(), tsl())),
-                    "Stop Sensor");
-        }
-    }
-
 
     public static void restartSensorWithTimeTravel() {
         restartSensorWithTimeTravel(tsl() -
@@ -1307,10 +1249,8 @@ public class Ob1G5StateMachine {
             lastGlucoseBgReading.calculateAgeAdjustedRawValue();
             lastGlucoseBgReading.save();
         } else {
-            if (!Ob1G5CollectionService.usingNativeMode() || Ob1G5CollectionService.fallbackToXdripAlgorithm() || BgReading.latest(3).size() < 3) {
-                final BgReading bgreading = BgReading.create(transmitterData.raw_data, transmitterData.filtered_data, xdrip.getAppContext(), transmitterData.timestamp);
-                UserError.Log.d(TAG, "BgReading created: " + bgreading.uuid + " " + JoH.dateTimeText(bgreading.timestamp));
-            }
+            final BgReading bgreading = BgReading.create(transmitterData.raw_data, transmitterData.filtered_data, xdrip.getAppContext(), transmitterData.timestamp);
+            UserError.Log.d(TAG, "BgReading created: " + bgreading.uuid + " " + JoH.dateTimeText(bgreading.timestamp));
         }
 
         //   UserError.Log.d(TAG, "Dex raw_data " + Double.toString(transmitterData.raw_data));//KS
@@ -1329,7 +1269,7 @@ public class Ob1G5StateMachine {
                 if (!usingG6()) {
                     Ob1G5CollectionService.setG6Defaults();
                     JoH.showNotification("Enabled G6", "G6 Features and default settings automatically enabled", null, Constants.G6_DEFAULTS_MESSAGE, false, true, false);
-                } else if (!onlyUsingNativeMode() && !Home.get_engineering_mode()) {
+                } else if (!Home.get_engineering_mode()) {
                     // TODO revisit this now that there is scaling
                     Ob1G5CollectionService.setG6Defaults();
                     JoH.showNotification("Enabled G6", "G6 Native mode enabled", null, Constants.G6_DEFAULTS_MESSAGE, false, true, false);

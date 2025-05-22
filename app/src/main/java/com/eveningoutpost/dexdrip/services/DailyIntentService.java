@@ -162,7 +162,6 @@ public class DailyIntentService extends IntentService {
                     Log.e(TAG, "Exception cleaning up DesertSync");
                 }
                 try {
-                    Telemetry.sendFirmwareReport();
                     Telemetry.sendCaptureReport();
                 } catch (Exception e) {
                     Log.e(TAG, "Exception in Telemetry: " + e);

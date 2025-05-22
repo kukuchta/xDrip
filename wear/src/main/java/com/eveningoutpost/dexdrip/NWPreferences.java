@@ -84,7 +84,6 @@ public class NWPreferences extends PreferenceActivity {
     }
 
     public void setCollectionPrefs() {
-        //if (mPrefs.getBoolean("dex_collection_method", false)) {//DexCollectionType.DexcomG5
         if (DexCollectionType.hasBluetooth()) {
             screen.addPreference(category);
             Log.d("NWPreferences", "setCollectionPrefs addPreference category");

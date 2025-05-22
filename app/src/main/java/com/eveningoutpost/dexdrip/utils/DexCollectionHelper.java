@@ -35,24 +35,7 @@ public class DexCollectionHelper {
             // g6 is currently a pseudo type which enables required g6 settings and then sets g5
             case DexcomG6:
                 Ob1G5CollectionService.setG6Defaults();
-
-                DexCollectionType.setDexCollectionType(DexCollectionType.DexcomG5);
                 // intentional fall thru
-
-            case DexcomG5:
-                final String pref = "dex_txid";
-                textSettingDialog(activity,
-                        pref, activity.getString(R.string.dexcom_transmitter_id),
-                        activity.getString(R.string.enter_your_transmitter_id_exactly),
-                        InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS | InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD,
-                        () -> {
-                            // InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS does not seem functional here
-                            Pref.setString(pref, Pref.getString(pref, "").toUpperCase());
-                            if (!Dialog.askIfNeeded(activity, Pref.getString(pref, ""))) {
-                                Home.staticRefreshBGCharts();
-                            }
-                            CollectionServiceStarter.restartCollectionServiceBackground();
-                        });
                 break;
 
             case NSFollow:

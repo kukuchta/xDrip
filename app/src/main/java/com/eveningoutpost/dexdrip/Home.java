@@ -158,7 +158,6 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.internal.bind.DateTypeAdapter;
-import static com.eveningoutpost.dexdrip.utils.DexCollectionType.DexcomG5;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -226,7 +225,6 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
     private Viewport tempViewport = new Viewport();
     public Viewport holdViewport = new Viewport();
     private boolean isBTShare;
-    private boolean isG5Share;
     private BroadcastReceiver _broadcastReceiver;
     private BroadcastReceiver newDataReceiver;
     private BroadcastReceiver statusReceiver;
@@ -2425,13 +2423,9 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
         // port this lot to DexCollectionType to avoid multiple lookups of the same preference
 
         isBTShare = CollectionServiceStarter.isBTShare(getApplicationContext());
-        isG5Share = CollectionServiceStarter.isBTG5(getApplicationContext());
         alreadyDisplayedBgInfoCommon = false; // reset flag
         if (isBTShare) {
             updateCurrentBgInfoForBtShare(notificationText);
-        }
-        if (isG5Share) {
-            updateCurrentBgInfoCommon(collector, notificationText);
         }
         if (is_follower || collector.isPassive()) {
             displayCurrentInfo();
@@ -2566,17 +2560,8 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
 
         boolean isSensorActive = Sensor.isActive();
 
-        // automagically start an xDrip sensor session if G5 transmitter already has active sensor
-        if (!isSensorActive && Ob1G5CollectionService.isG5SensorStarted() && !Sensor.stoppedRecently()) {
-            JoH.static_toast_long(getString(R.string.auto_starting_sensor));
-            Sensor.create(tsl() - HOUR_IN_MS * 3);
-            isSensorActive = Sensor.isActive();
-        }
-
         if (!isSensorActive) {
-            // Define a variable (notConnectedToG6Yet) that is only true if Native G6 is chosen, but, transmitter days is unknown or not synced yet.
-            boolean notConnectedToG6Yet = DexCollectionType.getDexCollectionType() == DexcomG5 && Pref.getBooleanDefaultFalse("ob1_g5_use_transmitter_alg") && Pref.getBooleanDefaultFalse("using_g6") && (DexTimeKeeper.getTransmitterAgeInDays(getTransmitterID()) == -1 || !DexSyncKeeper.isReady(getTransmitterID()));
-            if (notConnectedToG6Yet || shortTxId()) { // Only if G6 has been selected and transmitter is not synced yet, or if G7 has been selected.
+            if (shortTxId()) { // Only if G6 has been selected and transmitter is not synced yet, or if G7 has been selected.
                 notificationText.setText(R.string.wait_to_connect);
             } else { // Only if G6 is not selected or G6 transmitter is synced.
                 notificationText.setText(R.string.now_start_your_sensor);
@@ -2596,7 +2581,7 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
                     dialog = builder.create();
                     dialog.show();
                 } else {
-                    if (!Experience.gotData() && !QuickSettingsDialogs.isDialogShowing() && !notConnectedToG6Yet && JoH.ratelimit("start-sensor_prompt", 20)) {
+                    if (!Experience.gotData() && !QuickSettingsDialogs.isDialogShowing() && JoH.ratelimit("start-sensor_prompt", 20)) {
                         // Show the start sensor prompt only if G6 is not selected or the G6 transmitter is synchronized.
                         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
                         final Context context = this;
@@ -2635,72 +2620,47 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
             }
         }
 
-        // TODO this logic needed a rework even a year ago, now its a lot more confused with the additional complexity of native mode
-        if (Ob1G5CollectionService.isG5ActiveButUnknownState() && Calibration.latestValid(2).size() < 2) {
-            // TODO use format string
-            notificationText.setText(String.format(gs(R.string.state_not_currently_known), (Ob1G5StateMachine.usingG6() ? (shortTxId() ? "G7" : "G6") : "G5")));
-            showUncalibratedSlope();
-        } else {
-
-            if (Ob1G5CollectionService.isG5WarmingUp() || (Ob1G5CollectionService.isPendingStart())) {
-                notificationText.setText(R.string.sensor_is_still_warming_up_please_wait);
-                showUncalibratedSlope();
+        final int calculatedBgReadingsCount = BgReading.latest(3).size();
+        if ((calculatedBgReadingsCount > 2)) {
+            // TODO potential to calibrate off stale data here
+            final List<Calibration> calibrations = Calibration.latestValid(2);
+            if ((calibrations != null) && (calibrations.size() > 1)) {
+                if (calibrations.size() > 1) {
+                    if (calibrations.get(0).possible_bad != null && calibrations.get(0).possible_bad == true && calibrations.get(1).possible_bad != null && calibrations.get(1).possible_bad != true) {
+                        notificationText.setText(R.string.possible_bad_calibration);
+                    }
+                }
+                displayCurrentInfo();
+                if (screen_forced_on) dontKeepScreenOn();
             } else {
-                final int calculatedBgReadingsCount = BgReading.latest(3).size();
-                if ((calculatedBgReadingsCount > 2) || (Ob1G5CollectionService.onlyUsingNativeMode() && BgReading.latest(1).size() > 0)) {
-                    // TODO potential to calibrate off stale data here
-                    final List<Calibration> calibrations = Calibration.latestValid(2);
-                    if (((calibrations != null) && (calibrations.size() > 1)) || Ob1G5CollectionService.onlyUsingNativeMode()) {
-                        if (calibrations.size() > 1) {
-                            if (calibrations.get(0).possible_bad != null && calibrations.get(0).possible_bad == true && calibrations.get(1).possible_bad != null && calibrations.get(1).possible_bad != true) {
-                                notificationText.setText(R.string.possible_bad_calibration);
-                            }
-                        }
-                        displayCurrentInfo();
-                        if (screen_forced_on) dontKeepScreenOn();
-                    } else {
-                        if (BgReading.isDataSuitableForDoubleCalibration()) {
-                            notificationText.setText(R.string.please_enter_two_calibrations_to_get_started);
-                            showUncalibratedSlope();
-                            Log.d(TAG, "Asking for calibration A: Uncalculated BG readings: " + BgReading.latest(2).size() + " / Calibrations size: " + calibrations.size());
-                            promptForCalibration();
-                            dontKeepScreenOn();
-                        } else {
-                            notificationText.setText(R.string.unusual_calibration_waiting);
-                            if (Ob1G5CollectionService.isProvidingNativeGlucoseData()) {
-                                displayCurrentInfo();
-                                if (screen_forced_on) dontKeepScreenOn();
-                            }
-                        }
-                    }
+                if (BgReading.isDataSuitableForDoubleCalibration()) {
+                    notificationText.setText(R.string.please_enter_two_calibrations_to_get_started);
+                    showUncalibratedSlope();
+                    Log.d(TAG, "Asking for calibration A: Uncalculated BG readings: " + BgReading.latest(2).size() + " / Calibrations size: " + calibrations.size());
+                    promptForCalibration();
+                    dontKeepScreenOn();
                 } else {
-                    UserError.Log.d(TAG, "NOT ENOUGH CALCULATED READINGS: " + calculatedBgReadingsCount);
-                    if (!BgReading.isDataSuitableForDoubleCalibration() && (!Ob1G5CollectionService.usingNativeMode() || Ob1G5CollectionService.fallbackToXdripAlgorithm())) {
-                        notificationText.setText(R.string.please_wait_need_two_readings_first);
-                        showInitialStatusHelper();
+                    notificationText.setText(R.string.unusual_calibration_waiting);
+                }
+            }
+        } else {
+            UserError.Log.d(TAG, "NOT ENOUGH CALCULATED READINGS: " + calculatedBgReadingsCount);
+            if (!BgReading.isDataSuitableForDoubleCalibration()) {
+                notificationText.setText(R.string.please_wait_need_two_readings_first);
+                showInitialStatusHelper();
+            } else {
+                List<Calibration> calibrations = Calibration.latest(2);
+                if (calibrations.size() < 2) {
+                    if (BgReading.isDataSuitableForDoubleCalibration()) {
+                        notificationText.setText(R.string.please_enter_two_calibrations_to_get_started);
+                        showUncalibratedSlope();
+                        Log.d(TAG, "Asking for calibration B: Uncalculated BG readings: " + BgReading.latestUnCalculated(2).size() + " / Calibrations size: " + calibrations.size() + " quality: " + BgReading.isDataSuitableForDoubleCalibration());
+                        promptForCalibration();
                     } else {
-                        List<Calibration> calibrations = Calibration.latest(2);
-                        if (calibrations.size() < 2) {
-                            if (BgReading.isDataSuitableForDoubleCalibration() || Ob1G5CollectionService.isG5WantingInitialCalibration()) {
-                                notificationText.setText(R.string.please_enter_two_calibrations_to_get_started);
-                                showUncalibratedSlope();
-                                Log.d(TAG, "Asking for calibration B: Uncalculated BG readings: " + BgReading.latestUnCalculated(2).size() + " / Calibrations size: " + calibrations.size() + " quality: " + BgReading.isDataSuitableForDoubleCalibration());
-                                if (!Ob1G5CollectionService.isPendingCalibration()) {
-                                    promptForCalibration();
-                                } else {
-                                    notificationText.setText(R.string.transmitter_waiting_for_calibration);
-                                }
-                            } else {
-                                if (!Ob1G5CollectionService.isG5SensorStarted()) {
-                                    notificationText.setText(R.string.sensor_not_started);
-                                    // TODO do we stop xDrip sensor session here?
-                                } else {
-                                    notificationText.setText(R.string.not_getting_readings);
-                                }
-                            }
-                            dontKeepScreenOn();
-                        }
+                        notificationText.setText(R.string.sensor_not_started);
+                        // TODO do we stop xDrip sensor session here?
                     }
+                    dontKeepScreenOn();
                 }
             }
         }

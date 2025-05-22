@@ -7,7 +7,6 @@ package com.eveningoutpost.dexdrip;
  */
 
 import static com.eveningoutpost.dexdrip.Home.startWatchUpdaterService;
-import static com.eveningoutpost.dexdrip.utils.DexCollectionType.DexcomG5;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.Medtrum;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.NSFollow;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.SHAndCLFollow;
@@ -166,13 +165,7 @@ public class MegaStatus extends FloatingLocaleActivityWithScreenshot {
             final DexCollectionType dexCollectionType = DexCollectionType.getDexCollectionType();
 
             // probably want a DexCollectionService related set
-            if (dexCollectionType.equals(DexcomG5)) {
-                if (Pref.getBooleanDefaultFalse(Ob1G5CollectionService.OB1G5_PREFS)) {
-                    addAsection(G5_STATUS, "G6/Dex1/G7/1+ Collector/Transmitter Status");
-                } else {
-                    addAsection(G5_STATUS, "G5 Collector and Transmitter Status");
-                }
-            } else if (dexCollectionType.equals(Medtrum)) {
+            if (dexCollectionType.equals(Medtrum)) {
                 addAsection(MEDTRUM_STATUS, "Medtrum A6 Status");
             }
             if (BlueJayEntry.isEnabled()) {
@@ -348,11 +341,6 @@ public class MegaStatus extends FloatingLocaleActivityWithScreenshot {
                     switch (action) {
                         case WatchUpdaterService.ACTION_BLUETOOTH_COLLECTION_SERVICE_UPDATE:
                             switch (DexCollectionType.getDexCollectionType()) {
-                                case DexcomG5:
-                                    // as this is fairly lightweight just write the data to both G5 collectors
-                                    G5CollectionService.setWatchStatus(dataMap);//msg, last_timestamp
-                                    Ob1G5CollectionService.setWatchStatus(dataMap);//msg, last_timestamp
-                                    break;
                                 case DexcomShare:
                                     if (lastState != null && !lastState.isEmpty()) {
                                         //setConnectionStatus(lastState);//TODO set System Status page connection_status.setText to lastState for non-G5 Services?
@@ -403,11 +391,7 @@ public class MegaStatus extends FloatingLocaleActivityWithScreenshot {
 
     private void requestWearCollectorStatus() {
         if (Home.get_enable_wear()) {
-            if (DexCollectionType.getDexCollectionType().equals(DexcomG5)) {
-                startWatchUpdaterService(xdrip.getAppContext(), WatchUpdaterService.ACTION_STATUS_COLLECTOR, TAG, "getBatteryStatusNow", G5CollectionService.getBatteryStatusNow);
-            } else {
-                startWatchUpdaterService(xdrip.getAppContext(), WatchUpdaterService.ACTION_STATUS_COLLECTOR, TAG);
-            }
+            startWatchUpdaterService(xdrip.getAppContext(), WatchUpdaterService.ACTION_STATUS_COLLECTOR, TAG);
         }
     }
 

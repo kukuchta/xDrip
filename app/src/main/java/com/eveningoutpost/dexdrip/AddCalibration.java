@@ -206,32 +206,19 @@ public class AddCalibration extends AppCompatActivity implements NavigationDrawe
                             final double calValue = JoH.tolerantParseDouble(string_value);
 
                             if (!Home.get_follower()) {
-                                if (DexCollectionType.hasDexcomRaw() && FirmwareCapability.isTransmitterRawIncapable(getTransmitterID())) { // Firefly only
-                                    double bg = calValue;
-                                    if (unit.compareTo("mgdl") != 0) {
-                                        bg = bg * Constants.MMOLL_TO_MGDL;
-                                    }
-                                    JoH.clearCache();
-                                    final Calibration Calibration = new Calibration();
-                                    final Sensor sensor = Sensor.currentSensor();
-                                    JoH.static_toast_long("Sending Blood Test to Transmitter");
-                                    BloodTest.create(JoH.tsl() - (Constants.SECOND_IN_MS * 30), bg, "Add Calibration");
-                                    if (!Pref.getBooleanDefaultFalse("bluetooth_meter_for_calibrations_auto")) {
-                                        NativeCalibrationPipe.addCalibration((int) bg, JoH.tsl() - (Constants.SECOND_IN_MS * 30));
-                                    }
+
+                                Calibration calibration = Calibration.create(calValue, getApplicationContext());
+                                if (calibration != null) {
+                                    UndoRedo.addUndoCalibration(calibration.uuid);
+                                    //startWatchUpdaterService(v.getContext(), WatchUpdaterService.ACTION_SYNC_CALIBRATION, TAG);
+                                    //Ob1G5StateMachine.addCalibration((int)calibration.bg, calibration.timestamp);
+                                    NativeCalibrationPipe.addCalibration((int) calibration.bg, calibration.timestamp);
                                 } else {
-                                    Calibration calibration = Calibration.create(calValue, getApplicationContext());
-                                    if (calibration != null) {
-                                        UndoRedo.addUndoCalibration(calibration.uuid);
-                                        //startWatchUpdaterService(v.getContext(), WatchUpdaterService.ACTION_SYNC_CALIBRATION, TAG);
-                                        //Ob1G5StateMachine.addCalibration((int)calibration.bg, calibration.timestamp);
-                                        NativeCalibrationPipe.addCalibration((int) calibration.bg, calibration.timestamp);
-                                    } else {
-                                        Log.e(TAG, "Calibration creation resulted in null");
-                                        JoH.static_toast_long("Could not create calibration!");
-                                        // TODO probably follower must ensure it has a valid sensor regardless..
-                                    }
+                                    Log.e(TAG, "Calibration creation resulted in null");
+                                    JoH.static_toast_long("Could not create calibration!");
+                                    // TODO probably follower must ensure it has a valid sensor regardless..
                                 }
+
                             } else if (Home.get_follower()) {
                                 // Sending the data for the master to update the main tables.
                                 sendFollowerCalibration(calValue, 0); // default offset is 0

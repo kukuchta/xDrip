@@ -376,8 +376,6 @@ public class Home extends BaseWatchFace {
 
     public static long stale_data_millis()
     {
-        if (DexCollectionType.getDexCollectionType() == DexCollectionType.DexcomG5 &&
-            Pref.getBooleanDefaultFalse("engineering_mode")) return (60000 * 5);
         return (60000 * 11);
     }
 

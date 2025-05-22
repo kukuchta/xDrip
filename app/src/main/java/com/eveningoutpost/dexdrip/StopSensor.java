@@ -65,7 +65,7 @@ public class StopSensor extends ActivityWithMenu {
 
         Treatments.sensorStop(null, "Stopped by xDrip");
 
-        Ob1G5StateMachine.stopSensor();
+        // stop deleted
         if (JoH.pratelimit("dex-stop-start", 15)) {
             //
         }
@@ -99,19 +99,11 @@ public class StopSensor extends ActivityWithMenu {
         // 2- They cannot be restarted easily or they cannot be restarted at all.
         // TODO this could be moved to another utility class if the same logic is used elsewhere
         public boolean resettableCals() { // Used on the stop sensor menu.
-            return DexCollectionType.getDexCollectionType() != DexCollectionType.DexcomG5
-                    || !Pref.getBooleanDefaultFalse("using_g6")
-                    || !FirmwareCapability.isTransmitterRawIncapable(getTransmitterID());
+            return true;
         }
 
         public void stopSensorClick() {
             String confirm = gs(R.string.are_you_sure);
-            if (!resettableCals()) { // Dexcom G6 Firefly or G7
-                confirm = gs(R.string.sensor_stop_confirm_norestart);
-                if (shortTxId()) { // Dexcom G7
-                    confirm = gs(R.string.sensor_stop_confirm_really_norestart);
-                }
-            }
             GenericConfirmDialog.show(StopSensor.this, gs(R.string.are_you_sure), confirm, () -> {
                 stop();
                 JoH.startActivity(Home.class);

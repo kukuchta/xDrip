@@ -2008,8 +2008,7 @@ public class BgReading extends Model implements ShareUploadableBg {
         Boolean bg_unclear_readings_alerts = prefs.getBoolean("bg_unclear_readings_alerts", false);
         if (!bg_unclear_readings_alerts
                 || !DexCollectionType.hasFiltered()
-                || Ob1G5CollectionService.usingG6()
-                || Ob1G5CollectionService.usingNativeMode()) {
+                || Ob1G5CollectionService.usingG6()) {
             Log.d(TAG_ALERT, "getUnclearReading returned false since feature is disabled");
             UserNotification.DeleteNotificationByType("bg_unclear_readings_alert");
             return false;

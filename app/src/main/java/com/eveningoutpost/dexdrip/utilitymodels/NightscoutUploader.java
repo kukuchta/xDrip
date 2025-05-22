@@ -1116,8 +1116,7 @@ public class NightscoutUploader {
 
         batteries.add(NightscoutBatteryDevice.PHONE);
 
-        if ((DexCollectionType.hasBattery() && (Pref.getBoolean("send_bridge_battery_to_nightscout", true)))
-                || (Home.get_forced_wear() && DexCollectionType.getDexCollectionType().equals(DexCollectionType.DexcomG5))) {
+        if (DexCollectionType.hasBattery() && (Pref.getBoolean("send_bridge_battery_to_nightscout", true))) {
             batteries.add(NightscoutBatteryDevice.BRIDGE);
         }
 

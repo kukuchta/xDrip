@@ -108,15 +108,6 @@ public class StartNewSensor extends ActivityWithMenu {
     private void sensorButtonClick() {
 
         ucalendar = Calendar.getInstance();
-        if (Ob1G5CollectionService.usingNativeMode()) {
-            if (!DexSyncKeeper.isReady(Pref.getString("dex_txid", "NULL")) || transmitterAgeInDays() == -1) {
-                JoH.static_toast_long("Need to connect to transmitter before we can start sensor");
-                UserError.Log.e(TAG, "Need to connect to transmitter before we can start sensor");
-                MegaStatus.startStatus(MegaStatus.G5_STATUS);
-            } else {
-                startSensorOrAskForG6Code();   // If we're using native mode, don't bother asking about insertion time
-            }
-        } else {
             final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
             builder.setTitle(gs(R.string.did_you_insert_it_today));
             builder.setMessage(gs(R.string.we_need_to_know_when_the_sensor_was_inserted_to_improve_calculation_accuracy__was_it_inserted_today));
@@ -127,34 +118,33 @@ public class StartNewSensor extends ActivityWithMenu {
                 }
             });
             builder.setNegativeButton(gs(R.string.not_today), new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int which) {
-                    dialog.dismiss();
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
 
-                    final DatePickerFragment datePickerFragment = new DatePickerFragment();
-                    datePickerFragment.setAllowFuture(false);
-                    if (!Home.get_engineering_mode()) {
-                        datePickerFragment.setEarliestDate(JoH.tsl() - (30L * 24 * 60 * 60 * 1000)); // 30 days
-                    }
-                    datePickerFragment.setTitle(gs(R.string.which_day_was_it_inserted));
-                    datePickerFragment.setDateCallback(new ProfileAdapter.DatePickerCallbacks() {
-                        @Override
-                        public void onDateSet(int year, int month, int day) {
-                            ucalendar.set(year, month, day);
-                            // Long enough in the past for age adjustment to be meaningless? Skip asking time
-                            if ((!Home.get_engineering_mode()) && (JoH.tsl() - ucalendar.getTimeInMillis() > (AGE_ADJUSTMENT_TIME + (1000 * 60 * 60 * 24)))) {
-                                startSensorOrAskForG6Code();
-                            } else {
-                                askSensorInsertionTime();
-                            }
-                        }
-                    });
-
-                    datePickerFragment.show(activity.getFragmentManager(), "DatePicker");
-
+                final DatePickerFragment datePickerFragment = new DatePickerFragment();
+                datePickerFragment.setAllowFuture(false);
+                if (!Home.get_engineering_mode()) {
+                    datePickerFragment.setEarliestDate(JoH.tsl() - (30L * 24 * 60 * 60 * 1000)); // 30 days
                 }
-            });
-            builder.create().show();
-        }
+                datePickerFragment.setTitle(gs(R.string.which_day_was_it_inserted));
+                datePickerFragment.setDateCallback(new ProfileAdapter.DatePickerCallbacks() {
+                    @Override
+                    public void onDateSet(int year, int month, int day) {
+                        ucalendar.set(year, month, day);
+                        // Long enough in the past for age adjustment to be meaningless? Skip asking time
+                        if ((!Home.get_engineering_mode()) && (JoH.tsl() - ucalendar.getTimeInMillis() > (AGE_ADJUSTMENT_TIME + (1000 * 60 * 60 * 24)))) {
+                            startSensorOrAskForG6Code();
+                        } else {
+                            askSensorInsertionTime();
+                        }
+                    }
+                });
+
+                datePickerFragment.show(activity.getFragmentManager(), "DatePicker");
+
+            }
+        });
+        builder.create().show();
     }
 
     private void askSensorInsertionTime() {
@@ -176,37 +166,13 @@ public class StartNewSensor extends ActivityWithMenu {
         timePickerFragment.show(activity.getFragmentManager(), "TimePicker");
     }
 
-    private static final int ABSOLUTE_MAX_AGE_DAYS = 180;
-    private static final int MAX_AGE_DAYS = 100;
-    private static final int MONTH_WARNING_DAYS = 30;
-
     private void startSensorOrAskForG6Code() {
         if (getTransmitterID().length() == 4) {
             Sensor.createDefaultIfMissing();
             finish();
         }
-        final int cap = 20;
-        if (Ob1G5CollectionService.usingCollector() && Ob1G5StateMachine.usingG6()) {
-            if (JoH.pratelimit("dex-stop-start", cap)) {
-                JoH.clearRatelimit("dex-stop-start");
-                val transmitterAgeInDays = transmitterAgeInDays();
-                val modified = FirmwareCapability.isTransmitterModified(getTransmitterID());
-                val endOfLife = transmitterAgeInDays >= ABSOLUTE_MAX_AGE_DAYS || (!modified && transmitterAgeInDays >= MAX_AGE_DAYS);
-                if (transmitterAgeInDays < MAX_AGE_DAYS - MONTH_WARNING_DAYS
-                        || (modified && transmitterAgeInDays < ABSOLUTE_MAX_AGE_DAYS - MONTH_WARNING_DAYS)) {
-                    // More than 30 days left of starting sensors - just ask for code
-                    G6CalibrationCodeDialog.ask(this, this::startSensorAndSetIntent);
-                } else { // 30 or less days left of starting sensors - give additional message first
-                    G6EndOfLifeDialog.show(activity, () ->
-                                    G6CalibrationCodeDialog.ask(this, this::startSensorAndSetIntent),
-                            endOfLife, modified, transmitterAgeInDays);
-                }
-            } else {
-                JoH.static_toast_long(String.format(Locale.ENGLISH, getString(R.string.please_wait_seconds_before_trying_to_start_sensor), cap));
-            }
-        } else {
-            startSensorAndSetIntent();
-        }
+
+        startSensorAndSetIntent();
     }
 
     private void startSensorAndSetIntent() {
@@ -246,7 +212,7 @@ public class StartNewSensor extends ActivityWithMenu {
 
         CollectionServiceStarter.restartCollectionServiceBackground();
 
-        Ob1G5StateMachine.startSensor(startTime);
+        // start deleted
         JoH.clearCache();
         Home.staticRefreshBGCharts();
 

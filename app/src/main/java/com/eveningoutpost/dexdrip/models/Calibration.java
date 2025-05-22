@@ -293,22 +293,8 @@ public class Calibration extends Model {
 
         // don't allow initial calibration if data would be stale (but still use data for native mode)
             if ((bgReadings == null) || (bgReadings.size() != 3) || !isDataSuitableForDoubleCalibration() ){
-
-            if (Ob1G5CollectionService.usingNativeMode()) {
-                JoH.static_toast_long("Sending Blood Tests to Transmitter"); // TODO extract string
-                BloodTest.create(JoH.tsl() - (Constants.SECOND_IN_MS * 30), bg1, "Initial Calibration");
-                BloodTest.create(JoH.tsl(), bg2, "Initial Calibration");
-
-                if (!Pref.getBooleanDefaultFalse("bluetooth_meter_for_calibrations_auto")) {
-                    // blood tests above don't automatically become part of calibration pipe if this setting is unset so do here
-                    NativeCalibrationPipe.addCalibration((int) bg1, JoH.tsl() - (Constants.SECOND_IN_MS * 30));
-                    NativeCalibrationPipe.addCalibration((int) bg2, JoH.tsl());
-                }
-
-            } else {
-                UserError.Log.wtf(TAG, "Did not find 3 readings for initial calibration - aborting");
-                JoH.static_toast_long("Not enough recent sensor data! - cancelling!");
-            }
+            UserError.Log.wtf(TAG, "Did not find 3 readings for initial calibration - aborting");
+            JoH.static_toast_long("Not enough recent sensor data! - cancelling!");
             return;
         }
 
@@ -405,9 +391,9 @@ public class Calibration extends Model {
             CalibrationSendQueue.addToQueue(calibration, context);
         }
         JoH.clearCache();
-        if (!Ob1G5CollectionService.usingNativeMode()) {
-            adjustRecentBgReadings(5);
-        }
+
+        adjustRecentBgReadings(5);
+
         CalibrationRequest.createOffset(lowerCalibration.bg, 35);
         Notifications.staticUpdateNotification();
     }
@@ -631,9 +617,8 @@ public class Calibration extends Model {
                         calculate_w_l_s(prefs.getBoolean("infrequent_calibration", false));
                         CalibrationSendQueue.addToQueue(calibration, context);
                         BgReading.pushBgReadingSyncToWatch(bgReading, false);
-                        if (!Ob1G5CollectionService.usingNativeMode()) {
-                            adjustRecentBgReadings(adjustPast ? 30 : 2);
-                        }
+                        adjustRecentBgReadings(adjustPast ? 30 : 2);
+
                         Notifications.start();
                         Calibration.requestCalibrationIfRangeTooNarrow();
                         newFingerStickData();

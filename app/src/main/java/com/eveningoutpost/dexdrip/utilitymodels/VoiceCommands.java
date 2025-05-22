@@ -50,9 +50,6 @@ public class VoiceCommands {
             JoH.static_toast_long("Fake data pre-calibration OFF");
         } else if (allWords.contentEquals("set sensor code")) {
             G6CalibrationCodeDialog.ask(mActivity, null);
-        } else if (allWords.contentEquals("multiple start")) {
-                Ob1G5StateMachine.twoPartUpdate();
-                JoH.static_toast_long("Multiple start test");
         } else if (allWords.contentEquals("hard reset transmitter")) {
             G5BaseService.setHardResetTransmitterNow();
             JoH.static_toast_long("Will attempt to reset transmitter on next poll!! Can take 15 minutes to process");
@@ -118,21 +115,6 @@ public class VoiceCommands {
         }
 
         switch (allWords) {
-            case "restart g5 session":
-                Ob1G5StateMachine.restartSensorWithTimeTravel();
-                JoH.static_toast_long("Attempting to restart sensor session");
-                break;
-            case "restart g5 session nearly ended":
-                Ob1G5StateMachine.restartSensorWithTimeTravel((JoH.tsl() - Constants.DAY_IN_MS * 1) + Constants.MINUTE_IN_MS * 20);
-                break;
-            case "stop g5 session":
-                Ob1G5StateMachine.stopSensor();
-                JoH.static_toast_long("Attempting to stop sensor session");
-                break;
-            case "start g5 session":
-                Ob1G5StateMachine.startSensor(JoH.tsl());
-                JoH.static_toast_long("Attempting to start sensor session");
-                break;
             case "clear last update check time":
                 UpdateActivity.clearLastCheckTime();
                 JoH.static_toast_long(allWords);
@@ -150,14 +132,6 @@ public class VoiceCommands {
             case "start sensor on master":
                 JoH.static_toast_long(allWords);
                 GcmActivity.push_start_master_sensor();
-                break;
-            case "enable extension parameter":
-                Ob1G5StateMachine.enableExtensionParameter();
-                JoH.static_toast_long("Enabling extension parameter");
-                break;
-            case "disable extension parameter":
-                Ob1G5StateMachine.disableExtensionParameter();
-                JoH.static_toast_long("Disabling extension parameter");
                 break;
             case "test medtrum calibrate":
                 MedtrumCollectionService.calibratePing();

@@ -84,15 +84,9 @@ import static com.eveningoutpost.dexdrip.services.Ob1G5CollectionService.android
 import static com.eveningoutpost.dexdrip.services.Ob1G5CollectionService.getTransmitterID;
 import static com.eveningoutpost.dexdrip.services.Ob1G5CollectionService.ignoreBonding;
 import static com.eveningoutpost.dexdrip.services.Ob1G5CollectionService.immediateBonding;
-import static com.eveningoutpost.dexdrip.services.Ob1G5CollectionService.onlyUsingNativeMode;
-import static com.eveningoutpost.dexdrip.services.Ob1G5CollectionService.resetSomeInternalState;
 import static com.eveningoutpost.dexdrip.services.Ob1G5CollectionService.wear_broadcast;
 import static com.eveningoutpost.dexdrip.utilitymodels.BgGraphBuilder.DEXCOM_PERIOD;
-import static com.eveningoutpost.dexdrip.utilitymodels.Constants.DAY_IN_MS;
 import static com.eveningoutpost.dexdrip.utilitymodels.Constants.HOUR_IN_MS;
-import static com.eveningoutpost.dexdrip.utilitymodels.Constants.MINUTE_IN_MS;
-import static com.eveningoutpost.dexdrip.utilitymodels.Constants.SECOND_IN_MS;
-import static com.eveningoutpost.dexdrip.utils.DexCollectionType.getBestCollectorHardwareName;
 import static com.eveningoutpost.dexdrip.utils.bt.Helper.getStatusName;
 
 
@@ -802,7 +796,7 @@ public class Ob1G5StateMachine {
                                     if (Pref.getBooleanDefaultFalse("ob1_g5_restart_sensor")) {
                                         if (pratelimit("secondary-g5-start", 1800)) {
                                             UserError.Log.ueh(TAG, "Trying to Start sensor again");
-                                            startSensor(tsl());
+                                            // start deleted
                                         } else {
                                             if (!parent.lastSensorState.sensorStarted()) {
                                                 UserError.Log.uel(TAG, "Stopping sensor session due to repeated restart failure");
@@ -943,7 +937,7 @@ public class Ob1G5StateMachine {
                                 if (txtime.getSessionDuration() > Constants.DAY_IN_MS * restartDaysThreshold
                                         && txtime.getSessionDuration() < Constants.MONTH_IN_MS) {
                                     UserError.Log.uel(TAG, "Requesting preemptive session restart");
-                                    restartSensorWithTimeTravel();
+                                    // start deleted
                                 }
                             }
                             break;
@@ -1132,26 +1126,6 @@ public class Ob1G5StateMachine {
         return getTransmitterID().length() < 6;
     }
 
-
-    private static Ob1Work enqueueCommand(BaseMessage tm, String msg) {
-        if (tm != null) {
-            final Ob1Work item = new Ob1Work(tm, msg);
-            synchronized (commandQueue) {
-                commandQueue.add(item);
-            }
-            streamCheck(item);
-            backupCheck(item);
-            return item;
-        }
-        return null;
-    }
-
-    private static void streamCheck(Ob1Work item) {
-        if (item.streamable()) {
-            Inevitable.task("check wear stream", 5000, WatchUpdaterService::checkOb1Queue);
-        }
-    }
-
     private static void backupCheck(Ob1Work item) {
         if (item.streamable()) {
             saveQueue();
@@ -1172,17 +1146,11 @@ public class Ob1G5StateMachine {
                     UserError.Log.d(TAG, "Adding to queue packet: " + msg + " " + HexDump.dumpHexString(tm.byteSequence));
                 }
                 commandQueue.add(item);
-                streamCheck(item);
             }
             backupCheck(item);
             return item;
         }
         return null;
-    }
-
-    private static boolean queueContains(BaseMessage tm) {
-        final Class searchClass = tm.getClass();
-        return queueContains(searchClass);
     }
 
     private static boolean queueContains(Class searchClass) {
@@ -1313,39 +1281,6 @@ public class Ob1G5StateMachine {
         }
     }
 
-    private static boolean acceptCommands() {
-        return DexCollectionType.hasDexcomRaw() && Pref.getBooleanDefaultFalse("ob1_g5_use_transmitter_alg");
-    }
-
-    // actual limit is something like 20-30 mins but due to propagation delays its too risky to adjust
-    private static final long MAX_START_TIME_REWIND = Constants.MINUTE_IN_MS * 5;
-
-    public static void startSensor(long when) {
-        if (acceptCommands()) {
-            if (msSince(when) > MAX_START_TIME_REWIND) {
-                when = tsl() - MAX_START_TIME_REWIND;
-                UserError.Log.e(TAG, "Cannot rewind sensor start time beyond: " + JoH.dateTimeText(when));
-            }
-            if (usingG6()) {
-                final String code = G6CalibrationParameters.getCurrentSensorCode();
-                if (code == null) {
-                    UserError.Log.wtf(TAG, "Cannot start G6 sensor as calibration code not set!");
-                } else {
-                    UserError.Log.ueh(TAG, "Starting G6 sensor using calibration code: " + code);
-                    enqueueUniqueCommand(new SessionStartTxMessage(when,
-                                    DexTimeKeeper.getDexTime(getTransmitterID(), when), code),
-                            "Start G6 Sensor");
-                }
-
-            } else {
-                UserError.Log.ueh(TAG, "Starting G5 sensor");
-                enqueueUniqueCommand(new SessionStartTxMessage(when,
-                                DexTimeKeeper.getDexTime(getTransmitterID(), when)),
-                        "Start G5 Sensor");
-            }
-        }
-    }
-
     private static void reprocessTxMessage(BaseMessage tm) {
         // rewrite session start messages in case our clock was wrong
         if (tm instanceof SessionStartTxMessage) {
@@ -1369,113 +1304,10 @@ public class Ob1G5StateMachine {
         }
     }
 
-    public static void twoPartUpdate() {
-        if (acceptCommands()) {
-            new Thread(() -> {
-                for (int part = 0; part < 2; part++) {
-                    final String code = G6CalibrationParameters.getCurrentSensorCode();
-                    if (code != null) {
-                        final long n = tsl();
-                        final int d = DexTimeKeeper.getDexTime(getTransmitterID(), n);
-                        enqueueCommand(new SessionStopTxMessage(d), "Part " + part + " A");
-                        enqueueCommand(new SessionStartTxMessage(n, d, code), "Part " + part + " B");
-                        threadSleep(30_000);
-                    }
-                }
-            }).start();
-        }
-    }
-
-    public static void stopSensor() {
-        if (acceptCommands()) {
-            enqueueCommand(
-                    new SessionStopTxMessage(
-                            DexTimeKeeper.getDexTime(getTransmitterID(), tsl())),
-                    "Stop Sensor");
-        }
-    }
-
-    private static void postExtension() {
-        Inevitable.task("post-extension", 2000, () -> {
-            DexSyncKeeper.clear(getTransmitterID());
-            clearStoredFirmwareBytes(getTransmitterID());
-            emptyQueue();
-            resetSomeInternalState();
-        });
-    }
-
-    public static void enableExtensionParameter() {
-        if (acceptCommands()) {
-            enqueueUniqueCommand(new ExtensionTxMessage(ExtensionTxMessage.PARAM_ENABLE), "Enable extension")
-                    .setDontRetry()
-                    .setPreWrite(Ob1G5StateMachine::postExtension);
-        }
-    }
-
-    public static void disableExtensionParameter() {
-        if (acceptCommands()) {
-            enqueueUniqueCommand(new ExtensionTxMessage(ExtensionTxMessage.PARAM_DISABLE), "Disable extension")
-                    .setDontRetry()
-                    .setPreWrite(Ob1G5StateMachine::postExtension);
-        }
-    }
-
-    public static void restartSensorWithTimeTravel() {
-        restartSensorWithTimeTravel(tsl() -
-                (useExtendedTimeTravel() ? DAY_IN_MS * 3 + HOUR_IN_MS * 2 : HOUR_IN_MS * 2 - MINUTE_IN_MS * 10));
-    }
-
     public static boolean useExtendedTimeTravel() {
         return Pref.getBooleanDefaultFalse("ob1_g5_preemptive_restart_extended_time_travel")
                 && (FirmwareCapability.isTransmitterTimeTravelCapable(getTransmitterID())
                 || (Pref.getBooleanDefaultFalse("ob1_g5_defer_preemptive_restart_all_firmwares") && Home.get_engineering_mode()));
-    }
-
-    public static void restartSensorWithTimeTravel(long when) {
-        if (acceptCommands()) {
-            enqueueUniqueCommand(
-                    new SessionStopTxMessage(
-                            DexTimeKeeper.getDexTime(getTransmitterID(), when)),
-                    "Auto Stop Sensor");
-            final long when_started = when + SECOND_IN_MS;
-            enqueueUniqueCommand(new SessionStartTxMessage(when,
-                            DexTimeKeeper.getDexTime(getTransmitterID(), when_started)),
-                    "Auto Start Sensor");
-            if (Pref.getBoolean("ob1_g5_preemptive_restart_alert", true)) {
-                Notifications.ob1SessionRestartRequested();
-            }
-            Treatments.create_note(xdrip.getAppContext().getString(R.string.ob1_session_restarted_note), JoH.tsl());
-        }
-    }
-
-    public static void addCalibration(final int glucose, long timestamp) {
-        if (acceptCommands()) {
-            long since = msSince(timestamp);
-            if (since < 0) {
-                final String msg = "Cannot send calibration in future to transmitter: " + glucose + " @ " + JoH.dateTimeText(timestamp);
-                JoH.static_toast_long(msg);
-                UserError.Log.wtf(TAG, msg);
-                return;
-            }
-            if (since > HOUR_IN_MS) {
-                final String msg = "Cannot send calibration older than 1 hour to transmitter: " + glucose + " @ " + JoH.dateTimeText(timestamp);
-                JoH.static_toast_long(msg);
-                UserError.Log.wtf(TAG, msg);
-                return;
-            }
-            if ((glucose < 40 || glucose > 400)) {
-                final String msg = "Calibration glucose value out of range: " + glucose;
-                JoH.static_toast_long(msg);
-                UserError.Log.wtf(TAG, msg);
-                return;
-            }
-
-            UserError.Log.uel(TAG, "Queuing Calibration for transmitter: " + BgGraphBuilder.unitized_string_with_units_static(glucose) + " " + JoH.dateTimeText(timestamp));
-
-            enqueueCommand(new CalibrateTxMessage(
-                            glucose, DexTimeKeeper.getDexTime(getTransmitterID(), timestamp)),
-                    "Calibrate " + BgGraphBuilder.unitized_string_with_units_static_short(glucose));
-        }
     }
 
     private static boolean queued(Ob1G5CollectionService parent, RxBleConnection connection) {
@@ -1551,34 +1383,13 @@ public class Ob1G5StateMachine {
         if (changed) saveQueue();
     }
 
-    private static void checkAndActivateSensor() {
-        // automagically start an xDrip sensor session if transmitter already has active sensor
-        if (!Sensor.isActive() && Ob1G5CollectionService.isG5SensorStarted() && (!Sensor.stoppedRecently() || shortTxId())) {
-            JoH.static_toast_long(xdrip.gs(R.string.auto_starting_sensor));
-            if (shortTxId()) relAutoSessionStartTime = HOUR_IN_MS * 24; // If we are using a G7
-            final List<BgReading> last = BgReading.latest(1); // Last reading
-            if ((last != null) && (last.size() > 0)) { // Have we had a reading?
-                final long now = JoH.tsl();
-                final long since = now - last.get(0).timestamp; // Time since last reading
-                if (since < relAutoSessionStartTime) { // If the last reading was less than 3 hours ago, or if we are using G7 and the last reading was less than 24 hours ago
-                    relAutoSessionStartTime = since; // We will start the new session starting from the last reading.
-                }
-            }
-            Sensor.create(tsl() - relAutoSessionStartTime);
-        }
-    }
-
     private static void processGlucoseRxMessage(Ob1G5CollectionService parent, final BaseGlucoseRxMessage glucose) {
         if (glucose == null) return;
         lastGlucosePacket = tsl();
         DexTimeKeeper.updateAge(getTransmitterID(), glucose.timestamp);
-        if (glucose.calibrationState().warmingUp()) {
-            checkAndActivateSensor();
-        }
         if (glucose.usable() || (glucose.insufficient() && Pref.getBoolean("ob1_g5_use_insufficiently_calibrated", true))) {
             UserError.Log.d(TAG, "Got usable glucose data from transmitter!!");
             final long rxtimestamp = glucose.getRealTimestamp();
-            checkAndActivateSensor();
             DexSyncKeeper.store(getTransmitterID(), rxtimestamp, parent.static_last_connected, lastGlucosePacket);
             final BgReading bgReading = BgReading.bgReadingInsertFromG5(glucose.glucose, rxtimestamp);
             if (bgReading != null) {
@@ -1704,10 +1515,8 @@ public class Ob1G5StateMachine {
             lastGlucoseBgReading.calculateAgeAdjustedRawValue();
             lastGlucoseBgReading.save();
         } else {
-            if (!Ob1G5CollectionService.usingNativeMode() || Ob1G5CollectionService.fallbackToXdripAlgorithm() || BgReading.latest(3).size() < 3) {
-                final BgReading bgreading = BgReading.create(transmitterData.raw_data, transmitterData.filtered_data, xdrip.getAppContext(), transmitterData.timestamp);
-                UserError.Log.d(TAG, "BgReading created: " + bgreading.uuid + " " + JoH.dateTimeText(bgreading.timestamp));
-            }
+            final BgReading bgreading = BgReading.create(transmitterData.raw_data, transmitterData.filtered_data, xdrip.getAppContext(), transmitterData.timestamp);
+            UserError.Log.d(TAG, "BgReading created: " + bgreading.uuid + " " + JoH.dateTimeText(bgreading.timestamp));
         }
 
         //   UserError.Log.d(TAG, "Dex raw_data " + Double.toString(transmitterData.raw_data));//KS
@@ -1726,7 +1535,7 @@ public class Ob1G5StateMachine {
                 if (!usingG6()) {
                     setG6Defaults();
                     JoH.showNotification("Enabled defaults", "Default settings automatically enabled", null, Constants.G6_DEFAULTS_MESSAGE, false, true, false);
-                } else if (!onlyUsingNativeMode() && !Home.get_engineering_mode()) {
+                } else if (!Home.get_engineering_mode()) {
                     // TODO revisit this now that there is scaling
                     setG6Defaults();
                     UserError.Log.wtf(TAG, "Dex Native mode enabled.  For your device, non-native mode is either not possible or not recommended.");
