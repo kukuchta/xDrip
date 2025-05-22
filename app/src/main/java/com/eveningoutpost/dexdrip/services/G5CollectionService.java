@@ -101,7 +101,7 @@ import static com.eveningoutpost.dexdrip.xdrip.gs;
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
 public class G5CollectionService extends G5BaseService {
 
-    public final static String TAG = G5CollectionService.class.getSimpleName();
+    public final static String TAG = "deleted";
 
     private static final Object short_lock = new Object();
     private final Object mLock = new Object();

@@ -43,9 +43,7 @@ import com.eveningoutpost.dexdrip.models.UserError;
 import com.eveningoutpost.dexdrip.models.UserError.Log;
 import com.eveningoutpost.dexdrip.services.CustomComplicationProviderService;
 import com.eveningoutpost.dexdrip.services.DexCollectionService;
-import com.eveningoutpost.dexdrip.services.G5CollectionService;
 import com.eveningoutpost.dexdrip.services.HeartRateService;
-import com.eveningoutpost.dexdrip.services.Ob1G5CollectionService;
 import com.eveningoutpost.dexdrip.utilitymodels.AlertPlayer;
 import com.eveningoutpost.dexdrip.utilitymodels.BgSendQueue;
 import com.eveningoutpost.dexdrip.utilitymodels.Blukon;
@@ -95,10 +93,6 @@ import java.util.concurrent.TimeUnit;
 
 import static com.eveningoutpost.dexdrip.g5model.Ob1G5StateMachine.PREF_QUEUE_DRAINED;
 import static com.eveningoutpost.dexdrip.models.JoH.ts;
-import static com.eveningoutpost.dexdrip.services.G5CollectionService.G5_BATTERY_FROM_MARKER;
-import static com.eveningoutpost.dexdrip.services.G5CollectionService.G5_BATTERY_MARKER;
-import static com.eveningoutpost.dexdrip.services.G5CollectionService.G5_BATTERY_WEARABLE_SEND;
-import static com.eveningoutpost.dexdrip.services.G5CollectionService.G5_FIRMWARE_MARKER;
 import static com.eveningoutpost.dexdrip.services.HeartRateService.getWearHeartSensorData;
 import static com.eveningoutpost.dexdrip.utilitymodels.BgSendQueue.doMgdl;
 import static com.eveningoutpost.dexdrip.utilitymodels.BgSendQueue.extraStatusLine;
@@ -375,8 +369,7 @@ public class ListenerService extends WearableListenerService implements GoogleAp
                                                         PersistentStore.setBoolean(PREF_QUEUE_DRAINED, false); // TODO only set this when we get ack
                                                     datamap.putBoolean(PREF_QUEUE_DRAINED, queue_drained);
                                                     datamap.putString("dextime", Ob1G5StateMachine.extractDexTime());
-                                                    final CalibrationState lastState = Ob1G5CollectionService.lastSensorState;
-                                                    datamap.putInt("native_calibration_state", lastState != null ? lastState.getValue() : 0);
+                                                    datamap.putInt("native_calibration_state", 0);
                                                     sendMessagePayload(node, "SYNC_BGS_PRECALCULATED_PATH", SYNC_BGS_PRECALCULATED_PATH, datamap.toByteArray());
                                                 } else {
                                                     Log.d(TAG, "Sending transmitter data: " + datamap.size());
@@ -389,10 +382,6 @@ public class ListenerService extends WearableListenerService implements GoogleAp
                                                     byte[] compressPayload = JoH.compressBytesToBytesGzip((datamap.toByteArray()));
                                                     sendMessagePayload(node, "SYNC_LOGS_PATH", SYNC_LOGS_PATH, compressPayload);
                                                 }
-                                            }
-                                            if (PersistentStore.getBoolean(G5_BATTERY_WEARABLE_SEND)) {
-                                                PersistentStore.setBoolean(G5_BATTERY_WEARABLE_SEND, false);
-
                                             }
                                             if (PersistentStore.getBoolean(WEARABLE_RESEND_PATH)) {
                                                 Log.d(TAG, "doInBackground WEARABLE_RESEND_PATH");
@@ -1228,8 +1217,6 @@ public class ListenerService extends WearableListenerService implements GoogleAp
                 } else if (path.equals(STATUS_COLLECTOR_PATH)) {
                     Log.d(TAG, "onDataChanged path=" + path);
                     dataMap = DataMapItem.fromDataItem(event.getDataItem()).getDataMap();
-                    G5CollectionService.getBatteryStatusNow = dataMap.getBoolean("getBatteryStatusNow", false);
-                    Ob1G5CollectionService.getBatteryStatusNow = dataMap.getBoolean("getBatteryStatusNow", false);
                     sendCollectorStatus(getApplicationContext(), path);
                 } else if (path.equals(WEARABLE_SENSOR_DATA_PATH)) {//KS
                     dataMap = DataMapItem.fromDataItem(event.getDataItem()).getDataMap();

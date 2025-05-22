@@ -9,8 +9,6 @@ import com.google.common.collect.ImmutableSet;
 
 import lombok.Getter;
 
-import static com.eveningoutpost.dexdrip.services.G5CollectionService.TAG;
-
 public enum CalibrationState {
 
     // TODO i18n
@@ -75,7 +73,7 @@ public enum CalibrationState {
 
     public static CalibrationState parse(byte state) {
         final CalibrationState result = lookup.get(state);
-        if (result == null) UserError.Log.e(TAG, "Unknown calibration state: " + state);
+        if (result == null) UserError.Log.e("deleted", "Unknown calibration state: " + state);
         return result != null ? result : Unknown;
     }
 

@@ -4,7 +4,6 @@ package com.eveningoutpost.dexdrip.utilitymodels;
 
 import android.app.Activity;
 
-import com.eveningoutpost.dexdrip.g5model.Ob1G5StateMachine;
 import com.eveningoutpost.dexdrip.GcmActivity;
 import com.eveningoutpost.dexdrip.Home;
 import com.eveningoutpost.dexdrip.models.BgReading;
@@ -24,7 +23,6 @@ import com.eveningoutpost.dexdrip.plugin.Registry;
 import com.eveningoutpost.dexdrip.profileeditor.BasalProfileEditor;
 import com.eveningoutpost.dexdrip.ui.activities.DatabaseAdmin;
 import com.eveningoutpost.dexdrip.ui.dialog.G6CalibrationCodeDialog;
-import com.eveningoutpost.dexdrip.utils.DexCollectionType;
 import com.eveningoutpost.dexdrip.utils.SdcardImportExport;
 
 import static com.eveningoutpost.dexdrip.Home.get_engineering_mode;
@@ -56,9 +54,6 @@ public class VoiceCommands {
         } else if (allWords.contentEquals("remove transmitter bonding")) {
             Ob1G5CollectionService.unBondAndStop = true;
             JoH.static_toast_long("Attempt to unbond and shutdown collector");
-        } else if (allWords.contentEquals("clear transmitter queue")) {
-            Ob1G5StateMachine.emptyQueue();
-            JoH.static_toast_long("Clearing transmitter command queue");
         } else if (allWords.contentEquals("reset heart rate sync")) {
             PersistentStore.setLong("nightscout-rest-heartrate-synced-time", 0);
             JoH.static_toast_long("Cleared heart rate sync data");

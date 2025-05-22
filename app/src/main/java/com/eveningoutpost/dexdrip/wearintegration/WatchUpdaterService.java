@@ -16,8 +16,6 @@ import android.widget.Toast;
 
 import com.eveningoutpost.dexdrip.BestGlucose;
 import com.eveningoutpost.dexdrip.BuildConfig;
-import com.eveningoutpost.dexdrip.g5model.CalibrationState;
-import com.eveningoutpost.dexdrip.g5model.Ob1G5StateMachine;
 import com.eveningoutpost.dexdrip.Home;
 import com.eveningoutpost.dexdrip.models.ActiveBluetoothDevice;
 import com.eveningoutpost.dexdrip.models.AlertType;
@@ -87,7 +85,6 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static com.eveningoutpost.dexdrip.g5model.Ob1G5StateMachine.PREF_QUEUE_DRAINED;
 import static com.eveningoutpost.dexdrip.models.JoH.showNotification;
 import static com.eveningoutpost.dexdrip.models.JoH.ts;
 
@@ -354,16 +351,6 @@ public class WatchUpdaterService extends WearableListenerService implements
 
     private synchronized void syncBgReadingsData(DataMap dataMap) {
         Log.d(TAG, "sync-precalculated-bg-readings-Data");
-
-        final int calibration_state = dataMap.getInt("native_calibration_state", 0);
-        Ob1G5CollectionService.processCalibrationState(CalibrationState.parse(calibration_state));
-        Ob1G5StateMachine.injectDexTime(dataMap.getString("dextime", null));
-
-        final boolean queue_drained = dataMap.getBoolean(PREF_QUEUE_DRAINED);
-        if (queue_drained) {
-            Ob1G5StateMachine.emptyQueue();
-        }
-
 
         final ArrayList<DataMap> entries = dataMap.getDataMapArrayList("entries");
         if (entries != null) {
@@ -1814,12 +1801,6 @@ public class WatchUpdaterService extends WearableListenerService implements
             dataMap.putBoolean("show_wear_treatments", Pref.getBooleanDefaultFalse("show_wear_treatments"));
             dataMap.putBoolean("use_ob1_g5_collector_service", Pref.getBooleanDefaultFalse("use_ob1_g5_collector_service"));
             dataMap.putString(Blukon.BLUKON_PIN_PREF, Pref.getStringDefaultBlank(Blukon.BLUKON_PIN_PREF));
-
-            final String dex_time_keeper = Ob1G5StateMachine.extractDexTime();
-            if (dex_time_keeper != null) {
-                dataMap.putString("dex-timekeeping", dex_time_keeper);
-            }
-
         }
         //Step Counter
         // note transmutes use_pebble_health -> use_wear_health

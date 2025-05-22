@@ -175,13 +175,6 @@
             </intent-filter>
         </service>
         <service
-            android:name=".services.G5CollectionService"
-            android:enabled="true"
-            android:exported="true"></service>
-        <service
-            android:name=".services.Ob1G5CollectionService"
-            android:enabled="true" />
-        <service
             android:name=".services.DexCollectionService"
             android:enabled="true"
             android:exported="true" />

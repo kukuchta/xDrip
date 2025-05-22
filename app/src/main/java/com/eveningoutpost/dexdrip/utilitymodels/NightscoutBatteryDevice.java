@@ -1,7 +1,6 @@
 package com.eveningoutpost.dexdrip.utilitymodels;
 
 
-import static com.eveningoutpost.dexdrip.g5model.Ob1G5StateMachine.shortTxId;
 
 import android.content.Context;
 import android.content.Intent;
@@ -9,8 +8,6 @@ import android.content.IntentFilter;
 import android.os.BatteryManager;
 import android.os.Build;
 
-import com.eveningoutpost.dexdrip.g5model.Ob1G5StateMachine;
-import com.eveningoutpost.dexdrip.g5model.Ob1DexTransmitterBattery;
 import com.eveningoutpost.dexdrip.services.DexCollectionService;
 
 import org.json.JSONException;
@@ -76,10 +73,6 @@ public enum NightscoutBatteryDevice {
          */
         @Override
         int getBatteryLevel(Context mContext) {
-            Ob1DexTransmitterBattery b = new Ob1DexTransmitterBattery();
-            if (b.isPresent()) {
-                return b.voltageA();
-            }
             return -1;
         }
 
@@ -101,37 +94,7 @@ public enum NightscoutBatteryDevice {
          */
         @Override
         public JSONObject getUploaderJson(Context mContext) throws JSONException {
-            JSONObject uploader = new JSONObject();
-
-            Ob1DexTransmitterBattery b = new Ob1DexTransmitterBattery();
-
-            if (!b.isPresent()) return null;
-
-            uploader.put("days", b.days());
-            uploader.put("daysEstimate", b.daysEstimate());
-            uploader.put("status", b.status().name());
-            uploader.put("voltagea", b.voltageA());
-            if (b.voltageAWarning()) {
-                uploader.put("voltagea_warning", true);
-            }
-            uploader.put("voltageb", b.voltageB());
-            if (b.voltageBWarning()) {
-                uploader.put("voltageb_warning", true);
-            }
-            if (b.resistanceStatus() != Ob1DexTransmitterBattery.ResistanceStatus.UNKNOWN) {
-                uploader.put("resistance", b.resistance());
-                uploader.put("resistance_status", b.resistanceStatus().name());
-            }
-            uploader.put("temperature", b.temperature());
-
-            // What nightscout will normally show in the UI
-            uploader.put("battery", b.days() + " days (voltage: " + b.voltageA() + "/" + b.voltageB() + ")");
-
-            // Epoch timestamp representing when the battery was last queried.
-            uploader.put("lastQueried", b.lastQueried());
-
-            uploader.put("type", name());
-            return uploader;
+            return null;
         }
 
         /**
@@ -144,12 +107,6 @@ public enum NightscoutBatteryDevice {
 
         @Override
         String getDeviceName() {
-            if (Ob1G5StateMachine.usingG6()) {
-                if (shortTxId()) { // If using G7
-                    return "G7 Device";
-                }
-                return "G6 Transmitter";
-            }
             return "G5 Transmitter";
         }
     };

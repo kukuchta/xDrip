@@ -1,7 +1,6 @@
 package com.eveningoutpost.dexdrip.models;
 
 import static com.eveningoutpost.dexdrip.evaluators.PersistentHigh.persistentHighThreshold;
-import static com.eveningoutpost.dexdrip.g5model.Ob1G5StateMachine.shortTxId;
 import static com.eveningoutpost.dexdrip.importedlibraries.dexcom.Dex_Constants.TREND_ARROW_VALUES.NOT_COMPUTABLE;
 import static com.eveningoutpost.dexdrip.importedlibraries.dexcom.Dex_Constants.TREND_ARROW_VALUES.getTrend;
 import static com.eveningoutpost.dexdrip.calibrations.PluggableCalibration.getCalibrationPluginFromPreferences;
@@ -27,7 +26,6 @@ import com.eveningoutpost.dexdrip.importedlibraries.dexcom.records.EGVRecord;
 import com.eveningoutpost.dexdrip.importedlibraries.dexcom.records.SensorRecord;
 import com.eveningoutpost.dexdrip.models.UserError.Log;
 import com.eveningoutpost.dexdrip.R;
-import com.eveningoutpost.dexdrip.services.Ob1G5CollectionService;
 import com.eveningoutpost.dexdrip.services.SyncService;
 import com.eveningoutpost.dexdrip.sharemodels.ShareUploadableBg;
 import com.eveningoutpost.dexdrip.utilitymodels.BgGraphBuilder;
@@ -1130,15 +1128,7 @@ public class BgReading extends Model implements ShareUploadableBg {
             bgr.uuid = UUID.randomUUID().toString();
             bgr.calculated_value = calculated_value;
             bgr.raw_data = SPECIAL_G5_PLACEHOLDER; // placeholder
-            if (Ob1G5CollectionService.usingG6()) {
-                if (shortTxId()) { // If using G7
-                    bgr.appendSourceInfo("G7");
-                } else {
-                    bgr.appendSourceInfo("G6 Native");
-                }
-            } else {
-                bgr.appendSourceInfo("G5 Native");
-            }
+            bgr.appendSourceInfo("G5 Native");
             if (sourceInfoAppend != null && sourceInfoAppend.length() > 0) {
                 bgr.appendSourceInfo(sourceInfoAppend);
             }
@@ -1699,10 +1689,10 @@ public class BgReading extends Model implements ShareUploadableBg {
     }
 
     public void calculateAgeAdjustedRawValue(){
-        boolean is_g6 = Ob1G5CollectionService.usingG6();
-        final double adjust_for = (is_g6 ? AGE_ADJUSTMENT_TIME_G6 : AGE_ADJUSTMENT_TIME) - time_since_sensor_started;
+
+        final double adjust_for = AGE_ADJUSTMENT_TIME - time_since_sensor_started;
         if (adjust_for > 0) {
-            age_adjusted_raw_value = (((is_g6 ? AGE_ADJUSTMENT_FACTOR_G6 : AGE_ADJUSTMENT_FACTOR) * (adjust_for / (is_g6 ? AGE_ADJUSTMENT_TIME_G6 : AGE_ADJUSTMENT_TIME))) * raw_data) + raw_data;
+            age_adjusted_raw_value = ((AGE_ADJUSTMENT_FACTOR * (adjust_for / AGE_ADJUSTMENT_TIME)) * raw_data) + raw_data;
             Log.i(TAG, "calculateAgeAdjustedRawValue: RAW VALUE ADJUSTMENT FROM:" + raw_data + " TO: " + age_adjusted_raw_value);
         } else {
             age_adjusted_raw_value = raw_data;
@@ -2007,8 +1997,7 @@ public class BgReading extends Model implements ShareUploadableBg {
 
         Boolean bg_unclear_readings_alerts = prefs.getBoolean("bg_unclear_readings_alerts", false);
         if (!bg_unclear_readings_alerts
-                || !DexCollectionType.hasFiltered()
-                || Ob1G5CollectionService.usingG6()) {
+                || !DexCollectionType.hasFiltered()) {
             Log.d(TAG_ALERT, "getUnclearReading returned false since feature is disabled");
             UserNotification.DeleteNotificationByType("bg_unclear_readings_alert");
             return false;

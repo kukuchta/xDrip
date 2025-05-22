@@ -26,8 +26,6 @@ import com.eveningoutpost.dexdrip.utils.DexCollectionType;
 
 import java.util.UUID;
 
-import static com.eveningoutpost.dexdrip.services.Ob1G5CollectionService.getTransmitterID;
-
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.drawerlayout.widget.DrawerLayout;
 

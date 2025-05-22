@@ -451,14 +451,6 @@
             android:enabled="true"
             android:exported="true" />
         <service
-            android:name=".services.G5CollectionService"
-            android:enabled="true"
-            android:exported="true" />
-        <service
-            android:name=".services.Ob1G5CollectionService"
-            android:enabled="true"
-            android:foregroundServiceType="connectedDevice|location" />
-        <service
             android:name=".insulin.pendiq.PendiqService"
             android:enabled="true"
             android:exported="false"

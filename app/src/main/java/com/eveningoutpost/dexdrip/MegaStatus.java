@@ -48,8 +48,6 @@ import com.eveningoutpost.dexdrip.models.RollCall;
 import com.eveningoutpost.dexdrip.models.UserError;
 import com.eveningoutpost.dexdrip.services.DexCollectionService;
 import com.eveningoutpost.dexdrip.services.DoNothingService;
-import com.eveningoutpost.dexdrip.services.G5CollectionService;
-import com.eveningoutpost.dexdrip.services.Ob1G5CollectionService;
 import com.eveningoutpost.dexdrip.services.WifiCollectionService;
 import com.eveningoutpost.dexdrip.ui.helpers.FloatingLocaleActivityWithScreenshot;
 import com.eveningoutpost.dexdrip.utilitymodels.JamorhamShowcaseDrawer;
@@ -224,13 +222,6 @@ public class MegaStatus extends FloatingLocaleActivityWithScreenshot {
 
             case G4_STATUS:
                 la.addRows(DexCollectionService.megaStatus());
-                break;
-            case G5_STATUS:
-                if (Pref.getBooleanDefaultFalse(Ob1G5CollectionService.OB1G5_PREFS)) {
-                    la.addRows(Ob1G5CollectionService.megaStatus());
-                } else {
-                    la.addRows(G5CollectionService.megaStatus());
-                }
                 break;
             case MEDTRUM_STATUS:
                 la.addRows(MedtrumCollectionService.megaStatus());

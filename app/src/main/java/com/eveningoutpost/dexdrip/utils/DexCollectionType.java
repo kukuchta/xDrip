@@ -14,8 +14,6 @@ import com.eveningoutpost.dexdrip.cgm.sharefollow.ShareFollowService;
 import com.eveningoutpost.dexdrip.cgm.webfollow.WebFollowService;
 import com.eveningoutpost.dexdrip.cgm.carelinkfollow.CareLinkFollowService;
 
-import static com.eveningoutpost.dexdrip.g5model.Ob1G5StateMachine.shortTxId;
-
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashMap;
@@ -99,9 +97,6 @@ public enum DexCollectionType {
 
     public static boolean hasBattery() {
         return usesBattery.contains(getDexCollectionType());
-    }
-
-    public static boolean hasDexcomRaw(DexCollectionType type) {
     }
 
     public static boolean hasFiltered() {

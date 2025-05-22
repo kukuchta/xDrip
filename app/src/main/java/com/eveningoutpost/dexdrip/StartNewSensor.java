@@ -2,7 +2,6 @@ package com.eveningoutpost.dexdrip;
 
 import static com.eveningoutpost.dexdrip.Home.startWatchUpdaterService;
 import static com.eveningoutpost.dexdrip.models.BgReading.AGE_ADJUSTMENT_TIME;
-import static com.eveningoutpost.dexdrip.services.Ob1G5CollectionService.getTransmitterID;
 import static com.eveningoutpost.dexdrip.xdrip.gs;
 
 import android.app.Activity;
@@ -17,24 +16,16 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-import com.eveningoutpost.dexdrip.g5model.DexSyncKeeper;
 import com.eveningoutpost.dexdrip.g5model.DexTimeKeeper;
-import com.eveningoutpost.dexdrip.g5model.FirmwareCapability;
-import com.eveningoutpost.dexdrip.g5model.Ob1G5StateMachine;
 import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.models.Sensor;
 import com.eveningoutpost.dexdrip.models.Treatments;
 import com.eveningoutpost.dexdrip.models.UserError;
 import com.eveningoutpost.dexdrip.models.UserError.Log;
-import com.eveningoutpost.dexdrip.services.Ob1G5CollectionService;
 import com.eveningoutpost.dexdrip.utilitymodels.CollectionServiceStarter;
-import com.eveningoutpost.dexdrip.utilitymodels.Experience;
-import com.eveningoutpost.dexdrip.utilitymodels.Pref;
 import com.eveningoutpost.dexdrip.profileeditor.DatePickerFragment;
 import com.eveningoutpost.dexdrip.profileeditor.ProfileAdapter;
 import com.eveningoutpost.dexdrip.profileeditor.TimePickerFragment;
-import com.eveningoutpost.dexdrip.ui.dialog.G6CalibrationCodeDialog;
-import com.eveningoutpost.dexdrip.ui.dialog.G6EndOfLifeDialog;
 import com.eveningoutpost.dexdrip.utils.ActivityWithMenu;
 import com.eveningoutpost.dexdrip.utils.DexCollectionType;
 import com.eveningoutpost.dexdrip.utils.LocationHelper;
@@ -42,9 +33,6 @@ import com.eveningoutpost.dexdrip.wearintegration.WatchUpdaterService;
 
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Locale;
-
-import lombok.val;
 
 public class StartNewSensor extends ActivityWithMenu {
     // public static String menu_name = "Start Sensor";
@@ -54,9 +42,6 @@ public class StartNewSensor extends ActivityWithMenu {
     // private TimePicker tp;
     final Activity activity = this;
     Calendar ucalendar = Calendar.getInstance();
-    private int transmitterAgeInDays() { // Transmitter days reported by the transmitter; 0 on day 1; -1 if unknown due to no connectivity.
-        return DexTimeKeeper.getTransmitterAgeInDays(getTransmitterID());
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -167,11 +152,6 @@ public class StartNewSensor extends ActivityWithMenu {
     }
 
     private void startSensorOrAskForG6Code() {
-        if (getTransmitterID().length() == 4) {
-            Sensor.createDefaultIfMissing();
-            finish();
-        }
-
         startSensorAndSetIntent();
     }
 
@@ -226,7 +206,6 @@ public class StartNewSensor extends ActivityWithMenu {
             for (int i = 0; i < permissions.length; i++) {
                 if (permissions[i].equals(android.Manifest.permission.ACCESS_FINE_LOCATION)) {
                     if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
-                        Ob1G5CollectionService.clearScanError();
                         sensorButtonClick();
                     }
                 }

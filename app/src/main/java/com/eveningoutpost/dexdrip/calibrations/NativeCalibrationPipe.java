@@ -1,11 +1,9 @@
 package com.eveningoutpost.dexdrip.calibrations;
 
-import com.eveningoutpost.dexdrip.g5model.Ob1G5StateMachine;
 import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.models.UserError;
 import com.eveningoutpost.dexdrip.utilitymodels.BgGraphBuilder;
 import com.eveningoutpost.dexdrip.utilitymodels.PersistentStore;
-import com.eveningoutpost.dexdrip.utilitymodels.Unitized;
 import com.eveningoutpost.dexdrip.cgm.medtrum.Medtrum;
 
 import static com.eveningoutpost.dexdrip.models.JoH.msSince;
@@ -54,9 +52,4 @@ public class NativeCalibrationPipe {
 
     }
 
-    public static void removePendingCalibration(final int glucose) {
-        if (Ob1G5StateMachine.deleteFirstQueueCalibration(glucose)) {
-            JoH.static_toast_long("Deleted pending calibration for: " + Unitized.unitized_string_static(glucose));
-        }
-    }
 }

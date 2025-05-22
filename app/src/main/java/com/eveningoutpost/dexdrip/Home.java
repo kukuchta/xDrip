@@ -1,11 +1,9 @@
 package com.eveningoutpost.dexdrip;
 
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
-import static com.eveningoutpost.dexdrip.g5model.Ob1G5StateMachine.shortTxId;
 import static com.eveningoutpost.dexdrip.models.JoH.msSince;
 import static com.eveningoutpost.dexdrip.models.JoH.quietratelimit;
 import static com.eveningoutpost.dexdrip.models.JoH.tsl;
-import static com.eveningoutpost.dexdrip.services.Ob1G5CollectionService.getTransmitterID;
 import static com.eveningoutpost.dexdrip.utilitymodels.ColorCache.X;
 import static com.eveningoutpost.dexdrip.utilitymodels.ColorCache.getCol;
 import static com.eveningoutpost.dexdrip.utilitymodels.Constants.DAY_IN_MS;
@@ -69,9 +67,6 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.eveningoutpost.dexdrip.g5model.DexSyncKeeper;
-import com.eveningoutpost.dexdrip.g5model.DexTimeKeeper;
-import com.eveningoutpost.dexdrip.g5model.Ob1G5StateMachine;
 import com.eveningoutpost.dexdrip.g5model.SensorDays;
 import com.eveningoutpost.dexdrip.importedlibraries.usbserial.util.HexDump;
 import com.eveningoutpost.dexdrip.models.ActiveBgAlert;
@@ -89,7 +84,6 @@ import com.eveningoutpost.dexdrip.models.StepCounter;
 import com.eveningoutpost.dexdrip.models.Treatments;
 import com.eveningoutpost.dexdrip.models.UserError;
 import com.eveningoutpost.dexdrip.services.ActivityRecognizedService;
-import com.eveningoutpost.dexdrip.services.Ob1G5CollectionService;
 import com.eveningoutpost.dexdrip.services.PlusSyncService;
 import com.eveningoutpost.dexdrip.utilitymodels.AlertPlayer;
 import com.eveningoutpost.dexdrip.utilitymodels.BgGraphBuilder;
@@ -114,7 +108,6 @@ import com.eveningoutpost.dexdrip.utilitymodels.StatusLine;
 import com.eveningoutpost.dexdrip.utilitymodels.UndoRedo;
 import com.eveningoutpost.dexdrip.utilitymodels.UpdateActivity;
 import com.eveningoutpost.dexdrip.utilitymodels.VoiceCommands;
-import com.eveningoutpost.dexdrip.calibrations.NativeCalibrationPipe;
 import com.eveningoutpost.dexdrip.calibrations.PluggableCalibration;
 import com.eveningoutpost.dexdrip.cloud.backup.BackupActivity;
 import com.eveningoutpost.dexdrip.dagger.Injectors;
@@ -1053,7 +1046,6 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
                             builder1.setPositiveButton(gs(R.string.yes_delete), (dialog12, which12) -> {
                                 dialog12.dismiss();
                                 bt.removeState(BloodTest.STATE_VALID);
-                                NativeCalibrationPipe.removePendingCalibration((int) bt.mgdl);
                                 GcmActivity.syncBloodTests();
                                 if (Home.get_show_wear_treatments())
                                     BloodTest.pushBloodTestSyncToWatch(bt, false);
@@ -2561,11 +2553,7 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
         boolean isSensorActive = Sensor.isActive();
 
         if (!isSensorActive) {
-            if (shortTxId()) { // Only if G6 has been selected and transmitter is not synced yet, or if G7 has been selected.
-                notificationText.setText(R.string.wait_to_connect);
-            } else { // Only if G6 is not selected or G6 transmitter is synced.
-                notificationText.setText(R.string.now_start_your_sensor);
-            }
+            notificationText.setText(R.string.now_start_your_sensor);
 
             if ((dialog == null) || (!dialog.isShowing())) {
                 if (!Experience.gotData() && Experience.backupAvailable() && JoH.ratelimit("restore-backup-prompt", 10)) {

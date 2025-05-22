@@ -20,18 +20,13 @@ import java.util.Locale;
 import lombok.Getter;
 import lombok.val;
 
-import static com.eveningoutpost.dexdrip.g5model.FirmwareCapability.isDeviceAlt2;
-import static com.eveningoutpost.dexdrip.g5model.Ob1G5StateMachine.getFirmwareXDetails;
 import static com.eveningoutpost.dexdrip.models.JoH.msSince;
 import static com.eveningoutpost.dexdrip.models.JoH.roundDouble;
 import static com.eveningoutpost.dexdrip.models.JoH.tsl;
-import static com.eveningoutpost.dexdrip.services.G5BaseService.usingG6;
-import static com.eveningoutpost.dexdrip.services.Ob1G5CollectionService.getTransmitterID;
 import static com.eveningoutpost.dexdrip.utilitymodels.Constants.DAY_IN_MS;
 import static com.eveningoutpost.dexdrip.utilitymodels.Constants.HOUR_IN_MS;
 import static com.eveningoutpost.dexdrip.utilitymodels.Constants.MINUTE_IN_MS;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.None;
-import static com.eveningoutpost.dexdrip.utils.DexCollectionType.getBestCollectorHardwareName;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.getDexCollectionType;
 
 // jamorham
@@ -51,13 +46,16 @@ public class SensorDays {
 
     @Getter
     private long period = UNKNOWN;
+    @Getter
+    private long warmupMs = 2 * HOUR_IN_MS;
+    private long created = 0;
 
     private int strategy = 0;
 
     // load current config and compute
     public static SensorDays get() {
         val type = getDexCollectionType();
-        val tx_id = getTransmitterID();
+        val tx_id = "deleted";
         return get(type, tx_id);
     }
 
@@ -175,5 +173,7 @@ public class SensorDays {
     boolean isKnown() {
         return period != UNKNOWN;
     }
-
+    boolean cacheValid() {
+        return msSince(created) < MINUTE_IN_MS * 10;
+    }
 }

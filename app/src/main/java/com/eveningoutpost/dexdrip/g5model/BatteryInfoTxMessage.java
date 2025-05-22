@@ -2,7 +2,6 @@ package com.eveningoutpost.dexdrip.g5model;
 
 import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.models.UserError;
-import com.eveningoutpost.dexdrip.services.G5CollectionService;
 
 /**
  * Created by jamorham on 25/11/2016.
@@ -10,7 +9,7 @@ import com.eveningoutpost.dexdrip.services.G5CollectionService;
 
 public class BatteryInfoTxMessage extends BaseMessage {
 
-    private final static String TAG = G5CollectionService.TAG; // meh
+    private final static String TAG = "deleted"; // meh
     static final byte opcode = 0x22;
 
     public BatteryInfoTxMessage() {

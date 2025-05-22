@@ -1,7 +1,5 @@
 package com.eveningoutpost.dexdrip.g5model;
 
-import static com.eveningoutpost.dexdrip.services.Ob1G5CollectionService.getTransmitterID;
-
 import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.models.UserError;
 import com.eveningoutpost.dexdrip.utilitymodels.PersistentStore;
@@ -36,11 +34,7 @@ public class DexTimeKeeper {
         if (dexTimeStamp < 1) {
             UserError.Log.e(TAG, "Invalid dex timestamp in updateAge: " + dexTimeStamp);
             if (dexTimeStamp == 0 && absolute) {
-                if (FirmwareCapability.isTransmitterG5(getTransmitterID()) || FirmwareCapability.isTransmitterTimeTravelCapable(getTransmitterID()) || FirmwareCapability.isTransmitterModified(getTransmitterID())) { // Devices that can be hard reset only
-                    DexResetHelper.offer("Your transmitter clock has stopped or never started. Do you want to hard reset it?");
-                } else { // Everything else - future devices will be here.  If a future device can be hard reset, they should be added to the true (other) side.
-                    UserError.Log.e(TAG, "Your transmitter clock has stopped or never started.");
-                }
+                UserError.Log.e(TAG, "Your transmitter clock has stopped or never started.");
             }
             return;
         }
