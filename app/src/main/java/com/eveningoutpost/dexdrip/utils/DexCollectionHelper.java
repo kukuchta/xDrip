@@ -7,13 +7,8 @@ import android.text.InputType;
 import com.eveningoutpost.dexdrip.BluetoothScan;
 import com.eveningoutpost.dexdrip.Home;
 import com.eveningoutpost.dexdrip.models.ActiveBluetoothDevice;
-import com.eveningoutpost.dexdrip.R;
-import com.eveningoutpost.dexdrip.services.Ob1G5CollectionService;
 import com.eveningoutpost.dexdrip.utilitymodels.CollectionServiceStarter;
-import com.eveningoutpost.dexdrip.utilitymodels.Pref;
 import com.eveningoutpost.dexdrip.cgm.sharefollow.ShareFollowService;
-import com.eveningoutpost.dexdrip.cgm.carelinkfollow.CareLinkFollowService;
-import com.eveningoutpost.dexdrip.plugin.Dialog;
 import com.eveningoutpost.dexdrip.xdrip;
 
 import static com.eveningoutpost.dexdrip.ui.dialog.QuickSettingsDialogs.booleanSettingDialog;
@@ -25,20 +20,10 @@ import static com.eveningoutpost.dexdrip.ui.dialog.QuickSettingsDialogs.textSett
 
 public class DexCollectionHelper {
 
-    private static final String TAG = DexCollectionHelper.class.getSimpleName();
-
-
     public static void assistance(Activity activity, DexCollectionType type) {
 
         switch (type) {
-
-            // g6 is currently a pseudo type which enables required g6 settings and then sets g5
-            case DexcomG6:
-                Ob1G5CollectionService.setG6Defaults();
-                // intentional fall thru
-                break;
-
-            case NSFollow:
+             case NSFollow:
                 textSettingDialog(activity,
                         "nsfollow_url", "Nightscout Follow URL",
                         "Web address for following",

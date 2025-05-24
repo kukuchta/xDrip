@@ -2,11 +2,8 @@ package com.eveningoutpost.dexdrip.cgm.dex;
 
 import static com.eveningoutpost.dexdrip.utilitymodels.Constants.HOUR_IN_MS;
 
-import com.eveningoutpost.dexdrip.g5model.BackFillRxMessage;
 import com.eveningoutpost.dexdrip.g5model.BackFillStream;
-import com.eveningoutpost.dexdrip.g5model.BaseGlucoseRxMessage;
 import com.eveningoutpost.dexdrip.g5model.DexTimeKeeper;
-import com.eveningoutpost.dexdrip.g5model.GlucoseRxMessage;
 import com.eveningoutpost.dexdrip.models.BgReading;
 import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.models.UserError;
@@ -49,69 +46,8 @@ public class ClassifierAction {
                 UserError.Log.d(TAG, "Added backfill cache: " + JoH.bytesToHex(data));
                 break;
 
-            case CONTROL:
-                val g7EGlucose = new EGlucoseRxMessage(data);
-                if (g7EGlucose.isValid()) {
-                    DexTimeKeeper.updateAge(TXID, (int) g7EGlucose.clock);
-                    UserError.Log.d(TAG, "Got valid glucose: " + g7EGlucose);
-                    if (g7EGlucose.usable()) {
-                        lastReadingTimestamp = g7EGlucose.timestamp;
-                        if (BgReading.getForPreciseTimestamp(g7EGlucose.timestamp, DexCollectionType.getCurrentDeduplicationPeriod(), false) == null) {
-                            final BgReading bgReading = BgReading.bgReadingInsertFromG5(g7EGlucose.glucose, g7EGlucose.timestamp);
-                            if (bgReading != null) {
-                                try {
-                                    bgReading.calculated_value_slope = g7EGlucose.getTrend() / Constants.MINUTE_IN_MS; // note this is different to the typical calculated slope, (normally delta)
-                                    if (bgReading.calculated_value_slope == Double.NaN) {
-                                        bgReading.hide_slope = true;
-                                    }
-                                } catch (Exception e) {
-                                    // not a good number - does this exception ever actually fire?
-                                }
-                                bgReading.source_info = "G7 Native";
-                                bgReading.noRawWillBeAvailable();
-                            }
-                        } else {
-                            UserError.Log.d(TAG, "Reading already present for this time period");
-                        }
-                    } else {
-                        UserError.Log.d(TAG, "Glucose value is not usable");
-                    }
 
-                    break;
-                } else {
-                    val bfc1 = new BackFillRxMessage(data);
-                    val bfc2 = new BackfillControlRx(data);
-                    if (bfc1.isValid() || bfc2.isValid()) {
-                        Inevitable.task("Process G6/G7 backfill", 3000, ClassifierAction::processBackfill);
-                    } else {
-                        BaseGlucoseRxMessage glucose = new GlucoseRxMessage(data);
-                        if (!glucose.usable()) {
-                            glucose = new com.eveningoutpost.dexdrip.g5model.EGlucoseRxMessage(data);
-                        }
-                        if (glucose.usable()) {
-                            UserError.Log.d(TAG, "Updating age from timestamp: " + glucose.timestamp);
-                            DexTimeKeeper.updateAge(TXID, glucose.timestamp);
-                            val ts = DexTimeKeeper.fromDexTime(TXID, glucose.timestamp);
-                            lastReadingTimestamp = ts;
-                            if (BgReading.getForPreciseTimestamp(ts, DexCollectionType.getCurrentDeduplicationPeriod(), false) == null) {
-                                final BgReading bgReading = BgReading.bgReadingInsertFromG5(glucose.glucose, ts);
-                                if (bgReading != null) {
-                                    try {
-                                        bgReading.calculated_value_slope = glucose.getTrend() / Constants.MINUTE_IN_MS; // note this is different to the typical calculated slope, (normally delta)
-                                        if (bgReading.calculated_value_slope == Double.NaN) {
-                                            bgReading.hide_slope = true;
-                                        }
-                                    } catch (Exception e) {
-                                        // not a good number - does this exception ever actually fire?
-                                    }
-                                    bgReading.noRawWillBeAvailable();
-                                }
-                            } else {
-                                UserError.Log.d(TAG, "Reading already present for this time period");
-                            }
-                        }
-                    }
-                }
+
         }
     }
 

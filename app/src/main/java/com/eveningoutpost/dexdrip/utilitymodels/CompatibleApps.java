@@ -19,8 +19,6 @@ import com.eveningoutpost.dexdrip.Home;
 import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.models.UserError;
 import com.eveningoutpost.dexdrip.R;
-import com.eveningoutpost.dexdrip.services.G5BaseService;
-import com.eveningoutpost.dexdrip.utils.DexCollectionType;
 import com.eveningoutpost.dexdrip.webservices.XdripWebService;
 import com.eveningoutpost.dexdrip.xdrip;
 
@@ -305,10 +303,6 @@ public class CompatibleApps extends BroadcastReceiver {
 
                     case ENABLE_WEAR_OS_SYNC:
                         enableBoolean("wear_sync", "Enabled Wear OS Sync!", intent);
-                        break;
-
-                    case HARD_RESET_TRANSMITTER:
-                        G5BaseService.setHardResetTransmitterNow();
                         break;
 
                     default:

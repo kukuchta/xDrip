@@ -30,8 +30,6 @@ import com.eveningoutpost.dexdrip.models.TransmitterData;
 import com.eveningoutpost.dexdrip.models.Treatments;
 import com.eveningoutpost.dexdrip.models.UserError;
 import com.eveningoutpost.dexdrip.R;
-import com.eveningoutpost.dexdrip.services.G5CollectionService;
-import com.eveningoutpost.dexdrip.services.Ob1G5CollectionService;
 import com.eveningoutpost.dexdrip.utilitymodels.AlertPlayer;
 import com.eveningoutpost.dexdrip.utilitymodels.BgGraphBuilder;
 import com.eveningoutpost.dexdrip.utilitymodels.BgSendQueue;
@@ -215,27 +213,6 @@ public class WatchUpdaterService extends WearableListenerService implements
             Wearable.DataApi.putDataItem(googleApiClient, putDataRequest);
         } else {
             Log.e(TAG, "sendDataReceived No connection to wearable available!");
-        }
-    }
-
-    private void syncFieldData(DataMap dataMap) {
-        String dex_txid = dataMap.getString("dex_txid", "");
-        byte[] G5_BATTERY_MARKER = dataMap.getByteArray(G5CollectionService.G5_BATTERY_MARKER);
-        byte[] G5_FIRMWARE_MARKER = dataMap.getByteArray(G5CollectionService.G5_FIRMWARE_MARKER);
-        if (dex_txid != null && dex_txid.equals(mPrefs.getString("dex_txid", "default"))) {
-            if (G5_BATTERY_MARKER != null) {
-                long watch_last_battery_query = dataMap.getLong(G5CollectionService.G5_BATTERY_FROM_MARKER);
-                long phone_last_battery_query = PersistentStore.getLong(G5CollectionService.G5_BATTERY_FROM_MARKER + dex_txid);
-                if (watch_last_battery_query > phone_last_battery_query) {
-                    G5CollectionService.setStoredBatteryBytes(dex_txid, G5_BATTERY_MARKER);
-                    PersistentStore.setLong(G5CollectionService.G5_BATTERY_FROM_MARKER + dex_txid, watch_last_battery_query);
-                    G5CollectionService.getBatteryStatusNow = false;
-                    Ob1G5CollectionService.getBatteryStatusNow = false;
-                }
-            }
-            if (G5_FIRMWARE_MARKER != null) {
-                G5CollectionService.setStoredFirmwareBytes(dex_txid, G5_FIRMWARE_MARKER);
-            }
         }
     }
 
@@ -852,25 +829,6 @@ public class WatchUpdaterService extends WearableListenerService implements
         Log.d(TAG, "stopBtService should have called onDestroy");
     }
 
-    private void startBtG5Service() {//KS
-        Log.d(TAG, "startBtG5Service");
-        is_using_bt = DexCollectionType.hasBluetooth();
-        if (is_using_bt) {
-            Context myContext = getApplicationContext();
-            Log.d(TAG, "startBtG5Service start G5CollectionService");
-            myContext.startService(new Intent(myContext, G5CollectionService.class));
-            Log.d(TAG, "startBtG5Service AFTER startService G5CollectionService");
-        } else {
-            Log.d(TAG, "Not starting any G5 service as it is not our data source");
-        }
-    }
-
-    private void stopBtG5Service() {//KS
-        Log.d(TAG, "stopBtG5Service");
-        Context myContext = getApplicationContext();
-        myContext.stopService(new Intent(myContext, G5CollectionService.class));
-    }
-
     public static void startSelf() {
         Inevitable.task("wear-startself", 2000, () -> {
             if (JoH.ratelimit("start-wear", 5)) {
@@ -1380,13 +1338,6 @@ public class WatchUpdaterService extends WearableListenerService implements
                                         break;
                                 }
                             }
-                        }
-                        break;
-                    case WEARABLE_G5BATTERY_PAYLOAD:
-                        dataMap = DataMap.fromByteArray(event.getData());
-                        if (dataMap != null) {
-                            Log.d(TAG, "onMessageReceived WEARABLE_FIELD_SENDPATH dataMap=" + dataMap);
-                            syncFieldData(dataMap);
                         }
                         break;
                     case WEARABLE_INITPREFS_PATH:

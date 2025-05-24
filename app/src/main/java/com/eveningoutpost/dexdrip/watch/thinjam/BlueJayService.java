@@ -11,7 +11,6 @@ import android.os.PowerManager;
 import android.util.Pair;
 
 import com.eveningoutpost.dexdrip.cloud.jamcm.Pusher;
-import com.eveningoutpost.dexdrip.g5model.CalibrationState;
 import com.eveningoutpost.dexdrip.Home;
 import com.eveningoutpost.dexdrip.importedlibraries.usbserial.util.HexDump;
 import com.eveningoutpost.dexdrip.models.BgReading;
@@ -20,7 +19,6 @@ import com.eveningoutpost.dexdrip.models.Treatments;
 import com.eveningoutpost.dexdrip.models.UserError;
 import com.eveningoutpost.dexdrip.R;
 import com.eveningoutpost.dexdrip.services.JamBaseBluetoothSequencer;
-import com.eveningoutpost.dexdrip.services.Ob1G5CollectionService;
 import com.eveningoutpost.dexdrip.utilitymodels.AlertPlayer;
 import com.eveningoutpost.dexdrip.utilitymodels.BroadcastSnooze;
 import com.eveningoutpost.dexdrip.utilitymodels.Constants;
@@ -49,7 +47,6 @@ import com.eveningoutpost.dexdrip.watch.thinjam.messages.GlucoseTx;
 import com.eveningoutpost.dexdrip.watch.thinjam.messages.PushRx;
 import com.eveningoutpost.dexdrip.watch.thinjam.messages.RBulkUpTx;
 import com.eveningoutpost.dexdrip.watch.thinjam.messages.ResetPersistTx;
-import com.eveningoutpost.dexdrip.watch.thinjam.messages.SetGammaEtc;
 import com.eveningoutpost.dexdrip.watch.thinjam.messages.SetTimeTx;
 import com.eveningoutpost.dexdrip.watch.thinjam.messages.SetTxIdTx;
 import com.eveningoutpost.dexdrip.watch.thinjam.messages.StandbyTx;
@@ -391,9 +388,6 @@ public class BlueJayService extends JamBaseBluetoothSequencer {
         return I;
     }
 
-    public BaseState getmState() {
-        return mState;
-    }
 
     public void getStatus1() {
         new QueueMe().setBytes(new byte[]{OPCODE_GET_STATUS_1})
@@ -449,48 +443,6 @@ public class BlueJayService extends JamBaseBluetoothSequencer {
     // only called for status 2 readings
     public void processInboundGlucose() {
         final BlueJayInfo info = BlueJayInfo.getInfo(I.address);
-        final long inboundTimestamp = info.getTimestamp();
-        UserError.Log.d(TAG, "Processing inbound glucose: " + JoH.dateTimeText(info.getTimestamp())+" "+info.toS());
-        // TODO allow only tighter windows for sync
-        if (inboundTimestamp > 1561900000000L && inboundTimestamp < (tsl() + (Constants.MINUTE_IN_MS * 5))) {
-            final BgReading bgReading = BgReading.last();
-
-            if (bgReading == null || msSince(bgReading.timestamp) > Constants.MINUTE_IN_MS * 4) { // TODO collector frequency de-dupe period instead
-                // is a new reading
-                Ob1G5CollectionService.processCalibrationStateLite(CalibrationState.parse(info.state), inboundTimestamp);       /// TODO revisit
-                if (D && info.glucose == 1) {
-                    info.glucose = 123;         // TODO THIS IS DEBUG ONLY!!
-                }
-                if (Ob1G5CollectionService.lastSensorState.usableGlucose()) {
-                    UserError.Log.d(TAG, "USABLE GLUCOSE");
-                    lastUsableGlucoseTimestamp = inboundTimestamp;
-                    final BgReading existing = BgReading.getForPreciseTimestamp(inboundTimestamp, Constants.MINUTE_IN_MS * 4, false);
-                    if (existing == null) {
-                        val last = BgReading.last();
-                        final BgReading bgr = BgReading.bgReadingInsertFromG5(info.glucose, inboundTimestamp, "BlueJay");
-                        try {
-                            bgr.calculated_value_slope = info.getTrend() / Constants.MINUTE_IN_MS; // note this is different to the typical calculated slope, (normally delta)
-                            if (bgReading.calculated_value_slope == Double.NaN) {
-                                bgReading.hide_slope = true;
-                            }
-                        } catch (Exception e) {
-                            // not a good number - does this exception ever actually fire?
-                        }
-                        if (bgr != null && bgr.timestamp > last.timestamp) {
-                            UserError.Log.d(TAG, "Post processing new reading: " + JoH.dateTimeText(bgr.timestamp));
-                            bgr.postProcess(false);
-                        }
-                    } else {
-                        UserError.Log.d(TAG, "Ignoring status glucose reading as we already have one within 4 mins");
-                    }
-                } else {
-                    UserError.Log.d(TAG, "Glucose value not reported as usable");
-                }
-                // TODO add trend - done in post process
-            }
-        } else {
-            UserError.Log.d(TAG, "No valid timestamp for inbound glucose data");
-        }
     }
 
     public void sendGlucose() {
@@ -522,14 +474,6 @@ public class BlueJayService extends JamBaseBluetoothSequencer {
                 UserError.Log.d(TAG, "Watch already has recent reading");
                 // watch reading too close to the reading we were going to send
             }
-        }
-    }
-
-    public void setGamma(int value) {
-        if (value <= 255) {
-            queueGenericCommand(new SetGammaEtc(value).getBytes(), "Set Gamma " + value, null);
-        } else {
-            UserError.Log.e(TAG, "Gamma out of range: " + value);
         }
     }
 
@@ -712,10 +656,6 @@ public class BlueJayService extends JamBaseBluetoothSequencer {
         item.queue();
         doQueue();
         return item;
-    }
-
-    public QueueMe getQitemInstance() {
-        return new QueueMe();
     }
 
     public void shutdown() {

@@ -88,7 +88,6 @@ import com.eveningoutpost.dexdrip.receiver.InfoContentProvider;
 import com.eveningoutpost.dexdrip.services.ActivityRecognizedService;
 import com.eveningoutpost.dexdrip.services.BluetoothGlucoseMeter;
 import com.eveningoutpost.dexdrip.services.DexCollectionService;
-import com.eveningoutpost.dexdrip.services.G5BaseService;
 import com.eveningoutpost.dexdrip.services.PlusSyncService;
 import com.eveningoutpost.dexdrip.services.UiBasedCollector;
 import com.eveningoutpost.dexdrip.services.broadcastservice.BroadcastService;
@@ -1195,7 +1194,6 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
             // this gets cached in a static final field at the moment so needs hard reset
             findPreference("g5-battery-warning-level").setOnPreferenceChangeListener((preference, newValue) -> {
                 prefs.edit().putString("g5-battery-warning-level", (String) newValue).commit();
-                G5BaseService.resetTransmitterBatteryStatus();
                 SdcardImportExport.hardReset();
                 return true;
             });

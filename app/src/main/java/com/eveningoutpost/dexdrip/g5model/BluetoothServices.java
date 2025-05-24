@@ -33,8 +33,6 @@ public class BluetoothServices {
     //CharacteristicDescriptorUUID
     public static final UUID CharacteristicUpdateNotification = UUID.fromString("00002902-0000-1000-8000-00805F9B34FB");
 
-    public static final UUID Mask16 = UUID.fromString("0000FFFF-0000-0000-0000-000000000000");
-
     private static final HashMap<UUID, String> mapToName = new HashMap<>();
 
 
@@ -53,15 +51,4 @@ public class BluetoothServices {
         mapToName.put(CharacteristicF, "CharacteristicF");
         mapToName.put(CharacteristicUpdateNotification, "CharacteristicUpdateNotification");
     }
-
-
-    public static String getUUIDName(UUID uuid) {
-        if (uuid == null) return "null";
-        if (mapToName.containsKey(uuid)) {
-            return mapToName.get(uuid);
-        } else {
-            return "Unknown uuid: " + uuid.toString();
-        }
-    }
-
 }

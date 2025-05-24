@@ -1,10 +1,7 @@
 package com.eveningoutpost.dexdrip.utils.bt;
 
-import com.eveningoutpost.dexdrip.GcmActivity;
 import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.models.UserError;
-import com.eveningoutpost.dexdrip.services.Ob1G5CollectionService;
-import com.eveningoutpost.dexdrip.utilitymodels.Inevitable;
 import com.eveningoutpost.dexdrip.utilitymodels.WholeHouse;
 import com.eveningoutpost.dexdrip.utils.CipherUtils;
 import com.eveningoutpost.dexdrip.utils.Root;
@@ -23,12 +20,9 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 
 import static com.eveningoutpost.dexdrip.models.JoH.emptyString;
-import static com.eveningoutpost.dexdrip.utils.bt.Mimeograph.SearchState.COPY_COLLISION_KEY;
-import static com.eveningoutpost.dexdrip.utils.bt.Mimeograph.SearchState.COPY_DEVICE_KEY;
 import static com.eveningoutpost.dexdrip.utils.bt.Mimeograph.SearchState.COPY_SCAN;
 import static com.eveningoutpost.dexdrip.utils.bt.Mimeograph.SearchState.INJECT_COLLISION_KEY;
 import static com.eveningoutpost.dexdrip.utils.bt.Mimeograph.SearchState.INJECT_DEVICE_KEY;
-import static com.eveningoutpost.dexdrip.utils.bt.Mimeograph.SearchState.SCAN;
 
 // jamorham
 
@@ -36,12 +30,9 @@ public class Mimeograph {
 
     private static final String TAG = "Mimeograph";
     private static final String KEY_STORE = "/data/misc/bluedroid/bt_config.conf";
-    private static final String MAC_STORE = "/data/property/persist.service.bdroid.bdaddr";
-    private static final String ADAPTER_MARKER = "[Adapter]";
     private static final int MAX_BYTES = 40000;
     private static volatile int spinner;
 
-    private static String localMac;
     private static String lastWrite = "";
     private static String lastBroadcast = "";
     private static long lastLocalReception;
@@ -59,23 +50,8 @@ public class Mimeograph {
     public static void poll(final boolean hint) {
         if (!enabled()) return;
         lastLocalReception = JoH.tsl();
-        Inevitable.task("mimeograph poll", 2000, () -> pollTask(hint));
     }
 
-    private static String extractCachedBtMac() {
-        if (localMac == null) {
-            localMac = extractBtMac();
-        }
-        return localMac;
-    }
-
-    private static String extractBtMac() {
-        if (!enabled()) {
-            UserError.Log.d(TAG, "Not tested except on RPI - skipping");
-            return null;
-        }
-        return readSystemFileContent(MAC_STORE);
-    }
 
     private static String extractConfig() {
         if (!enabled()) {
@@ -85,25 +61,6 @@ public class Mimeograph {
         return readSystemFileContent(KEY_STORE);
     }
 
-    private static String getExtractedXferJson() {
-        final Xfer xfer = getXfer(extractConfig());
-        return xfer != null ? xfer.valid() ? xfer.toJson() : null : null;
-    }
-
-    private synchronized static void pollTask(boolean hint) {
-        // TODO rate limit checking without hint? allow force push and improve persistence
-        final String result = getExtractedXferJson();
-        if (result != null) {
-            if (result.equals(lastBroadcast) && JoH.pratelimit("mimeograph last bcast", 3600)) {
-                UserError.Log.d(TAG, "Data unchanged since last broadcast");
-            } else {
-                GcmActivity.sendMimeoGraphUpdate(result);
-                lastBroadcast = result;
-            }
-        } else {
-            UserError.Log.d(TAG, "No valid Xfer on poll");
-        }
-    }
 
     private static String readFileContent(final String path) {
         try (final FileInputStream fileInputStream = new FileInputStream(path)) {
@@ -149,43 +106,6 @@ public class Mimeograph {
             if (readBytes > MAX_BYTES) break;
         }
         return readBytes;
-    }
-
-    private static Xfer getXfer(final String data) {
-        if (data == null) return null;
-        final String[] array = split(data);
-        SearchState state = SCAN;
-        final StringBuilder asb = new StringBuilder();
-        final StringBuilder dsb = new StringBuilder();
-
-        final String deviceMac = Ob1G5CollectionService.getMac();
-        if (deviceMac == null) {
-            UserError.Log.d(TAG, "OB1 device mac not known");
-            return null;
-        }
-        final String deviceHunt = String.format("[%s]", deviceMac).toLowerCase();
-        UserError.Log.d(TAG, "Hunting for: " + deviceHunt);
-        for (final String line : array) {
-            if (line.startsWith(ADAPTER_MARKER)) {
-                state = COPY_COLLISION_KEY;
-            } else if (line.startsWith(deviceHunt)) {
-                state = COPY_DEVICE_KEY;
-            } else if (line.length() == 0) {
-                state = SCAN;
-            }
-            switch (state) {
-                case COPY_COLLISION_KEY:
-                    add(line, asb);
-                    break;
-                case COPY_DEVICE_KEY:
-                    add(line, dsb);
-                    break;
-            }
-        }
-
-        final Xfer xfer = new Xfer(asb.toString(), dsb.toString())
-                .setSpoofMac(extractCachedBtMac());
-        return xfer.valid() ? xfer : null;
     }
 
     private synchronized static void mergeXfer(final Xfer xfer) {
@@ -362,21 +282,12 @@ public class Mimeograph {
             return !emptyString(device) && !emptyString(adapter);
         }
 
-        String toJson() {
-            return JoH.defaultGsonInstance().toJson(this);
-        }
-
         static Xfer fromJson(final String json) {
             try {
                 return JoH.defaultGsonInstance().fromJson(json, Xfer.class);
             } catch (Exception e) {
                 return null;
             }
-        }
-
-        Xfer setSpoofMac(final String mac) {
-            this.spoofMac = mac;
-            return this;
         }
     }
 

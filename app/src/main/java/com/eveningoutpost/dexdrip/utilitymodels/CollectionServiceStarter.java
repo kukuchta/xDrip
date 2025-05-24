@@ -11,12 +11,8 @@ import com.eveningoutpost.dexdrip.GcmActivity;
 import com.eveningoutpost.dexdrip.Home;
 import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.models.UserError.Log;
-import com.eveningoutpost.dexdrip.services.DexCollectionService;
 import com.eveningoutpost.dexdrip.services.DexShareCollectionService;
 import com.eveningoutpost.dexdrip.services.DoNothingService;
-import com.eveningoutpost.dexdrip.services.G5CollectionService;
-import com.eveningoutpost.dexdrip.services.Ob1G5CollectionService;
-import com.eveningoutpost.dexdrip.services.WifiCollectionService;
 import com.eveningoutpost.dexdrip.utilitymodels.pebble.PebbleUtil;
 import com.eveningoutpost.dexdrip.utilitymodels.pebble.PebbleWatchSync;
 import com.eveningoutpost.dexdrip.utils.DexCollectionType;
@@ -138,8 +134,6 @@ public class CollectionServiceStarter {
     private void stopAll() {
         Log.d(TAG, "stop all");
         stopBtShareService();
-        stopFollowerThread();
-        stopG5Service();
         JoH.stopService(getCollectorServiceClass(Medtrum));
         JoH.stopService(getCollectorServiceClass(NSFollow));
         JoH.stopService(getCollectorServiceClass(SHFollow));
@@ -156,7 +150,6 @@ public class CollectionServiceStarter {
         if (isBTShare(collection_method)) {
             Log.d("DexDrip", "Starting bt share collector");
             stopFollowerThread();
-            stopG5Service();
 
             if (prefs.getBoolean("wear_sync", false)) {//KS
                 boolean enable_wearG5 = prefs.getBoolean("enable_wearG5", false);
@@ -170,7 +163,6 @@ public class CollectionServiceStarter {
             }
         } else if (isFollower(collection_method)) {
             stopBtShareService();
-            stopG5Service();
 
             startFollowerThread();
         } else {
@@ -236,7 +228,6 @@ public class CollectionServiceStarter {
         Log.d(TAG, "stopBtService call stopService");
         final CollectionServiceStarter collectionServiceStarter = new CollectionServiceStarter(context);
         collectionServiceStarter.stopBtShareService();
-        collectionServiceStarter.stopG5Service();
         Log.d(TAG, "stopBtService should have called onDestroy");
     }
 
@@ -267,15 +258,6 @@ public class CollectionServiceStarter {
     private void stopFollowerThread() {
         Log.d(TAG, "stopping follower service");
         this.mContext.stopService(new Intent(this.mContext, DoNothingService.class));
-    }
-
-    private void stopG5Service() {
-        Log.d(TAG, "stopping G5  services");
-        G5CollectionService.keep_running = false; // ensure zombie stays down
-        this.mContext.stopService(new Intent(this.mContext, G5CollectionService.class));
-        Ob1G5CollectionService.keep_running = false; // ensure zombie stays down
-        this.mContext.stopService(new Intent(this.mContext, Ob1G5CollectionService.class));
-        Ob1G5CollectionService.resetSomeInternalState();
     }
 
     @SuppressWarnings("ConstantConditions")

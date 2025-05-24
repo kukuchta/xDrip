@@ -13,8 +13,6 @@ import com.eveningoutpost.dexdrip.models.DesertSync;
 import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.models.Sensor;
 import com.eveningoutpost.dexdrip.services.ActivityRecognizedService;
-import com.eveningoutpost.dexdrip.services.G5BaseService;
-import com.eveningoutpost.dexdrip.services.Ob1G5CollectionService;
 import com.eveningoutpost.dexdrip.services.UiBasedCollector;
 import com.eveningoutpost.dexdrip.cgm.medtrum.MedtrumCollectionService;
 import com.eveningoutpost.dexdrip.cloud.backup.BackupActivity;
@@ -48,12 +46,6 @@ public class VoiceCommands {
             JoH.static_toast_long("Fake data pre-calibration OFF");
         } else if (allWords.contentEquals("set sensor code")) {
             G6CalibrationCodeDialog.ask(mActivity, null);
-        } else if (allWords.contentEquals("hard reset transmitter")) {
-            G5BaseService.setHardResetTransmitterNow();
-            JoH.static_toast_long("Will attempt to reset transmitter on next poll!! Can take 15 minutes to process");
-        } else if (allWords.contentEquals("remove transmitter bonding")) {
-            Ob1G5CollectionService.unBondAndStop = true;
-            JoH.static_toast_long("Attempt to unbond and shutdown collector");
         } else if (allWords.contentEquals("reset heart rate sync")) {
             PersistentStore.setLong("nightscout-rest-heartrate-synced-time", 0);
             JoH.static_toast_long("Cleared heart rate sync data");
