@@ -47,7 +47,6 @@ import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.models.RollCall;
 import com.eveningoutpost.dexdrip.models.UserError;
 import com.eveningoutpost.dexdrip.services.DoNothingService;
-import com.eveningoutpost.dexdrip.services.WifiCollectionService;
 import com.eveningoutpost.dexdrip.ui.helpers.FloatingLocaleActivityWithScreenshot;
 import com.eveningoutpost.dexdrip.utilitymodels.JamorhamShowcaseDrawer;
 import com.eveningoutpost.dexdrip.utilitymodels.PersistentStore;
@@ -60,8 +59,6 @@ import com.eveningoutpost.dexdrip.cgm.nsfollow.NightscoutFollowService;
 import com.eveningoutpost.dexdrip.cgm.sharefollow.ShareFollowService;
 import com.eveningoutpost.dexdrip.cgm.webfollow.WebFollowService;
 import com.eveningoutpost.dexdrip.cgm.carelinkfollow.CareLinkFollowService;
-import com.eveningoutpost.dexdrip.insulin.inpen.InPenEntry;
-import com.eveningoutpost.dexdrip.insulin.inpen.InPenService;
 import com.eveningoutpost.dexdrip.utils.DexCollectionType;
 import com.eveningoutpost.dexdrip.watch.lefun.LeFunEntry;
 import com.eveningoutpost.dexdrip.watch.lefun.LeFunService;
@@ -167,9 +164,6 @@ public class MegaStatus extends FloatingLocaleActivityWithScreenshot {
             if (BlueJayEntry.isEnabled()) {
                 addAsection(BLUEJAY_STATUS, "BlueJay Watch Status");
             }
-            if (InPenEntry.isEnabled()) {
-                addAsection(INPEN_STATUS,"InPen Status");
-            }
             if (Home.get_master_or_follower()) {
                 addAsection(XDRIP_PLUS_SYNC, "xDrip+ Sync Group");
             }
@@ -221,9 +215,6 @@ public class MegaStatus extends FloatingLocaleActivityWithScreenshot {
             case MEDTRUM_STATUS:
                 la.addRows(MedtrumCollectionService.megaStatus());
                 break;
-            case IP_COLLECTOR:
-                la.addRows(WifiCollectionService.megaStatus(mActivity));
-                break;
             case XDRIP_PLUS_SYNC:
                 la.addRows(DoNothingService.megaStatus());
                 la.addRows(GcmListenerSvc.megaStatus());
@@ -241,9 +232,6 @@ public class MegaStatus extends FloatingLocaleActivityWithScreenshot {
                 break;
             case BLUEJAY_STATUS:
                 la.addRows(BlueJayService.megaStatus());
-                break;
-            case INPEN_STATUS:
-                la.addRows(InPenService.megaStatus());
                 break;
             case NIGHTSCOUT_FOLLOW:
                 la.addRows(NightscoutFollowService.megaStatus());

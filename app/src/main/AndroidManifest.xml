@@ -187,10 +187,6 @@
             android:configChanges="orientation|screenSize"
             android:label="@string/title_activity_bluetooth_scan" />
 
-        <service
-            android:name=".services.WifiCollectionService"
-            android:enabled="true"
-            android:exported="true" />
         <service android:name=".services.ActivityRecognizedService" />
         <service android:name=".services.BluetoothGlucoseMeter" />
         <service
@@ -783,9 +779,6 @@
         <service
             android:name=".cgm.nsfollow.NightscoutFollowService"
             android:foregroundServiceType="dataSync" />
-        <service
-            android:name=".insulin.inpen.InPenService"
-            android:foregroundServiceType="connectedDevice|location" />
         <service
             android:name=".cgm.sharefollow.ShareFollowService"
             android:foregroundServiceType="dataSync" />

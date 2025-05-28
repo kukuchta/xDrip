@@ -75,7 +75,6 @@ import com.eveningoutpost.dexdrip.cgm.carelinkfollow.auth.CareLinkCredentialStor
 import com.eveningoutpost.dexdrip.cloud.jamcm.Pusher;
 import com.eveningoutpost.dexdrip.healthconnect.HealthConnectEntry;
 import com.eveningoutpost.dexdrip.healthconnect.HealthGamut;
-import com.eveningoutpost.dexdrip.insulin.inpen.InPenEntry;
 import com.eveningoutpost.dexdrip.models.DesertSync;
 import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.models.Profile;
@@ -1534,21 +1533,6 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                     //
                 }
             }
-
-            final Preference inpen_enabled = findPreference("inpen_enabled");
-            try {
-                inpen_enabled.setOnPreferenceChangeListener((preference, newValue) -> {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && (boolean) newValue) {
-                        LocationHelper.requestLocationForBluetooth((Activity) preference.getContext()); // double check!
-                    }
-                    InPenEntry.startWithRefresh();
-                    return true;
-                });
-            } catch (Exception e) {
-                //
-            }
-
-
 
             final Preference scanShare = findPreference("scan_share2_barcode");
             final EditTextPreference transmitterId = (EditTextPreference) findPreference("dex_txid");

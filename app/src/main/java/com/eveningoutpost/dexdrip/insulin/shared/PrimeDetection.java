@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.eveningoutpost.dexdrip.models.JoH.roundDouble;
-import static com.eveningoutpost.dexdrip.insulin.inpen.InPenEntry.ID_INPEN;
 
 /**
  * jamorham
@@ -51,12 +50,6 @@ public class PrimeDetection {
             if (!penType.equalsIgnoreCase(pd.type)) {
 
                 switch (pd.type) {
-                    case ID_INPEN:
-                        detect_primes = Pref.getBooleanDefaultFalse("inpen_detect_priming");
-                        prime_units = Pref.getStringToDouble("inpen_prime_units", INVALID_PRIME);
-                        prime_gap_ms = (long) (Pref.getStringToDouble("inpen_prime_minutes", -1) * Constants.MINUTE_IN_MS);
-                        orphan_prime_is_prime = Pref.getBoolean("inpen_orphan_primes_ignored", true);
-                        break;
                     default:
                         UserError.Log.e(TAG, "Unknown pen type: " + pd.type);
                         prime_units = INVALID_PRIME;

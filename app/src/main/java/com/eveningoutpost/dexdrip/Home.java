@@ -117,7 +117,6 @@ import com.eveningoutpost.dexdrip.databinding.PopupInitialStatusHelperBinding;
 import com.eveningoutpost.dexdrip.insulin.Insulin;
 import com.eveningoutpost.dexdrip.insulin.InsulinManager;
 import com.eveningoutpost.dexdrip.insulin.MultipleInsulins;
-import com.eveningoutpost.dexdrip.insulin.inpen.InPenEntry;
 import com.eveningoutpost.dexdrip.insulin.pendiq.Pendiq;
 import com.eveningoutpost.dexdrip.profileeditor.DatePickerFragment;
 import com.eveningoutpost.dexdrip.profileeditor.ProfileAdapter;
@@ -1013,8 +1012,6 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
                             JoH.static_toast_long(gs(R.string.running_test_with_number_123));
                             NumberGraphic.testNotification("123");
                         });
-            } else if (bundle.getString("inpen-reset") != null) {
-                InPenEntry.startWithReset();
             } else if (bundle.getString(Home.BLOOD_TEST_ACTION) != null) {
                 Log.d(TAG, "BLOOD_TEST_ACTION");
                 final AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -1899,7 +1896,6 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
         firstRunDialogs(checkedeula);
 
         Inevitable.task("home-resume-bg", 2000, () -> {
-            InPenEntry.startIfEnabled();
             NightscoutUploader.launchDownloadRest();
             Pendiq.immortality(); // Experimental testing phase
         });
