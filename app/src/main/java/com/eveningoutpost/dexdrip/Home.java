@@ -1067,8 +1067,6 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
                         DidYouCancelAlarm.dialog(this, AlertPlayer::defaultSnooze);
                         break;
                 }
-            } else if (bundle.getString(Home.ENABLE_STREAMING_DIALOG) != null) {
-                NFCReaderX.enableBluetoothAskUser(mActivity);
             } else if (bundle.getString(Home.CHOOSE_INSULIN_PEN) != null) {
                 ChooseInsulinPenDialog.show(this, bundle.getString(Home.CHOOSE_INSULIN_PEN));
             }
@@ -2010,49 +2008,6 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
         }
 
         chart.getChartData().setAxisXTop(null);
-/*
-        //Transmitter Battery Level
-        final Sensor sensor = Sensor.currentSensor();
-
-       //????????? what about tomato here ????? TODO this sucks - removed Feb 2020
-        if (sensor != null && sensor.latest_battery_level != 0 && !DexCollectionService.getBestLimitterHardwareName().equalsIgnoreCase("BlueReader") && sensor.latest_battery_level <= Dex_Constants.TRANSMITTER_BATTERY_LOW && !Pref.getBoolean("disable_battery_warning", false)) {
-            Drawable background = new Drawable() {
-
-                @Override
-                public void draw(Canvas canvas) {
-
-                    DisplayMetrics metrics = getApplicationContext().getResources().getDisplayMetrics();
-                    int px = (int) (30 * (metrics.densityDpi / 160f));
-                    Paint paint = new Paint();
-                    paint.setTextSize(px);
-                    paint.setAntiAlias(true);
-                    paint.setColor(Color.parseColor("#FFFFAA"));
-                    paint.setStyle(Paint.Style.STROKE);
-                    paint.setAlpha(100);
-                    canvas.drawText(getString(R.string.transmitter_battery), 10, chart.getHeight() / 3 - (int) (1.2 * px), paint);
-                    if (sensor.latest_battery_level <= Dex_Constants.TRANSMITTER_BATTERY_EMPTY) {
-                        paint.setTextSize((int) (px * 1.5));
-                        canvas.drawText(getString(R.string.very_low), 10, chart.getHeight() / 3, paint);
-                    } else {
-                        canvas.drawText(getString(R.string.low), 10, chart.getHeight() / 3, paint);
-                    }
-                }
-
-                @Override
-                public void setAlpha(int alpha) {
-                }
-
-                @Override
-                public void setColorFilter(ColorFilter cf) {
-                }
-
-                @Override
-                public int getOpacity() {
-                    return 0; // TODO Which pixel format should this be?
-                }
-            };
-            chart.setBackground(background);
-        }*/
         previewChart = findViewById(R.id.chart_preview);
 
         chart.setLineChartData(bgGraphBuilder.lineData());
@@ -2564,24 +2519,6 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
                     });
                     dialog = builder.create();
                     dialog.show();
-                } else {
-                    if (!Experience.gotData() && !QuickSettingsDialogs.isDialogShowing() && JoH.ratelimit("start-sensor_prompt", 20)) {
-                        // Show the start sensor prompt only if G6 is not selected or the G6 transmitter is synchronized.
-                        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                        final Context context = this;
-                        builder.setTitle(getString(R.string.start_sensor) + "?");
-                        builder.setMessage(String.format(gs(R.string.start_sensor_confirmation), DexCollectionType.getBestCollectorHardwareName()));
-                        builder.setNegativeButton(gs(R.string.change_settings), (dialog, which) -> {
-                            dialog.dismiss();
-                            startActivity(new Intent(context, Preferences.class).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-                        });
-                        builder.setPositiveButton(R.string.start_sensor, (dialog, which) -> {
-                            dialog.dismiss();
-                            startActivity(new Intent(context, StartNewSensor.class).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-                        });
-                        dialog = builder.create();
-                        dialog.show();
-                    }
                 }
             }
             return;

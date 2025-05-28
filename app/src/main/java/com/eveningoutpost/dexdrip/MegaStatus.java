@@ -46,7 +46,6 @@ import com.eveningoutpost.dexdrip.models.DesertSync;
 import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.models.RollCall;
 import com.eveningoutpost.dexdrip.models.UserError;
-import com.eveningoutpost.dexdrip.services.DexCollectionService;
 import com.eveningoutpost.dexdrip.services.DoNothingService;
 import com.eveningoutpost.dexdrip.services.WifiCollectionService;
 import com.eveningoutpost.dexdrip.ui.helpers.FloatingLocaleActivityWithScreenshot;
@@ -162,7 +161,6 @@ public class MegaStatus extends FloatingLocaleActivityWithScreenshot {
 
             final DexCollectionType dexCollectionType = DexCollectionType.getDexCollectionType();
 
-            // probably want a DexCollectionService related set
             if (dexCollectionType.equals(Medtrum)) {
                 addAsection(MEDTRUM_STATUS, "Medtrum A6 Status");
             }
@@ -220,9 +218,6 @@ public class MegaStatus extends FloatingLocaleActivityWithScreenshot {
         la.clear(false);
         switch (section) {
 
-            case G4_STATUS:
-                la.addRows(DexCollectionService.megaStatus());
-                break;
             case MEDTRUM_STATUS:
                 la.addRows(MedtrumCollectionService.megaStatus());
                 break;
@@ -329,23 +324,6 @@ public class MegaStatus extends FloatingLocaleActivityWithScreenshot {
                     String lastState = dataMap.getString("lastState", "");
                     long last_timestamp = dataMap.getLong("timestamp", 0);
                     UserError.Log.d(TAG, "serviceDataReceiver onReceive:" + action + " :: " + lastState + " last_timestamp :: " + last_timestamp);
-                    switch (action) {
-                        case WatchUpdaterService.ACTION_BLUETOOTH_COLLECTION_SERVICE_UPDATE:
-                            switch (DexCollectionType.getDexCollectionType()) {
-                                case DexcomShare:
-                                    if (lastState != null && !lastState.isEmpty()) {
-                                        //setConnectionStatus(lastState);//TODO set System Status page connection_status.setText to lastState for non-G5 Services?
-                                    }
-                                    break;
-                                default:
-                                    DexCollectionService.setWatchStatus(dataMap);//msg, last_timestamp
-                                    if (lastState != null && !lastState.isEmpty()) {
-                                        //setConnectionStatus(lastState);//TODO set System Status page connection_status.setText to lastState for non-G5 Services?
-                                    }
-                                    break;
-                            }
-                            break;
-                    }
                 }
             }
         };

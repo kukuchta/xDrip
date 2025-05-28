@@ -8,8 +8,6 @@ import android.content.IntentFilter;
 import android.os.BatteryManager;
 import android.os.Build;
 
-import com.eveningoutpost.dexdrip.services.DexCollectionService;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -50,7 +48,7 @@ public enum NightscoutBatteryDevice {
 
         @Override
         String getDeviceName() {
-            return DexCollectionService.getBestLimitterHardwareName();
+            return "deleted";
         }
     },
 

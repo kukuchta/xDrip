@@ -404,14 +404,6 @@ public class NFCReaderX {
     }
 
     public static void handleHomeScreenScanPreference(Context context, boolean state) {
-        try {
-            Log.d(TAG, "HomeScreen Scan State: " + (state ? "enable" : "disable"));
-            context.getPackageManager().setComponentEnabledSetting(new ComponentName(context, NFCFilterX.class),
-                    state ? PackageManager.COMPONENT_ENABLED_STATE_ENABLED : PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                    PackageManager.DONT_KILL_APP);
-        } catch (Exception e) {
-            Log.wtf(TAG, "Exception in handleHomeScreenScanPreference: " + e);
-        }
     }
 
     public static synchronized void scanFromActivity(final Activity context, final Intent intent) {

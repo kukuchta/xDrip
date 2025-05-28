@@ -188,11 +188,6 @@
             android:label="@string/title_activity_bluetooth_scan" />
 
         <service
-            android:name=".services.DexCollectionService"
-            android:enabled="true"
-            android:exported="true"
-            android:foregroundServiceType="connectedDevice|location" />
-        <service
             android:name=".services.WifiCollectionService"
             android:enabled="true"
             android:exported="true" />
@@ -252,17 +247,9 @@
             android:configChanges="orientation|screenSize"
             android:label="@string/add_calibration" />
         <activity
-            android:name=".StartNewSensor"
-            android:configChanges="orientation|screenSize"
-            android:label="@string/title_activity_start_new_sensor" />
-        <activity
             android:name=".NewSensorLocation"
             android:configChanges="orientation|screenSize"
             android:label="@string/title_activity_new_sensor_location" />
-        <activity
-            android:name=".StopSensor"
-            android:configChanges="orientation|screenSize"
-            android:label="@string/title_activity_stop_sensor" />
         <activity
             android:name=".BGHistory"
             android:configChanges="orientation|screenSize"
@@ -427,25 +414,6 @@
                 android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
                 android:resource="@xml/device_filter" />
         </activity>
-        <activity
-            android:name=".NFCFilterX"
-            android:configChanges="orientation|screenSize"
-            android:label="xDrip+ NFC"
-            android:launchMode="singleTask">
-            <intent-filter>
-                <action android:name="android.nfc.action.TECH_DISCOVERED" />
-            </intent-filter>
-
-            <meta-data
-                android:name="android.nfc.action.TECH_DISCOVERED"
-                android:resource="@xml/nfc_tech_list" />
-        </activity>
-        <activity
-            android:name=".NFCScanningX"
-            android:configChanges="orientation|screenSize"
-            android:label="NFC Scanning"
-            android:launchMode="singleTask" />
-
         <service
             android:name=".services.DexShareCollectionService"
             android:enabled="true"

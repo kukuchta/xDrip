@@ -93,13 +93,6 @@ public class NavDrawerBuilder {
                         }
                     }
                 }
-                if (!getBestCollectorHardwareName().equals("G7")) { // If we are using G7, there will be no stop sensor option in the menu.
-                    this.nav_drawer_options.add(context.getString(R.string.stop_sensor));
-                    this.nav_drawer_intents.add(new Intent(context, StopSensor.class));
-                }
-            } else {
-                this.nav_drawer_options.add(context.getString(R.string.start_sensor));
-                this.nav_drawer_intents.add(new Intent(context, StartNewSensor.class));
             }
         }
 

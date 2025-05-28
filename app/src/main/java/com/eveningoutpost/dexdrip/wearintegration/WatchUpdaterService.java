@@ -33,7 +33,6 @@ import com.eveningoutpost.dexdrip.R;
 import com.eveningoutpost.dexdrip.utilitymodels.AlertPlayer;
 import com.eveningoutpost.dexdrip.utilitymodels.BgGraphBuilder;
 import com.eveningoutpost.dexdrip.utilitymodels.BgSendQueue;
-import com.eveningoutpost.dexdrip.utilitymodels.Blukon;
 import com.eveningoutpost.dexdrip.utilitymodels.CollectionServiceStarter;
 import com.eveningoutpost.dexdrip.utilitymodels.Constants;
 import com.eveningoutpost.dexdrip.utilitymodels.Inevitable;
@@ -1751,7 +1750,6 @@ public class WatchUpdaterService extends WearableListenerService implements
 
             dataMap.putBoolean("show_wear_treatments", Pref.getBooleanDefaultFalse("show_wear_treatments"));
             dataMap.putBoolean("use_ob1_g5_collector_service", Pref.getBooleanDefaultFalse("use_ob1_g5_collector_service"));
-            dataMap.putString(Blukon.BLUKON_PIN_PREF, Pref.getStringDefaultBlank(Blukon.BLUKON_PIN_PREF));
         }
         //Step Counter
         // note transmutes use_pebble_health -> use_wear_health

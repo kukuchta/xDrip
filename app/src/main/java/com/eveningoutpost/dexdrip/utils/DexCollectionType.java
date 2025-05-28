@@ -1,6 +1,5 @@
 package com.eveningoutpost.dexdrip.utils;
 
-import com.eveningoutpost.dexdrip.services.DexCollectionService;
 import com.eveningoutpost.dexdrip.services.DexShareCollectionService;
 import com.eveningoutpost.dexdrip.services.DoNothingService;
 import com.eveningoutpost.dexdrip.services.UiBasedCollector;
@@ -125,7 +124,7 @@ public enum DexCollectionType {
             case SHAndCLFollow:
                 return ShareFollowService.class; // Get nano status only from Dexcom Share Follower
             default:
-                return DexCollectionService.class;
+                return CareLinkFollowService.class;
         }
     }
 

@@ -1,13 +1,11 @@
 package com.eveningoutpost.dexdrip;
 
 import android.annotation.TargetApi;
-import android.app.Dialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
-import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.content.Intent;
@@ -16,42 +14,29 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.text.InputFilter;
-import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.activeandroid.query.Select;
-import com.eveningoutpost.dexdrip.models.ActiveBluetoothDevice;
 import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.models.UserError;
 import com.eveningoutpost.dexdrip.models.UserError.Log;
-import com.eveningoutpost.dexdrip.utilitymodels.Blukon;
 import com.eveningoutpost.dexdrip.utilitymodels.CollectionServiceStarter;
 import com.eveningoutpost.dexdrip.utilitymodels.Inevitable;
 import com.eveningoutpost.dexdrip.utilitymodels.Pref;
-import com.eveningoutpost.dexdrip.cgm.medtrum.Medtrum;
-import com.eveningoutpost.dexdrip.utils.AndroidBarcode;
 import com.eveningoutpost.dexdrip.utils.ListActivityWithMenu;
 import com.eveningoutpost.dexdrip.utils.LocationHelper;
-import com.eveningoutpost.dexdrip.wearintegration.WatchUpdaterService;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import lecho.lib.hellocharts.util.ChartUtils;
@@ -239,50 +224,6 @@ public class BluetoothScan extends ListActivityWithMenu {
     @TargetApi(21)
     private void initializeScannerCallback() {
         Log.d(TAG, "initializeScannerCallback");
-        mScanCallback = new ScanCallback() {
-            @Override
-            public void onBatchScanResults(final List<ScanResult> results) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        for (ScanResult result : results) {
-                            BluetoothDevice device = result.getDevice();
-                            if (device.getName() != null && device.getName().length() > 0) {
-                                mLeDeviceListAdapter.addDevice(device);
-                                try {
-                                    if (result.getScanRecord() != null)
-                                        adverts.put(device.getAddress(), result.getScanRecord().getBytes());
-                                } catch (NullPointerException e) {
-                                    //
-                                }
-                            }
-                        }
-                        mLeDeviceListAdapter.notifyDataSetChanged();
-                    }
-                });
-            }
-
-            @Override
-            public void onScanResult(int callbackType, final ScanResult result) {
-                final BluetoothDevice device = result.getDevice();
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        final String deviceName = device.getName();
-                        if (deviceName != null && deviceName.length() > 0) {
-                            mLeDeviceListAdapter.addDevice(device);
-                            try {
-                                if (result.getScanRecord() != null)
-                                    adverts.put(device.getAddress(), result.getScanRecord().getBytes());
-                            } catch (NullPointerException e) {
-                                //
-                            }
-                            mLeDeviceListAdapter.notifyDataSetChanged();
-                        }
-                    }
-                });
-            }
-        };
     }
 
     @TargetApi(21)
@@ -346,98 +287,6 @@ public class BluetoothScan extends ListActivityWithMenu {
         }
     }
 
-    @Override
-    protected void onListItemClick(ListView l, View v, int position, long id) {
-        Log.d(TAG, "Item Clicked");
-        final BluetoothDevice device = mLeDeviceListAdapter.getDevice(position);
-        if (device == null || device.getName() == null) return;
-        Toast.makeText(this, R.string.connecting_to_device, Toast.LENGTH_LONG).show();
-
-        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        synchronized (ActiveBluetoothDevice.table_lock) {
-            ActiveBluetoothDevice btDevice = new Select().from(ActiveBluetoothDevice.class)
-                    .orderBy("_ID desc")
-                    .executeSingle();
-
-            prefs.edit().putString("last_connected_device_address", device.getAddress()).apply();
-            Blukon.clearPin();
-            if (btDevice == null) {
-                ActiveBluetoothDevice newBtDevice = new ActiveBluetoothDevice();
-                newBtDevice.name = device.getName();
-                newBtDevice.address = device.getAddress();
-                newBtDevice.save();
-            } else {
-                btDevice.name = device.getName();
-                btDevice.address = device.getAddress();
-                btDevice.save();
-            }
-
-            startWatchUpdaterService(this, WatchUpdaterService.ACTION_SYNC_ACTIVEBTDEVICE, TAG);
-        }
-
-        // automatically set or unset the option for "Transmiter" device
-        boolean using_transmiter = false;
-        // Experimental support for rfduino from Tomasz Stachowicz
-        // automatically set or unset the option for "RFDuino" device
-        boolean using_rfduino = false;
-
-        try {
-            prefs.edit().putBoolean("use_transmiter_pl_bluetooth", using_transmiter).apply();
-
-            // Experimental support for rfduino from Tomasz Stachowicz
-            if (device.getName().toLowerCase().contains("xbridge")
-                    && (adverts.containsKey(device.getAddress()) && (new String(adverts.get(device.getAddress()), "UTF-8").contains("rfduino")))) {
-                String msg = "Auto-detected rfduino device!";
-                Log.e(TAG, msg);
-                JoH.static_toast_long(msg);
-                using_rfduino = true;
-            }
-            prefs.edit().putBoolean("use_rfduino_bluetooth", using_rfduino).apply();
-
-
-            if (device.getName().toLowerCase().contains("dexcom")) {
-                if (!CollectionServiceStarter.isBTShare(getApplicationContext())) {
-                    prefs.edit().putString("dex_collection_method", "DexcomShare").apply();
-                    prefs.edit().putBoolean("calibration_notifications", false).apply();
-                }
-                if (prefs.getString("share_key", "SM00000000").compareTo("SM00000000") == 0 || prefs.getString("share_key", "SM00000000").length() < 10) {
-                    requestSerialNumber(prefs);
-                } else returnToHome();
-
-            } else if (device.getName().toLowerCase().contains("bridge")) {
-                if (prefs.getString("dex_txid", "00000").compareTo("00000") == 0 || prefs.getString("dex_txid", "00000").length() < 5) {
-                    requestTransmitterId(prefs);
-                } else returnToHome();
-
-            } else if (device.getName().toLowerCase().contains("drip")) {
-                prefs.edit().putString("dex_collection_method", "None").apply();
-                returnToHome();
-            } else if (device.getName().matches("^BLU[0-9][0-9][0-9][0-9][0-9].*$")) {
-
-                Blukon.doPinDialog(this,
-                        new Runnable() {
-                            @Override
-                            public void run() {
-                                //deleted with Limitter
-                            }
-                        });
-
-            } else if (device.getName().matches("MT")) {
-                if (Medtrum.saveSerialFromLegacy(adverts.get(device.getAddress()))) {
-                    JoH.static_toast_long("Set Medtrum serial number");
-                    CollectionServiceStarter.restartCollectionServiceBackground();
-                    returnToHome();
-                } else {
-                    JoH.static_toast_long("Failed to find Medtrum serial number");
-                }
-            } else {
-                returnToHome();
-            }
-
-        } catch (UnsupportedEncodingException | NullPointerException e) {
-            Log.d(TAG, "Got exception in listitemclick: " + Arrays.toString(e.getStackTrace()));
-        }
-    }
 
     public void returnToHome() {
         try {
@@ -452,71 +301,6 @@ public class BluetoothScan extends ListActivityWithMenu {
         final Intent intent = new Intent(this, Home.class);
         startActivity(intent);
         finish();
-    }
-
-    private void requestSerialNumber(final SharedPreferences prefs) {
-        final Dialog dialog = new Dialog(BluetoothScan.this);
-        dialog.setContentView(R.layout.dialog_single_text_field);
-        Button saveButton = (Button) dialog.findViewById(R.id.saveButton);
-        Button cancelButton = (Button) dialog.findViewById(R.id.cancelButton);
-        final EditText serialNumberView = (EditText) dialog.findViewById(R.id.editTextField);
-        serialNumberView.setHint("SM00000000");
-        ((TextView) dialog.findViewById(R.id.instructionsTextField)).setText("Enter Your Dexcom Receiver Serial Number");
-
-        dialog.findViewById(R.id.scannerButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                new AndroidBarcode(BluetoothScan.this).scan();
-                dialog.dismiss();
-            }
-        });
-
-        saveButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!TextUtils.isEmpty(serialNumberView.getText()))
-                    prefs.edit().putString("share_key", serialNumberView.getText().toString()).apply();
-                dialog.dismiss();
-                returnToHome();
-            }
-        });
-        cancelButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
-        dialog.show();
-    }
-
-    private void requestTransmitterId(final SharedPreferences prefs) {
-        final Dialog dialog = new Dialog(BluetoothScan.this);
-        dialog.setContentView(R.layout.dialog_single_text_field);
-        Button saveButton = (Button) dialog.findViewById(R.id.saveButton);
-        Button cancelButton = (Button) dialog.findViewById(R.id.cancelButton);
-        dialog.findViewById(R.id.scannerButton).setVisibility(View.GONE);
-        final EditText serialNumberView = (EditText) dialog.findViewById(R.id.editTextField);
-        serialNumberView.setHint("00000");
-        serialNumberView.setFilters(new InputFilter[]{new InputFilter.AllCaps()});
-        ((TextView) dialog.findViewById(R.id.instructionsTextField)).setText("Enter Your Dexcom Transmitter ID");
-
-        saveButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!TextUtils.isEmpty(serialNumberView.getText())) {
-                    prefs.edit().putString("dex_txid", serialNumberView.getText().toString()).apply();
-                }
-                dialog.dismiss();
-                returnToHome();
-            }
-        });
-        cancelButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
-        dialog.show();
     }
 
     static class ViewHolder {

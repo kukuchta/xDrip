@@ -111,7 +111,6 @@ public class xdrip extends Application {
 
         if (!isRunningTest()) {
             MissedReadingService.delayedLaunch();
-            NFCReaderX.handleHomeScreenScanPreference(getApplicationContext());
             AlertType.fromSettings(getApplicationContext());
             //new CollectionServiceStarter(getApplicationContext()).start(getApplicationContext());
             CollectionServiceStarter.restartCollectionServiceBackground();

@@ -41,7 +41,7 @@ import android.preference.PreferenceGroup;
 import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
 import android.preference.RingtonePreference;
-import android.preference.SwitchPreference;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
@@ -87,7 +87,6 @@ import com.eveningoutpost.dexdrip.profileeditor.ProfileEditor;
 import com.eveningoutpost.dexdrip.receiver.InfoContentProvider;
 import com.eveningoutpost.dexdrip.services.ActivityRecognizedService;
 import com.eveningoutpost.dexdrip.services.BluetoothGlucoseMeter;
-import com.eveningoutpost.dexdrip.services.DexCollectionService;
 import com.eveningoutpost.dexdrip.services.PlusSyncService;
 import com.eveningoutpost.dexdrip.services.UiBasedCollector;
 import com.eveningoutpost.dexdrip.services.broadcastservice.BroadcastService;
@@ -1889,64 +1888,6 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
             }
 
             try {
-                findPreference("nfc_scan_homescreen").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                    @Override
-                    public boolean onPreferenceChange(Preference preference, Object newValue) {
-                        NFCReaderX.handleHomeScreenScanPreference(xdrip.getAppContext(), false );
-                        return true;
-                    }
-                });
-            } catch (NullPointerException e) {
-                Log.d(TAG, "Nullpointer looking for nfc_scan_homescreen");
-            }
-            try {
-                findPreference("use_nfc_scan").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                    @Override
-                    public boolean onPreferenceChange(final Preference preference, final Object newValue) {
-                        final AlertDialog.Builder builder = new AlertDialog.Builder(preference.getContext());
-                        if ((boolean) newValue) {
-
-                            final boolean paranoidAboutNFC = false;
-                            if (paranoidAboutNFC) {
-                                // TODO changed Jul 2022 as this feature is well established to work and have been no reports of problems. Remove this block after Dec 2022 if no problems reported.
-                                builder.setTitle("Stop! Are you sure?");
-                                builder.setMessage("This can sometimes crash / break a sensor!\nWith some phones there can be problems, try on expiring sensor first for safety. You have been warned.");
-
-                                builder.setPositiveButton("I AM SURE", new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        dialog.dismiss();
-                                        ((SwitchPreference) preference).setChecked(true);
-                                        preference.getEditor().putBoolean("use_nfc_scan", true).apply();
-                                        NFCReaderX.handleHomeScreenScanPreference(xdrip.getAppContext(), (boolean) newValue && prefs.getBoolean("nfc_scan_homescreen", false));
-                                    }
-                                });
-                                builder.setNegativeButton("NOPE", new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        dialog.dismiss();
-                                    }
-                                });
-                                final AlertDialog alert = builder.create();
-                                alert.show();
-
-                            } else {
-                                ((SwitchPreference) preference).setChecked(true);
-                                preference.getEditor().putBoolean("use_nfc_scan", true).apply();
-                                NFCReaderX.handleHomeScreenScanPreference(xdrip.getAppContext(), (boolean) newValue && prefs.getBoolean("nfc_scan_homescreen", false));
-                                return true;
-                            }
-
-                            return false;
-                        } else {
-                            NFCReaderX.handleHomeScreenScanPreference(xdrip.getAppContext(), (boolean) newValue && prefs.getBoolean("nfc_scan_homescreen", false));
-                        }
-                        return true;
-                    }
-                });
-            } catch (NullPointerException e) {
-                Log.d(TAG, "Nullpointer looking for nfc_scan");
-            }
-
-            try {
                 findPreference("external_blukon_algorithm").setOnPreferenceChangeListener((preference, newValue) -> {
                     boolean isEnabled = ((Boolean) newValue).booleanValue();
                     findPreference("retrieve_blukon_history").setEnabled(!isEnabled);
@@ -1992,29 +1933,11 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
 
             collectionCategory.removePreference(nfcSettings);
 
-            if (!DexCollectionService.getBestLimitterHardwareName().equals("BlueReader")) {
-                collectionCategory.removePreference(bluereadersettings);
-            } else {
-                findPreference("blueReader_turn_off_value").setTitle(getString(R.string.blueReader_turnoffvalue) + " (" + prefs.getInt("blueReader_turn_off_value", 5) + ")");
-
-                findPreference("blueReader_turn_off_value").setOnPreferenceChangeListener((preference, newValue) ->
-                        {
-                            prefs.edit().putInt("blueReader_turn_off_value", (Integer) newValue).commit();
-                            preference.setTitle(getString(R.string.blueReader_turnoffvalue) + " (" + newValue + ")");
-                            return true;
-                        }
-                );
-
-            }
-
+            collectionCategory.removePreference(bluereadersettings);
 
             try {
 
-                try {
-                    collectionCategory.removePreference(libre2settings);
-                } catch (NullPointerException e) {
-                    Log.wtf(TAG, "Nullpointer Libre2Settings: ", e);
-                }
+                collectionCategory.removePreference(libre2settings);
 
                 try {
                     final String receiversIpAddresses = this.prefs.getString("wifi_recievers_addresses", "").trim();

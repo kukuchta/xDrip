@@ -39,13 +39,11 @@ import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.models.TransmitterData;
 import com.eveningoutpost.dexdrip.models.UserError;
 import com.eveningoutpost.dexdrip.models.UserError.Log;
-import com.eveningoutpost.dexdrip.services.DexCollectionService;
 import com.eveningoutpost.dexdrip.utilitymodels.CollectionServiceStarter;
 import com.eveningoutpost.dexdrip.utilitymodels.SensorStatus;
 import com.eveningoutpost.dexdrip.databinding.ActivitySystemStatusBinding;
 import com.eveningoutpost.dexdrip.ui.MicroStatus;
 import com.eveningoutpost.dexdrip.ui.MicroStatusImpl;
-import com.eveningoutpost.dexdrip.utils.DexCollectionType;
 import com.eveningoutpost.dexdrip.wearintegration.WatchUpdaterService;
 import com.google.android.gms.wearable.DataMap;
 
@@ -101,18 +99,8 @@ public class SystemStatusFragment extends Fragment {
                     UserError.Log.d(TAG, "serviceDataReceiver onReceive:" + action + " :: " + lastState + " last_timestamp :: " + last_timestamp);
                     switch (action) {
                         case WatchUpdaterService.ACTION_BLUETOOTH_COLLECTION_SERVICE_UPDATE:
-                            switch (DexCollectionType.getDexCollectionType()) {
-                                case DexcomShare:
-                                    if (lastState != null && !lastState.isEmpty()) {
-                                        setConnectionStatus(lastState);//TODO getLastState() in non-G5 Services
-                                    }
-                                    break;
-                                default:
-                                    DexCollectionService.setWatchStatus(dataMap);//msg, last_timestamp
-                                    if (lastState != null && !lastState.isEmpty()) {
-                                        setConnectionStatus(lastState);
-                                    }
-                                    break;
+                            if (lastState != null && !lastState.isEmpty()) {
+                                setConnectionStatus(lastState);
                             }
                             break;
                     }
