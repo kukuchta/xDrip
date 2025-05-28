@@ -20,7 +20,6 @@ import androidx.annotation.Nullable;
 
 import com.eveningoutpost.dexdrip.BestGlucose;
 import com.eveningoutpost.dexdrip.BuildConfig;
-import com.eveningoutpost.dexdrip.eassist.EmergencyAssist;
 import com.eveningoutpost.dexdrip.models.UserError;
 import com.eveningoutpost.dexdrip.utilitymodels.AlertPlayer;
 import com.eveningoutpost.dexdrip.utilitymodels.BgGraphBuilder;
@@ -74,13 +73,6 @@ public class InfoContentProvider extends ContentProvider {
                     if (selectionArgs.length > 0 && selectionArgs[0].equals("snooze")) {
                         AlertPlayer.getPlayer().OpportunisticSnooze();
                         Log.d(TAG, "Opportunistic snooze");
-                    }
-                    break;
-
-                case "eassist":
-                    if (enabledWrite()) {
-                        EmergencyAssist.test(EmergencyAssist.Reason.REQUESTED_ASSISTANCE, Constants.MINUTE_IN_MS);
-                        UserError.Log.ueh(TAG, "Emergency assist triggered remotely");
                     }
                     break;
 

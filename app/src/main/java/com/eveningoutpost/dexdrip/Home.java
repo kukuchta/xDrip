@@ -114,7 +114,6 @@ import com.eveningoutpost.dexdrip.dagger.Injectors;
 import com.eveningoutpost.dexdrip.databinding.ActivityHomeBinding;
 import com.eveningoutpost.dexdrip.databinding.ActivityHomeShelfSettingsBinding;
 import com.eveningoutpost.dexdrip.databinding.PopupInitialStatusHelperBinding;
-import com.eveningoutpost.dexdrip.eassist.EmergencyAssistActivity;
 import com.eveningoutpost.dexdrip.insulin.Insulin;
 import com.eveningoutpost.dexdrip.insulin.InsulinManager;
 import com.eveningoutpost.dexdrip.insulin.MultipleInsulins;
@@ -1901,7 +1900,6 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
 
         Inevitable.task("home-resume-bg", 2000, () -> {
             InPenEntry.startIfEnabled();
-            EmergencyAssistActivity.checkPermissionRemoved();
             NightscoutUploader.launchDownloadRest();
             Pendiq.immortality(); // Experimental testing phase
         });
@@ -3210,10 +3208,6 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
 
     public void showRemindersFromMenu(MenuItem myitem) {
         startActivity(new Intent(getApplicationContext(), Reminders.class));
-    }
-
-    public void showAssistFromMenu(MenuItem myitem) {
-        startActivity(new Intent(getApplicationContext(), EmergencyAssistActivity.class));
     }
 
     public void parakeetSetupMode(MenuItem myitem) {

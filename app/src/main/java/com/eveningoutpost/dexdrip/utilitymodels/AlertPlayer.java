@@ -32,7 +32,6 @@ import com.eveningoutpost.dexdrip.R;
 import com.eveningoutpost.dexdrip.services.SnoozeOnNotificationDismissService;
 import com.eveningoutpost.dexdrip.SnoozeActivity;
 import com.eveningoutpost.dexdrip.utilitymodels.pebble.PebbleWatchSync;
-import com.eveningoutpost.dexdrip.eassist.AlertTracker;
 import com.eveningoutpost.dexdrip.ui.FlashLight;
 import com.eveningoutpost.dexdrip.ui.helpers.AudioFocusType;
 import com.eveningoutpost.dexdrip.utils.PowerStateReceiver;
@@ -190,7 +189,6 @@ public class AlertPlayer {
         ActiveBgAlert.Create(newAlert.uuid, start_snoozed, nextAlertTime);
         if (!start_snoozed) VibrateNotifyMakeNoise(ctx, newAlert, bgValue, 0);
         ping("alarm");
-        AlertTracker.evaluate();
     }
 
     public synchronized void stopAlert(Context ctx, boolean ClearData, boolean clearIfSnoozeFinished) {
@@ -322,7 +320,6 @@ public class AlertPlayer {
             activeBgAlert.updateNextAlertAt(nextAlertTime);
             
             VibrateNotifyMakeNoise(ctx, alert, bgValue, minutesFromStartPlaying);
-            AlertTracker.evaluate();
         }
 
     }
