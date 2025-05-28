@@ -1,6 +1,5 @@
 package com.eveningoutpost.dexdrip.services;
 
-import static com.eveningoutpost.dexdrip.cgm.dex.ClassifierAction.lastReadingTimestamp;
 import static com.eveningoutpost.dexdrip.models.JoH.msSince;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.UiBased;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.getDexCollectionType;
@@ -28,7 +27,6 @@ import androidx.annotation.VisibleForTesting;
 import com.eveningoutpost.dexdrip.BestGlucose;
 import com.eveningoutpost.dexdrip.R;
 import com.eveningoutpost.dexdrip.alert.Persist;
-import com.eveningoutpost.dexdrip.cgm.dex.BlueTails;
 import com.eveningoutpost.dexdrip.models.BgReading;
 import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.models.Sensor;
@@ -143,7 +141,6 @@ public class UiBasedCollector extends NotificationListenerService {
                 if (sbn.isOngoing() || coOptedPackagesAll.contains(fromPackage)) {
                     lastPackage = fromPackage;
                     processNotification(sbn.getNotification());
-                    BlueTails.immortality();
                 }
             } else {
                 if (JoH.pratelimit("warn-notification-access", 7200)) {
@@ -368,7 +365,7 @@ public class UiBasedCollector extends NotificationListenerService {
 
         if ((mgdl >= 40 && mgdl <= 405)) {
             val grace = DexCollectionType.getCurrentSamplePeriod() * 4;
-            val recentbt = msSince(lastReadingTimestamp) < grace;
+            val recentbt = true; //msSince(lastReadingTimestamp) < grace; deleted with cgm.dex.ClassifierAction
             val dedupe = (!recentbt && isDifferentToLast(mgdl)) ? Constants.SECOND_IN_MS * 10
                     : DexCollectionType.getCurrentDeduplicationPeriod();
             val period = recentbt ? grace : dedupe;
