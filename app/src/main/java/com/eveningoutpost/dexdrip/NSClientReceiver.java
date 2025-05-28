@@ -11,7 +11,6 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.eveningoutpost.dexdrip.insulin.aaps.AAPSStatusHandler;
 import com.eveningoutpost.dexdrip.models.BgReading;
 import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.models.Treatments;
@@ -66,11 +65,7 @@ public class NSClientReceiver extends BroadcastReceiver {
 
                     final String device_status_json = bundle.getString("devicestatus", "");
                     if (!emptyString(device_status_json)) {
-                        try {
-                            AAPSStatusHandler.processDeviceStatus(device_status_json);
-                        } catch (Exception e) {
-                            Log.e(TAG, "Exception processing device status in NS_BRIDGE action: " + e);
-                        }
+                        //process status deleted
                     } else {
                         Log.e(TAG, "Empty device status received via NS_BRIDGE action");
                     }

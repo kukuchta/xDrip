@@ -117,7 +117,6 @@ import com.eveningoutpost.dexdrip.databinding.PopupInitialStatusHelperBinding;
 import com.eveningoutpost.dexdrip.insulin.Insulin;
 import com.eveningoutpost.dexdrip.insulin.InsulinManager;
 import com.eveningoutpost.dexdrip.insulin.MultipleInsulins;
-import com.eveningoutpost.dexdrip.insulin.pendiq.Pendiq;
 import com.eveningoutpost.dexdrip.profileeditor.DatePickerFragment;
 import com.eveningoutpost.dexdrip.profileeditor.ProfileAdapter;
 import com.eveningoutpost.dexdrip.ui.BaseShelf;
@@ -488,7 +487,6 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
             textInsulinSumDose.setVisibility(View.INVISIBLE);
             buttonInsulinSingleDose.setVisibility(View.INVISIBLE);
             Treatments.create(0, thisInsulinSumNumber, Treatments.getTimeStampWithOffset(thistimeoffset));
-            Pendiq.handleTreatment(thisInsulinSumNumber);
             thisInsulinSumNumber = 0;
             reset_viewport = true;
             if (hideTreatmentButtonsIfAllDone()) {
@@ -890,7 +888,6 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
                             if (i.getProfile() == InsulinManager.getBolusProfile())
                                 pendiqInsulin = i.getUnits();
                     } else pendiqInsulin = thisInsulinSumNumber;
-                    Pendiq.handleTreatment(pendiqInsulin);
                 } else {
                     Log.d(TAG, "processAndApproveTreatment Treatment already exists carbs=" + thiscarbsnumber + " insulin=" + thisInsulinSumNumber + " timestamp=" + JoH.dateTimeText(time));
                 }
@@ -913,7 +910,6 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
                     if (i.getProfile() == InsulinManager.getBolusProfile())
                         pendiqInsulin = i.getUnits();
             } else pendiqInsulin = thisInsulinSumNumber;
-            Pendiq.handleTreatment(pendiqInsulin);
         }
         hideAllTreatmentButtons();
 
@@ -1897,7 +1893,6 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
 
         Inevitable.task("home-resume-bg", 2000, () -> {
             NightscoutUploader.launchDownloadRest();
-            Pendiq.immortality(); // Experimental testing phase
         });
     }
 

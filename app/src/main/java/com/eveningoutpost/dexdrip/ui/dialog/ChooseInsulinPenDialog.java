@@ -6,7 +6,6 @@ import android.app.AlertDialog;
 import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.R;
 import com.eveningoutpost.dexdrip.insulin.InsulinManager;
-import com.eveningoutpost.dexdrip.insulin.opennov.data.Pens;
 import com.eveningoutpost.dexdrip.xdrip;
 
 import lombok.val;
@@ -64,7 +63,6 @@ public class ChooseInsulinPenDialog {
     }
 
     private static void set(final String serial, final String type) {
-        Pens.load().updatePenBySerial(serial, type).save();
         JoH.static_toast_long(xdrip.gs(R.string.set_pen_to_format, serial, type));
     }
 

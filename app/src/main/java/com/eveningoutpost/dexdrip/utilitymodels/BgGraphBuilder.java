@@ -38,7 +38,6 @@ import com.eveningoutpost.dexdrip.R;
 import com.eveningoutpost.dexdrip.services.ActivityRecognizedService;
 import com.eveningoutpost.dexdrip.calibrations.CalibrationAbstract;
 import com.eveningoutpost.dexdrip.calibrations.PluggableCalibration;
-import com.eveningoutpost.dexdrip.insulin.opennov.Options;
 import com.eveningoutpost.dexdrip.processing.SmootherFactory;
 import com.eveningoutpost.dexdrip.store.FastStore;
 import com.eveningoutpost.dexdrip.store.KeyStore;
@@ -172,7 +171,6 @@ public class BgGraphBuilder {
     private final List<PointValue> activityValues = new ArrayList<PointValue>();
     private final List<PointValue> annotationValues = new ArrayList<>();
     private final Pattern posPattern = Pattern.compile(".*?pos:([0-9.]+).*");
-    private final boolean hidePriming = Options.hidePrimingDoses();
     private static TrendLine noisePoly;
     public static double last_noise = -99999;
     public static double original_value = -99999;
@@ -1639,9 +1637,6 @@ public class BgGraphBuilder {
                         }
 
                         if (treatment.noteOnly()) {
-                            if (hidePriming && treatment.isPrimingDose()) {
-                                continue;
-                            }
                             final HPointValue pv = NoteClassifier.noteToPointValue(treatment.notes);
                             if (pv != null) {
                                 final boolean tooClose = Math.abs(treatment.timestamp - lastIconTimestamp) < Constants.MINUTE_IN_MS * 6;
