@@ -7,7 +7,6 @@ package com.eveningoutpost.dexdrip;
  */
 
 import static com.eveningoutpost.dexdrip.Home.startWatchUpdaterService;
-import static com.eveningoutpost.dexdrip.utils.DexCollectionType.Medtrum;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.NSFollow;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.SHAndCLFollow;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.SHFollow;
@@ -53,7 +52,6 @@ import com.eveningoutpost.dexdrip.utilitymodels.Pref;
 import com.eveningoutpost.dexdrip.utilitymodels.ShotStateStore;
 import com.eveningoutpost.dexdrip.utilitymodels.StatusItem;
 import com.eveningoutpost.dexdrip.utilitymodels.UploaderQueue;
-import com.eveningoutpost.dexdrip.cgm.medtrum.MedtrumCollectionService;
 import com.eveningoutpost.dexdrip.cgm.nsfollow.NightscoutFollowService;
 import com.eveningoutpost.dexdrip.cgm.sharefollow.ShareFollowService;
 import com.eveningoutpost.dexdrip.cgm.carelinkfollow.CareLinkFollowService;
@@ -112,10 +110,7 @@ public class MegaStatus extends FloatingLocaleActivityWithScreenshot {
         MegaStatusAdapters.add(new MegaStatusListAdapter());
     }
 
-    private static final String G4_STATUS = "BT Device";
     public static final String G5_STATUS = "Dex Status";
-    private static final String MEDTRUM_STATUS = "Medtrum Status";
-    private static final String IP_COLLECTOR = "IP Collector";
     private static final String XDRIP_PLUS_SYNC = "Followers";
     private static final String UPLOADERS = "Uploaders";
     private static final String LEFUN_STATUS = "Lefun";
@@ -156,9 +151,6 @@ public class MegaStatus extends FloatingLocaleActivityWithScreenshot {
 
             final DexCollectionType dexCollectionType = DexCollectionType.getDexCollectionType();
 
-            if (dexCollectionType.equals(Medtrum)) {
-                addAsection(MEDTRUM_STATUS, "Medtrum A6 Status");
-            }
             if (BlueJayEntry.isEnabled()) {
                 addAsection(BLUEJAY_STATUS, "BlueJay Watch Status");
             }
@@ -207,9 +199,6 @@ public class MegaStatus extends FloatingLocaleActivityWithScreenshot {
         la.clear(false);
         switch (section) {
 
-            case MEDTRUM_STATUS:
-                la.addRows(MedtrumCollectionService.megaStatus());
-                break;
             case XDRIP_PLUS_SYNC:
                 la.addRows(DoNothingService.megaStatus());
                 la.addRows(GcmListenerSvc.megaStatus());

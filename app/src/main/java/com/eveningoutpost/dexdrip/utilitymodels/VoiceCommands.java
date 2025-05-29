@@ -14,7 +14,6 @@ import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.models.Sensor;
 import com.eveningoutpost.dexdrip.services.ActivityRecognizedService;
 import com.eveningoutpost.dexdrip.services.UiBasedCollector;
-import com.eveningoutpost.dexdrip.cgm.medtrum.MedtrumCollectionService;
 import com.eveningoutpost.dexdrip.cloud.backup.BackupActivity;
 import com.eveningoutpost.dexdrip.plugin.Registry;
 import com.eveningoutpost.dexdrip.profileeditor.BasalProfileEditor;
@@ -118,9 +117,6 @@ public class VoiceCommands {
             case "start sensor on master":
                 JoH.static_toast_long(allWords);
                 GcmActivity.push_start_master_sensor();
-                break;
-            case "test medtrum calibrate":
-                MedtrumCollectionService.calibratePing();
                 break;
             case "delete all desert sync data":
                 JoH.static_toast_long("deleted all desert sync data");

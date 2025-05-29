@@ -19,7 +19,6 @@ import com.eveningoutpost.dexdrip.utils.DexCollectionType;
 import com.eveningoutpost.dexdrip.wearintegration.WatchUpdaterService;
 import com.eveningoutpost.dexdrip.xdrip;
 
-import static com.eveningoutpost.dexdrip.utils.DexCollectionType.Medtrum;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.NSFollow;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.SHAndCLFollow;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.SHFollow;
@@ -133,7 +132,6 @@ public class CollectionServiceStarter {
     private void stopAll() {
         Log.d(TAG, "stop all");
         stopBtShareService();
-        JoH.stopService(getCollectorServiceClass(Medtrum));
         JoH.stopService(getCollectorServiceClass(NSFollow));
         JoH.stopService(getCollectorServiceClass(SHFollow));
         JoH.stopService(getCollectorServiceClass(CLFollow));
@@ -214,8 +212,6 @@ public class CollectionServiceStarter {
             case DexcomShare:
                 collectionServiceStarter.startBtShareService();
                 break;
-            case Medtrum:
-                JoH.startService(getCollectorServiceClass(Medtrum));
             default:
                 break;
         }

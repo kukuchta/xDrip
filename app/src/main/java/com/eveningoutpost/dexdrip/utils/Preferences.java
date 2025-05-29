@@ -1815,14 +1815,8 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                 this.prefs.edit().putBoolean("calibration_notifications", false).apply();
             }
 
-            if (collectionType != DexCollectionType.Medtrum) {
-                try {
-                    collectionCategory.removePreference(findPreference("medtrum_use_native"));
-                    collectionCategory.removePreference(findPreference("medtrum_a_hex"));
-                } catch (Exception e) {
-                    //
-                }
-            }
+            collectionCategory.removePreference(findPreference("medtrum_use_native"));
+            collectionCategory.removePreference(findPreference("medtrum_a_hex"));
 
             if (collectionType != DexCollectionType.NSFollow) {
                 try {

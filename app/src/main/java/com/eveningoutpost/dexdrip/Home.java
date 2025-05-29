@@ -2362,8 +2362,6 @@ public class Home extends ActivityWithMenu implements ActivityCompat.OnRequestPe
         if (is_follower || collector.isPassive()) {
             displayCurrentInfo();
             Inevitable.task("home-notifications-start", 5000, Notifications::start);
-        } else if (!alreadyDisplayedBgInfoCommon && (collector == DexCollectionType.Medtrum)) {
-            updateCurrentBgInfoCommon(collector, notificationText);
         }
         if (collector.equals(DexCollectionType.Disabled)) {
             notificationText.append(getString(R.string.__data_source_disabled));

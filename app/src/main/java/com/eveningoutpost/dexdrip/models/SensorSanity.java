@@ -51,12 +51,6 @@ public class SensorSanity {
         // passes by default!
         boolean state = true;
 
-        // checks for each type of data source
-        if (type == DexCollectionType.Medtrum) {
-            if (raw_value < DEXCOM_MIN_RAW) state = false;
-            else if (raw_value > DEXCOM_MAX_RAW) state = false;
-        }
-
         if (!state) {
             if (JoH.ratelimit("sanity-failure", 20)) {
                 final String msg = "Sensor Raw Data Sanity Failure: " + raw_value;

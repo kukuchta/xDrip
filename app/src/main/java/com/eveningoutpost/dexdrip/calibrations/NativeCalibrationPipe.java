@@ -4,7 +4,6 @@ import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.models.UserError;
 import com.eveningoutpost.dexdrip.utilitymodels.BgGraphBuilder;
 import com.eveningoutpost.dexdrip.utilitymodels.PersistentStore;
-import com.eveningoutpost.dexdrip.cgm.medtrum.Medtrum;
 
 import static com.eveningoutpost.dexdrip.models.JoH.msSince;
 import static com.eveningoutpost.dexdrip.utilitymodels.Constants.HOUR_IN_MS;
@@ -44,10 +43,6 @@ public class NativeCalibrationPipe {
         }
 
         UserError.Log.uel(TAG, "Queuing Calibration for transmitter: " + BgGraphBuilder.unitized_string_with_units_static(glucose) + " " + JoH.dateTimeText(timestamp));
-
-        // Send to potential listeners
-        Medtrum.addCalibration(glucose, timestamp);
-
         PersistentStore.setLong("last-calibration-pipe-timestamp", JoH.tsl());
 
     }

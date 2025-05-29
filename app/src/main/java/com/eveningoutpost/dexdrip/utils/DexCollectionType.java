@@ -4,7 +4,6 @@ import com.eveningoutpost.dexdrip.services.DexShareCollectionService;
 import com.eveningoutpost.dexdrip.services.DoNothingService;
 import com.eveningoutpost.dexdrip.services.UiBasedCollector;
 import com.eveningoutpost.dexdrip.utilitymodels.Pref;
-import com.eveningoutpost.dexdrip.cgm.medtrum.MedtrumCollectionService;
 import com.eveningoutpost.dexdrip.cgm.nsfollow.NightscoutFollowService;
 import com.eveningoutpost.dexdrip.cgm.sharefollow.ShareFollowService;
 import com.eveningoutpost.dexdrip.cgm.carelinkfollow.CareLinkFollowService;
@@ -30,7 +29,6 @@ public enum DexCollectionType {
     NSFollow("NSFollower"),
     SHFollow("SHFollower"),
     CLFollow("CLFollower"),
-    Medtrum("Medtrum"),
     UiBased("UiBased"),
     Disabled("Disabled"),
     Manual("Manual"),
@@ -57,7 +55,7 @@ public enum DexCollectionType {
             mapToInternalName.put(dct.internalName, dct);
         }
 
-        Collections.addAll(usesBluetooth, DexcomShare, Medtrum);
+        Collections.addAll(usesBluetooth, DexcomShare);
         Collections.addAll(usesFiltered, Follower); // Bluetooth and Wifi+Bluetooth need dynamic mode
         Collections.addAll(isPassive, NSEmulator, NSFollow, SHFollow, UiBased, CLFollow, AidexReceiver, SHAndCLFollow);
         Collections.addAll(usesBattery, Follower); // parakeet separate
@@ -105,8 +103,6 @@ public enum DexCollectionType {
         switch (type) {
             case DexcomShare:
                 return DexShareCollectionService.class;
-            case Medtrum:
-                return MedtrumCollectionService.class;
             case Follower:
                 return DoNothingService.class;
             case NSFollow:

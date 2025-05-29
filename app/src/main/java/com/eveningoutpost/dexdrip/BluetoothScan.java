@@ -41,8 +41,6 @@ import java.util.Map;
 
 import lecho.lib.hellocharts.util.ChartUtils;
 
-import static com.eveningoutpost.dexdrip.Home.startWatchUpdaterService;
-import static com.eveningoutpost.dexdrip.cgm.medtrum.Medtrum.getDeviceInfoStringFromLegacy;
 import static com.eveningoutpost.dexdrip.xdrip.gs;
 
 @TargetApi(android.os.Build.VERSION_CODES.JELLY_BEAN_MR2)
@@ -377,12 +375,6 @@ public class BluetoothScan extends ListActivityWithMenu {
                 viewHolder.deviceName.setText(deviceName);
                 viewHolder.deviceAddress.setText(device.getAddress());
                 if (adverts.containsKey(device.getAddress())) {
-                    if (deviceName.equals("MT")) {
-                        final String medtrum = getDeviceInfoStringFromLegacy(adverts.get(device.getAddress()));
-                        if (medtrum != null) {
-                            viewHolder.deviceName.setText(medtrum);
-                        }
-                    }
                     try {
                         if (Pref.getBooleanDefaultFalse("engineering_mode")) {
                             viewHolder.deviceAddress.append("   " + new String(adverts.get(device.getAddress()), "UTF-8"));

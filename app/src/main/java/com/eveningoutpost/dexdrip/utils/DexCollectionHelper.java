@@ -53,7 +53,6 @@ public class DexCollectionHelper {
                 break;
 
             case DexcomShare:
-            case Medtrum:
                 bluetoothScanIfNeeded();
                 break;
 

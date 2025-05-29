@@ -298,9 +298,8 @@ public class BgGraphBuilder {
         final List<Line> lines = new LinkedList<>();
 
         final boolean g_prediction = Pref.getBooleanDefaultFalse("show_g_prediction");
-        final boolean medtrum = (DexCollectionType.getDexCollectionType() == DexCollectionType.Medtrum)
-                && Pref.getBooleanDefaultFalse("show_medtrum_secondary");
-        if (medtrum || g_prediction) {
+
+        if (g_prediction) {
             final List<Prediction> plist = Prediction.latestForGraph(4000, loaded_start, loaded_end);
             if (plist.size() > 0) {
                 final List<PointValue> gpoints = new ArrayList<>(plist.size());
@@ -310,10 +309,6 @@ public class BgGraphBuilder {
                         case "EGlucoseRx":
                             final PointValue point = new HPointValue(((double) (p.timestamp + (Constants.MINUTE_IN_MS * 10)) / FUZZER), (float) (p.glucose * yscale));
                             gpoints.add(point);
-                            break;
-                        case "Medtrum2nd":
-                            final PointValue mpoint = new HPointValue(((double) p.timestamp / FUZZER), (float) (p.glucose * yscale));
-                            gpoints.add(mpoint);
                             break;
                     }
                 }
