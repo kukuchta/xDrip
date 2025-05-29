@@ -7,7 +7,6 @@ import com.eveningoutpost.dexdrip.utilitymodels.Pref;
 import com.eveningoutpost.dexdrip.cgm.medtrum.MedtrumCollectionService;
 import com.eveningoutpost.dexdrip.cgm.nsfollow.NightscoutFollowService;
 import com.eveningoutpost.dexdrip.cgm.sharefollow.ShareFollowService;
-import com.eveningoutpost.dexdrip.cgm.webfollow.WebFollowService;
 import com.eveningoutpost.dexdrip.cgm.carelinkfollow.CareLinkFollowService;
 
 import java.lang.reflect.Method;
@@ -30,7 +29,6 @@ public enum DexCollectionType {
     NSEmulator("NSEmulator"),
     NSFollow("NSFollower"),
     SHFollow("SHFollower"),
-    WebFollow("WebFollower"),
     CLFollow("CLFollower"),
     Medtrum("Medtrum"),
     UiBased("UiBased"),
@@ -61,7 +59,7 @@ public enum DexCollectionType {
 
         Collections.addAll(usesBluetooth, DexcomShare, Medtrum);
         Collections.addAll(usesFiltered, Follower); // Bluetooth and Wifi+Bluetooth need dynamic mode
-        Collections.addAll(isPassive, NSEmulator, NSFollow, SHFollow, WebFollow, UiBased, CLFollow, AidexReceiver, SHAndCLFollow);
+        Collections.addAll(isPassive, NSEmulator, NSFollow, SHFollow, UiBased, CLFollow, AidexReceiver, SHAndCLFollow);
         Collections.addAll(usesBattery, Follower); // parakeet separate
     }
 
@@ -115,8 +113,6 @@ public enum DexCollectionType {
                 return NightscoutFollowService.class;
             case SHFollow:
                 return ShareFollowService.class;
-            case WebFollow:
-                return WebFollowService.class;
             case UiBased:
                 return UiBasedCollector.class;
             case CLFollow:

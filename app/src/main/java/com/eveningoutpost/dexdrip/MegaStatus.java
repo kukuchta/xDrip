@@ -11,7 +11,6 @@ import static com.eveningoutpost.dexdrip.utils.DexCollectionType.Medtrum;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.NSFollow;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.SHAndCLFollow;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.SHFollow;
-import static com.eveningoutpost.dexdrip.utils.DexCollectionType.WebFollow;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.CLFollow;
 
 import android.app.Activity;
@@ -57,7 +56,6 @@ import com.eveningoutpost.dexdrip.utilitymodels.UploaderQueue;
 import com.eveningoutpost.dexdrip.cgm.medtrum.MedtrumCollectionService;
 import com.eveningoutpost.dexdrip.cgm.nsfollow.NightscoutFollowService;
 import com.eveningoutpost.dexdrip.cgm.sharefollow.ShareFollowService;
-import com.eveningoutpost.dexdrip.cgm.webfollow.WebFollowService;
 import com.eveningoutpost.dexdrip.cgm.carelinkfollow.CareLinkFollowService;
 import com.eveningoutpost.dexdrip.utils.DexCollectionType;
 import com.eveningoutpost.dexdrip.watch.lefun.LeFunEntry;
@@ -185,9 +183,6 @@ public class MegaStatus extends FloatingLocaleActivityWithScreenshot {
             if(dexCollectionType.equals(SHFollow)) {
                 addAsection(SHARE_FOLLOW, "Dex Share Follow Status");
             }
-            if(dexCollectionType.equals(WebFollow)) {
-                addAsection(WEB_FOLLOW, "Web Follower Status");
-            }
             if(dexCollectionType.equals(CLFollow)) {
                 addAsection(CARELINK_FOLLOW, "CareLink Follow Status");
             }
@@ -238,9 +233,6 @@ public class MegaStatus extends FloatingLocaleActivityWithScreenshot {
                 break;
             case SHARE_FOLLOW:
                 la.addRows(ShareFollowService.megaStatus());
-                break;
-            case WEB_FOLLOW:
-                la.addRows(WebFollowService.megaStatus());
                 break;
             case CARELINK_FOLLOW:
                 la.addRows(CareLinkFollowService.megaStatus());
