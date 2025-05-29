@@ -72,8 +72,6 @@ import com.eveningoutpost.dexdrip.cgm.sharefollow.ShareFollowService;
 import com.eveningoutpost.dexdrip.cgm.carelinkfollow.auth.CareLinkAuthenticator;
 import com.eveningoutpost.dexdrip.cgm.carelinkfollow.auth.CareLinkCredentialStore;
 import com.eveningoutpost.dexdrip.cloud.jamcm.Pusher;
-import com.eveningoutpost.dexdrip.healthconnect.HealthConnectEntry;
-import com.eveningoutpost.dexdrip.healthconnect.HealthGamut;
 import com.eveningoutpost.dexdrip.models.DesertSync;
 import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.models.Profile;
@@ -363,15 +361,6 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
         scanFormat = null;
         scanContents = null;
         scanRawBytes = null;
-        if (requestCode == Constants.HEALTH_CONNECT_RESPONSE_ID) {
-            if (HealthConnectEntry.enabled()) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    if (JoH.ratelimit("health-connect-bump", 2)) {
-                        HealthGamut.init(this);
-                    }
-                }
-            }
-        }
 
         if (requestCode == Constants.ZXING_FILE_REQ_CODE) { // If we are scanning an image file, not using the camera
             // The core of the following section, selecting the file, converting it into a bitmap, and then to a bitstream, is from:
@@ -2035,28 +2024,6 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                 });
             } catch (Exception e) {
                 //
-            }
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                try {
-                    findPreference("health_connect_enable").setOnPreferenceChangeListener((preference, newValue) -> {
-                        if ((Boolean) newValue) {
-                            Inevitable.task("check-health-connect", 300, () -> HealthGamut.init(getActivity()));
-                        }
-                        return true;
-                    });
-                } catch (Exception e) {
-                    //
-                }
-
-                try {
-                    findPreference("health_connect_manage").setOnPreferenceClickListener((preference) -> {
-                        HealthGamut.init(getActivity()).openPermissionManager();
-                        return true;
-                    });
-                } catch (Exception e) {
-                    //
-                }
             }
 
 

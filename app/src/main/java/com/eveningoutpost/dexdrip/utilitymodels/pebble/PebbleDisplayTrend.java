@@ -42,28 +42,6 @@ import java.util.concurrent.locks.ReentrantLock;
 public class PebbleDisplayTrend extends PebbleDisplayAbstract {
 
     private final static String TAG = PebbleDisplayTrend.class.getSimpleName();
-
-   /*
-    public static final int ICON_KEY = 0;
-    public static final int BG_KEY = 1;
-    public static final int RECORD_TIME_KEY = 2;
-    public static final int PHONE_TIME_KEY = 3;
-    public static final int BG_DELTA_KEY = 4;
-    public static final int UPLOADER_BATTERY_KEY = 5;
-    public static final int NAME_KEY = 6;
-    public static final int TREND_BEGIN_KEY = 7;
-    public static final int TREND_DATA_KEY = 8;
-    public static final int TREND_END_KEY = 9;
-    public static final int MESSAGE_KEY = 10;
-    public static final int VIBE_KEY = 11;
-
-    private static final int NO_BLUETOOTH_KEY = 111;
-    private static final int COLLECT_HEALTH_KEY = 112;
-
-    public static final int SYNC_KEY = 1000;
-    public static final int PLATFORM_KEY = 1001;
-    public static final int VERSION_KEY = 1002;
-    */
     private static final int CHUNK_SIZE = 100;
     public static final boolean d = false;
 

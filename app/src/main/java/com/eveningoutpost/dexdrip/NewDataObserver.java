@@ -13,8 +13,6 @@ import com.eveningoutpost.dexdrip.utilitymodels.Pref;
 import com.eveningoutpost.dexdrip.utilitymodels.VehicleMode;
 import com.eveningoutpost.dexdrip.utilitymodels.pebble.PebbleUtil;
 import com.eveningoutpost.dexdrip.utilitymodels.pebble.PebbleWatchSync;
-import com.eveningoutpost.dexdrip.healthconnect.HealthGamut;
-import com.eveningoutpost.dexdrip.healthconnect.HealthConnectEntry;
 import com.eveningoutpost.dexdrip.tidepool.TidepoolEntry;
 import com.eveningoutpost.dexdrip.ui.LockScreenWallPaper;
 import com.eveningoutpost.dexdrip.utils.BgToSpeech;
@@ -51,22 +49,16 @@ public class NewDataObserver {
     public static void newBgReading(BgReading bgReading, boolean is_follower) {
 
         sendToPebble();
-        sendToWear();
         sendToAmazfit();
         sendToLeFun();
         sendToMiBand();
         sendToBroadcastService();
-        sendToBlueJay();
-        sendToRemoteBlueJay();
         Notifications.start();
         InfoContentProvider.ping("bg");
         uploadToShare(bgReading, is_follower);
-        textToSpeech(bgReading, null);
         LibreBlock.UpdateBgVal(bgReading.timestamp, bgReading.calculated_value);
         LockScreenWallPaper.setIfEnabled();
-        sendToHealthConnect(bgReading);
         TidepoolEntry.newData();
-
     }
 
     // when we receive a new external status broadcast
@@ -81,7 +73,6 @@ public class NewDataObserver {
             // send to pebble
             sendToPebble();
             sendToAmazfit();
-            sendStatusToBlueJay();
 
             // don't send via GCM if received via GCM!
             if (receivedLocally) {
@@ -124,56 +115,6 @@ public class NewDataObserver {
         BroadcastEntry.sendLatestBG();
     }
 
-    private static void sendToBlueJay() {
-        if (BlueJayEntry.isEnabled()) {
-            Inevitable.task("poll-bluejay-for-bg", DexCollectionType.hasBluetooth() ? 2000 : 500, BlueJay::showLatestBG); // delay enough for BT to finish on collector
-        }
-    }
-
-    private static void sendStatusToBlueJay() {
-        if (BlueJayEntry.isEnabled()) {
-            Inevitable.task("poll-bluejay-for-status", 1000, BlueJay::showStatusLine);
-        }
-    }
-
-    private static void sendToRemoteBlueJay() {
-        if (BlueJayEntry.isRemoteEnabled()) {
-            Inevitable.task("poll-bluejay-remote-for-bg", DexCollectionType.hasBluetooth() ? 2000 : 500, BlueJayRemote::sendLatestBG); // delay enough for BT to finish on collector
-        }
-    }
-
-    private static void sendToHealthConnect(final BgReading bgReading) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-           if (HealthConnectEntry.sendEnabled()) {
-               HealthGamut.sendGlucoseStatic(bgReading);
-           }
-        }
-    }
-
-    // send to wear
-    // data is already synced via UploaderQueue but this will send the display glucose
-    private static void sendToWear() {
-        if ((Pref.getBooleanDefaultFalse("wear_sync")) && !Home.get_forced_wear()) {//KS not necessary since MongoSendTask sends UploaderQueue.newEntry BG to WatchUpdaterService.sendWearUpload
-            JoH.startService(WatchUpdaterService.class);
-            // I don't think this wakelock is really needed anymore
-            if (Pref.getBoolean("excessive_wakelocks", false)) {
-                JoH.getWakeLock("wear-quickFix3", 15000); // dangling wakelock
-            }
-        }
-    }
-
-    // speak value
-    private static void textToSpeech(BgReading bgReading, BestGlucose.DisplayGlucose dg) {
-        //Text to speech
-        if (Pref.getBooleanDefaultFalse("bg_to_speech") || VehicleMode.shouldSpeak()) {
-            if (dg == null) dg = BestGlucose.getDisplayGlucose();
-            if (dg != null) {
-                BgToSpeech.speak(dg.mgdl, dg.timestamp, dg.delta_name);
-            } else {
-                BgToSpeech.speak(bgReading.calculated_value, bgReading.timestamp, bgReading.slopeName());
-            }
-        }
-    }
 
     // share uploader
     private static void uploadToShare(BgReading bgReading, boolean is_follower) {

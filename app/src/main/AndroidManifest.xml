@@ -100,27 +100,6 @@
         android:appComponentFactory="android.support.v4.app.CoreComponentFactory"
         android:requestLegacyExternalStorage="true"
         android:usesCleartextTraffic="true">
-        <activity
-            android:name=".HealthPrivacy"
-            android:label="xDrip Privacy Policy"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
-            </intent-filter>
-        </activity>
-        <activity-alias
-            android:name="AndroidURationaleActivity"
-            android:exported="true"
-            android:targetActivity=".HealthPrivacy">
-            <intent-filter>
-                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
-            </intent-filter>
-            <!-- Permission handling for Android 14 -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE"/>
-                <category android:name="android.intent.category.HEALTH_PERMISSIONS"/>
-            </intent-filter>
-        </activity-alias>
 
         <activity
             android:name=".cloud.backup.BackupActivity"

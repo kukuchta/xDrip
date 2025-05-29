@@ -25,7 +25,6 @@ import com.eveningoutpost.dexdrip.utilitymodels.Notifications;
 import com.eveningoutpost.dexdrip.utilitymodels.Pref;
 import com.eveningoutpost.dexdrip.utilitymodels.pebble.PebbleUtil;
 import com.eveningoutpost.dexdrip.utilitymodels.pebble.PebbleWatchSync;
-import com.eveningoutpost.dexdrip.healthconnect.HealthConnectEntry;
 import com.eveningoutpost.dexdrip.ui.LockScreenWallPaper;
 import com.eveningoutpost.dexdrip.watch.lefun.LeFun;
 import com.eveningoutpost.dexdrip.watch.lefun.LeFunEntry;
@@ -98,7 +97,6 @@ public class MissedReadingService extends IntentService {
             DesertSync.pullAsEnabled();
             NanoStatus.keepFollowerUpdated();
             LockScreenWallPaper.timerPoll();
-            HealthConnectEntry.ping();
 
             // TODO functionalize the actual checking
             bg_missed_alerts = Pref.getBoolean("bg_missed_alerts", false);
