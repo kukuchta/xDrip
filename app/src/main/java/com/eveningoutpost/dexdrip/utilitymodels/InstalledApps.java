@@ -1,7 +1,5 @@
 package com.eveningoutpost.dexdrip.utilitymodels;
 
-import static com.eveningoutpost.dexdrip.watch.thinjam.BlueJayEntry.isNative;
-
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -25,7 +23,7 @@ public class InstalledApps {
     private static final String GOOGLE_PLAY_SERVICES_PACKAGE = "com.google.android.gms";
 
     public static boolean isGooglePlayInstalled(Context context) {
-        return isNative() || checkPackageExists(context, GOOGLE_PLAY_SERVICES_PACKAGE);
+        return checkPackageExists(context, GOOGLE_PLAY_SERVICES_PACKAGE);
     }
 
     public static boolean checkPackageExists(Context context, String packageName) {

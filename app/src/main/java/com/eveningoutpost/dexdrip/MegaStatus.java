@@ -60,8 +60,6 @@ import com.eveningoutpost.dexdrip.watch.lefun.LeFunEntry;
 import com.eveningoutpost.dexdrip.watch.lefun.LeFunService;
 import com.eveningoutpost.dexdrip.watch.miband.MiBandEntry;
 import com.eveningoutpost.dexdrip.watch.miband.MiBandService;
-import com.eveningoutpost.dexdrip.watch.thinjam.BlueJayEntry;
-import com.eveningoutpost.dexdrip.watch.thinjam.BlueJayService;
 import com.eveningoutpost.dexdrip.wearintegration.WatchUpdaterService;
 import com.github.amlcurran.showcaseview.ShowcaseView;
 import com.github.amlcurran.showcaseview.targets.ViewTarget;
@@ -151,9 +149,6 @@ public class MegaStatus extends FloatingLocaleActivityWithScreenshot {
 
             final DexCollectionType dexCollectionType = DexCollectionType.getDexCollectionType();
 
-            if (BlueJayEntry.isEnabled()) {
-                addAsection(BLUEJAY_STATUS, "BlueJay Watch Status");
-            }
             if (Home.get_master_or_follower()) {
                 addAsection(XDRIP_PLUS_SYNC, "xDrip+ Sync Group");
             }
@@ -213,9 +208,6 @@ public class MegaStatus extends FloatingLocaleActivityWithScreenshot {
                 break;
             case MIBAND_STATUS:
                 la.addRows(MiBandService.megaStatus());
-                break;
-            case BLUEJAY_STATUS:
-                la.addRows(BlueJayService.megaStatus());
                 break;
             case NIGHTSCOUT_FOLLOW:
                 la.addRows(NightscoutFollowService.megaStatus());

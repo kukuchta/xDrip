@@ -3,7 +3,6 @@ package com.eveningoutpost.dexdrip.receiver;
 import static com.eveningoutpost.dexdrip.utilitymodels.ColorCache.getCol;
 import static com.eveningoutpost.dexdrip.utilitymodels.NanoStatus.nanoStatus;
 import static com.eveningoutpost.dexdrip.utilitymodels.Pref.getBooleanDefaultFalse;
-import static com.eveningoutpost.dexdrip.watch.thinjam.BlueJayEntry.isNative;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
@@ -277,11 +276,11 @@ public class InfoContentProvider extends ContentProvider {
     }
 
     private static boolean enabled() {
-        return isNative() || xdrip.getAppContext() != null && getBooleanDefaultFalse("host_content_provider");
+        return xdrip.getAppContext() != null && getBooleanDefaultFalse("host_content_provider");
     }
 
     private static boolean enabledWrite() {
-        return enabled() && (isNative() || getBooleanDefaultFalse("content_provider_write"));
+        return enabled() && getBooleanDefaultFalse("content_provider_write");
     }
 
     public static void ping(String channel) {

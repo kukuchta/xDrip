@@ -35,12 +35,9 @@ import com.eveningoutpost.dexdrip.utilitymodels.Pref;
 import com.eveningoutpost.dexdrip.utils.CipherUtils;
 import com.eveningoutpost.dexdrip.utils.DisplayQRCode;
 import com.eveningoutpost.dexdrip.utils.SdcardImportExport;
-import com.eveningoutpost.dexdrip.watch.thinjam.BlueJayEntry;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.common.primitives.Bytes;
-import com.google.firebase.messaging.FirebaseMessaging;
-import com.google.firebase.messaging.RemoteMessage;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
@@ -828,18 +825,6 @@ public class GcmActivity extends FauxActivity {
         }
     }
 
-  /*  private static void fmSend(Bundle data) {
-        final FirebaseMessaging fm = FirebaseMessaging.getInstance();
-        if (senderid != null) {
-            fm.send(new RemoteMessage.Builder(senderid + "@gcm.googleapis.com")
-                    .setMessageId(Integer.toString(msgId.incrementAndGet()))
-                    .setData(JoH.bundleToMap(data))
-                    .build());
-        } else {
-            Log.wtf(TAG, "senderid is null");
-        }
-    }*/
-
     private void tryGCMcreate() {
         Log.d(TAG, "try GCMcreate");
         checkCease();
@@ -880,11 +865,6 @@ public class GcmActivity extends FauxActivity {
             xdrip.getAppContext().startService(intent);
         } else {
             cease_all_activity = true;
-            if (!BlueJayEntry.isNative()) {
-                final String msg = "ERROR: Connecting to Google Services - check google login or reboot?";
-                JoH.static_toast_long(msg);
-                Home.toaststaticnext(msg);
-            }
         }
     }
 
@@ -941,54 +921,6 @@ public class GcmActivity extends FauxActivity {
         super.onPause();
     }
 
-    static void checkSync(final Context context) {
-        if ((GcmActivity.last_ack > -1) && (GcmActivity.last_send_previous > 0)) {
-            if (GcmActivity.last_send_previous > GcmActivity.last_ack) {
-                if (Pref.getLong("sync_warning_never", 0) == 0) {
-
-                    if (PreferencesNames.SYNC_VERSION.equals("1") && isOldVersion(context)) {
-                        final long since_send = JoH.tsl() - GcmActivity.last_send_previous;
-                        if (since_send > 60000) {
-                            if (!DesertSync.isEnabled()) {
-                                final long ack_outstanding = JoH.tsl() - GcmActivity.last_ack;
-                                if (ack_outstanding > MAX_ACK_OUTSTANDING_MS) {
-                                    if (JoH.ratelimit("ack-failure", 7200)) {
-                                        if (JoH.isAnyNetworkConnected()) {
-                                            AlertDialog.Builder builder = new AlertDialog.Builder(context);
-                                            builder.setTitle("Possible Sync Problem");
-                                            builder.setMessage("It appears we haven't been able to send/receive sync data for the last: " + JoH.qs(ack_outstanding / 60000, 0) + " minutes\n\nDo you want to perform a reset of the sync system?");
-                                            builder.setPositiveButton("YES, Do it!", new DialogInterface.OnClickListener() {
-                                                public void onClick(DialogInterface dialog, int which) {
-                                                    dialog.dismiss();
-                                                    JoH.static_toast(context, "Resetting...", Toast.LENGTH_LONG);
-                                                    SdcardImportExport.forceGMSreset();
-                                                }
-                                            });
-                                            builder.setNeutralButton(gs(R.string.maybe_later), new DialogInterface.OnClickListener() {
-                                                public void onClick(DialogInterface dialog, int which) {
-                                                    dialog.dismiss();
-                                                }
-                                            });
-                                            builder.setNegativeButton("NO, Never", new DialogInterface.OnClickListener() {
-                                                @Override
-                                                public void onClick(DialogInterface dialog, int which) {
-                                                    dialog.dismiss();
-                                                    Pref.setLong("sync_warning_never", JoH.tsl());
-                                                }
-                                            });
-                                            AlertDialog alert = builder.create();
-                                            alert.show();
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     static void coolDown() {
         cool_down_till = JoH.tsl() + Constants.MINUTE_IN_MS * 20;
         Log.wtf(TAG, "Too many messages, activating cool down till: " + JoH.dateTimeText(cool_down_till));
@@ -1016,7 +948,6 @@ public class GcmActivity extends FauxActivity {
         if (resultCode != ConnectionResult.SUCCESS) {
             try {
                 if (apiAvailability.isUserResolvableError(resultCode)) {
-                    if (resultCode == 3 && BlueJayEntry.isNative()) return false;
                     if (activity != null) {
                         apiAvailability.getErrorDialog(activity, resultCode, PLAY_SERVICES_RESOLUTION_REQUEST)
                                 .show();

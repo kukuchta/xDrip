@@ -114,9 +114,6 @@ import com.eveningoutpost.dexdrip.watch.lefun.LeFunEntry;
 import com.eveningoutpost.dexdrip.watch.miband.MiBand;
 import com.eveningoutpost.dexdrip.watch.miband.MiBandEntry;
 import com.eveningoutpost.dexdrip.watch.miband.MiBandService;
-import com.eveningoutpost.dexdrip.watch.thinjam.BlueJay;
-import com.eveningoutpost.dexdrip.watch.thinjam.BlueJayAdapter;
-import com.eveningoutpost.dexdrip.watch.thinjam.BlueJayEntry;
 import com.eveningoutpost.dexdrip.wearintegration.Amazfitservice;
 import com.eveningoutpost.dexdrip.wearintegration.WatchUpdaterService;
 import com.eveningoutpost.dexdrip.webservices.XdripWebService;
@@ -418,15 +415,6 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                 return;
             }
 
-            try {
-                if (BlueJay.processQRCode(scanRawBytes)) {
-                    refreshFragments();
-                    return;
-                }
-            } catch (Exception e) {
-                // meh
-            }
-
 
             final NSBarcodeConfig barcode = new NSBarcodeConfig(scanContents);
             if (barcode.hasMongoConfig()) {
@@ -576,7 +564,6 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
         PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(LeFunEntry.prefListener);
         PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(MiBandEntry.prefListener);
         PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(BroadcastService.prefListener);
-        PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(BlueJayEntry.prefListener);
         PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(uiPrefListener);
         PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(Registry.prefListener);
         PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(xDripCloudListener);
@@ -591,7 +578,6 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
         PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(LeFunEntry.prefListener);
         PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(MiBandEntry.prefListener);
         PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(BroadcastService.prefListener);
-        PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(BlueJayEntry.prefListener);
         PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(uiPrefListener);
         PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(Registry.prefListener);
         PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(xDripCloudListener);
@@ -1544,21 +1530,6 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
             bindPreferenceSummaryToValue(findPreference("node_wearG5"));//KS
             bindPreferenceSummaryToValue(findPreference("wear_logs_prefix"));
             bindPreferenceSummaryToValue(findPreference("disable_wearG5_on_missedreadings_level"));
-
-            try {
-                final Preference blueJayScreenTimeout = findPreference("bluejay_screen_timeout");
-                BlueJayAdapter.sBindPreferenceTitleAppendToBlueJayTimeoutValueListener.onPreferenceChange(blueJayScreenTimeout,
-                        PreferenceManager
-                                .getDefaultSharedPreferences(blueJayScreenTimeout.getContext())
-                                .getInt(blueJayScreenTimeout.getKey(), -1));
-                blueJayScreenTimeout.setOnPreferenceChangeListener(BlueJayAdapter.sBindPreferenceTitleAppendToBlueJayTimeoutValueListener);
-
-                findPreference("bluejay_run_as_phone_collector").setOnPreferenceChangeListener(BlueJayAdapter.changeToPhoneSlotListener);
-                findPreference("bluejay_run_phone_collector").setOnPreferenceChangeListener(BlueJayAdapter.changeToPhoneCollectorListener);
-
-            } catch (Exception e) {
-                //
-            }
 
             final Preference useCustomSyncKey = findPreference("use_custom_sync_key");
             final Preference CustomSyncKey = findPreference("custom_sync_key");

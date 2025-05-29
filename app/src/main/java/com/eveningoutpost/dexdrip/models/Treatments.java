@@ -31,7 +31,6 @@ import com.eveningoutpost.dexdrip.insulin.Insulin;
 import com.eveningoutpost.dexdrip.insulin.InsulinManager;
 import com.eveningoutpost.dexdrip.insulin.MultipleInsulins;
 import com.eveningoutpost.dexdrip.utils.jobs.BackgroundQueue;
-import com.eveningoutpost.dexdrip.watch.thinjam.BlueJayEntry;
 import com.eveningoutpost.dexdrip.xdrip;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -405,74 +404,6 @@ public class Treatments extends Model {
         treatment.save();
     }
 
-    /**
-     * Returns a newly created treatment entry in the database for Sensor Start,
-     * and pushes the new treatment to followers.
-     * @param timestamp is optional, defaults to right now
-     * @param notes is optional
-     */
-    public static synchronized Treatments sensorStart(@Nullable Long timestamp, @Nullable String notes) {
-        if (timestamp == null || timestamp == 0) {
-            timestamp = new Date().getTime();
-        }
-
-        final Treatments treatment = new Treatments();
-        treatment.enteredBy = XDRIP_TAG;
-        treatment.eventType = SENSOR_START_EVENT_TYPE;
-        treatment.created_at = DateUtil.toISOString(timestamp);
-        treatment.timestamp = timestamp;
-        treatment.uuid = UUID.randomUUID().toString();
-        if (notes != null && notes.length() > 0) {
-            treatment.notes = notes;
-        }
-        treatment.save();
-        pushTreatmentSync(treatment);
-        return treatment;
-    }
-
-    /**
-     * Returns a newly created treatment entry in the database for Sensor Stop,
-     * and pushes the new treatment to followers.
-     * @param timestamp is optional, defaults to right now
-     * @param notes is optional
-     */
-    public static synchronized Treatments sensorStop(@Nullable Long timestamp, @Nullable String notes) {
-        if (timestamp == null || timestamp == 0) {
-            timestamp = new Date().getTime();
-        }
-
-        final Treatments treatment = new Treatments();
-        treatment.enteredBy = XDRIP_TAG;
-        treatment.eventType = SENSOR_STOP_EVENT_TYPE;
-        treatment.created_at = DateUtil.toISOString(timestamp);
-        treatment.timestamp = timestamp;
-        treatment.uuid = UUID.randomUUID().toString();
-        if (notes != null && notes.length() > 0) {
-            treatment.notes = notes;
-        }
-        treatment.save();
-        pushTreatmentSync(treatment);
-        return treatment;
-    }
-
-    public static void sensorStartIfNeeded() {
-
-        // Create treatment entry in the database if the sensor was started by another
-        // device (e.g. receiver) and not xDrip. If the sensor was started by
-        // xDrip, then there will be a Sensor Start treatment already in the db.
-        val lastSensorStart = Treatments.lastEventTypeFromXdrip(Treatments.SENSOR_START_EVENT_TYPE);
-
-        // If there isn't an existing sensor start in the xDrip db, or the most recently tracked
-        // sensor start was more than 15 minutes ago, then we assume the sensor was actually
-        // started from a non-xDrip device and so we track it.
-        if (lastSensorStart == null || JoH.msSince(lastSensorStart.timestamp) >= 15 * Constants.MINUTE_IN_MS) {
-            UserError.Log.i(TAG, "Creating treatment for Sensor Start initiated by another device");
-            Treatments.sensorStart(null, "Started by transmitter");
-        } else {
-            UserError.Log.i(TAG, "Not creating treatment for Sensor Start because one was created too recently: " + JoH.msSince(lastSensorStart.timestamp) + "ms ago");
-        }
-    }
-
     private static void pushTreatmentSync(Treatments treatment) {
         pushTreatmentSync(treatment, true, null); // new entry by default
     }
@@ -634,14 +565,6 @@ public class Treatments extends Model {
         // not synced with uploader queue - should we?
     }
 
-    public static Treatments delete_last() {
-        return delete_last(false);
-    }
-
-    public static void delete_by_timestamp(long timestamp) {
-        delete_by_timestamp(timestamp, 1500, false);
-    }
-
     public static void delete_by_timestamp(long timestamp, int accuracy, boolean from_interactive) {
         final Treatments t = byTimestamp(timestamp, accuracy); // do we need to alter default accuracy?
         if (t != null) {
@@ -764,8 +687,6 @@ public class Treatments extends Model {
                         // should not end up needing to append notes and be from_interactive via undo as these
                         // would be mutually exclusive operations so we don't need to handle that here.
                         Home.staticRefreshBGChartsOnIdle();
-                        // TODO review if this is correct place for new notes only
-                        evaluateNotesForNotification(mytreatment);
                     }
                 }
 
@@ -793,17 +714,10 @@ public class Treatments extends Model {
                 pushTreatmentSync(mytreatment);
             }
             // TODO review if this is correct place for new notes only
-            evaluateNotesForNotification(mytreatment);
             Home.staticRefreshBGChartsOnIdle();
             return true;
         } else {
             return false;
-        }
-    }
-
-    private static void evaluateNotesForNotification(final Treatments mytreatment) {
-        if (!emptyString(mytreatment.notes) && mytreatment.notes.startsWith("-")) {
-            BlueJayEntry.sendNotifyIfEnabled(mytreatment.notes);
         }
     }
 
